@@ -126,7 +126,7 @@ class Robot{
             switch (Action)
             {
             case ActionType::LINE:
-                PIDfollowLine();
+                PIDfollowLine(2,0.5,0.5);
                 break;
             case ActionType::TURN_LEFT:
                 turnLeft();

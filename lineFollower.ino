@@ -5,7 +5,6 @@
 //these can be changed, eg for a pure proportional, choose (2,0,0)
 //(proportional, integral, derivative)
 
-
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
@@ -13,8 +12,6 @@
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 Adafruit_DCMotor *myMotor1 = AFMS.getMotor(1);
 Adafruit_DCMotor *myMotor2 = AFMS.getMotor(2);
-
-
 
 float motorSpeed = 200;
 
@@ -45,6 +42,10 @@ class Robot{
         int frontRight = A1;    // input pin for light sensor
         int offAxisRight = A2;    // input pin for light sensor
         int backMiddle = A3;    // input pin for light sensor
+
+        enum class ActionType{LINE,TURN_LEFT,TURN_RIGHT,TURN_ONE_EIGHTY,PICKUP,BLUE_PLACE,RED_PLACE};  //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
+        ActionType Action;
+
 
         void PIDfollowLine(){
             static float speedDiff;
@@ -80,10 +81,50 @@ class Robot{
             backMiddleVal = analogRead(backMiddle);
         }
 
+        void decideActionToPerform(){
+            //this takes the sensor values and works out which stage of the algorithm the robot needs to be in at any particular point
+        }
 
-        int outputActionToPerform(){
+        void turnLeft(){
 
-            
+        }
+
+        void turnRight(){
+
+        }
+
+        void turnOneEighty(){
+
+        }
+
+        void runCurrentNeededAction(){
+            switch (Action)
+            {
+            case ActionType::LINE:
+                PIDfollowLine();
+                break;
+            case ActionType::TURN_LEFT:
+                turnLeft();
+                break;
+            case ActionType::TURN_RIGHT:
+                turnRight();
+                break;
+            case ActionType::PICKUP:
+                turnRight();
+                break;
+            case ActionType::BLUE_PLACE:
+                /* code */
+                break;
+            case ActionType::RED_PLACE:
+                /* code */
+                break;  
+            case ActionType::TURN_ONE_EIGHTY:
+                turnOneEighty();
+                break;   
+
+            default:
+                break;
+            }
         }
 };
 

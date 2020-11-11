@@ -16,8 +16,7 @@ Adafruit_DCMotor *myMotorRight = AFMS.getMotor(2);
 
 class Robot{
     public:
-
-
+    
         float orientation; //The orientation NESW of the robot - 0,N 90,E 180,S 360,W  
 
         int frontLeftVal = 0; //sensor values

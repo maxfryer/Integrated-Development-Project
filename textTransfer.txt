@@ -16,7 +16,11 @@ Adafruit_DCMotor *myMotor2 = AFMS.getMotor(2);
 
 class Robot{
     public:
-
+        Robot(float a, float b, float c){
+            PROPORTIONAL_GAIN = a;
+            INTEGRAL_GAIN = b;
+            DERIVATIVE_GAIN = c;
+        }
 
         float orientation; //The orientation NESW of the robot - 0,N 90,E 180,S 360,W  
 
@@ -24,6 +28,11 @@ class Robot{
         int frontRightVal = 0;  
         int farRightVal = 0;  
         int backMiddleVal = 0;  
+
+        float PROPORTIONAL_GAIN;
+        float INTEGRAL_GAIN;
+        float DERIVATIVE_GAIN;
+
 
         float motorSpeed = 200; //EDIT THIS 
         float motorSpeedLeft;
@@ -43,7 +52,8 @@ class Robot{
         ActionType Action;
 
 
-        void PIDfollowLine(int PROPORTIONAL_GAIN, int INTEGRAL_GAIN, int DERIVATIVE_GAIN){
+        void PIDfollowLine(){
+            static float speedDiff;
             static float lastOffset;
             static int lineOffsetSum;
 
@@ -58,31 +68,8 @@ class Robot{
 
             //THE CONTROLLER SECTION
             speedDifference = Proportional + Integral + Derivative;
-            motorSpeedLeft = motorSpeed-speedDifference;
-            motorSpeedRight = motorSpeed + speedDifference;
-            
-            myMotor1->setSpeed(motorSpeedLeft);
-            myMotor1->run(FORWARD);
-            myMotor2->setSpeed(motorSpeedRight);
-            myMotor2->run(FORWARD);
-        }
-
-        void binaryFollowLine(int threshold, int increaseRate){
-
-            if(frontLeftVal>100){
-                speedDifference += increaseRate;
-            }
-            if(frontRightVal>100){
-                speedDifference -= increaseRate;
-            }
-            else{
-                speedDifference = 0;
-            }
-
-
-            //THE CONTROLLER SECTION
-            motorSpeedLeft = motorSpeed-speedDifference;
-            motorSpeedRight = motorSpeed + speedDifference;
+            motorSpeedLeft = speedDifference + motorSpeed;
+            motorSpeedRight = speedDifference - motorSpeed;
             
             myMotor1->setSpeed(motorSpeedLeft);
             myMotor1->run(FORWARD);
@@ -162,7 +149,7 @@ void setup() {
     Serial.begin(9600); 
 }
 
-Robot Bot;
+Robot Bot(2,0.5,0.5);
 
 /*!
     @brief This is the main control loop for THE ENTIRE PROJECT
@@ -170,7 +157,6 @@ Robot Bot;
 void loop() {
 
     Bot.checkAllSensorValues();
-    //Bot.PIDfollowLine(2,0.5,0.5);
-    Bot.binaryFollowLine(100,20);
+    Bot.PIDfollowLine();
 
 }

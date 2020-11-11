@@ -10,8 +10,8 @@
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
-Adafruit_DCMotor *myMotor1 = AFMS.getMotor(1);
-Adafruit_DCMotor *myMotor2 = AFMS.getMotor(2);
+Adafruit_DCMotor *myMotorLeft = AFMS.getMotor(1);
+Adafruit_DCMotor *myMotorRight = AFMS.getMotor(2);
 
 
 class Robot{
@@ -25,10 +25,13 @@ class Robot{
         int farRightVal = 0;  
         int backMiddleVal = 0;  
 
-        float motorSpeed = 200; //EDIT THIS 
+        float motorSpeed = 100; //EDIT THIS 
         float motorSpeedLeft;
         float motorSpeedRight;
         float speedDifference = 0;
+
+        int motorDirectionLeft = FORWARD;
+        int motorDirectionRight = FORWARD;
 
         int frontLeft = A0;    // input pin for FRONT LEFT light sensor
         int frontRight = A1;    // input pin for light sensor
@@ -45,7 +48,7 @@ class Robot{
 
         void PIDfollowLine(int PROPORTIONAL_GAIN, int INTEGRAL_GAIN, int DERIVATIVE_GAIN){
             static float lastOffset;
-            static int lineOffsetSum;
+            static int lineOffsetSum = 0;
 
             int lineOffset = frontLeftVal-frontRightVal;
             lineOffsetSum = lineOffsetSum + lineOffset;
@@ -61,22 +64,25 @@ class Robot{
             motorSpeedLeft = motorSpeed-speedDifference;
             motorSpeedRight = motorSpeed + speedDifference;
             
-            myMotor1->setSpeed(motorSpeedLeft);
-            myMotor1->run(FORWARD);
-            myMotor2->setSpeed(motorSpeedRight);
-            myMotor2->run(FORWARD);
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(FORWARD);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(FORWARD);
         }
 
         void binaryFollowLine(int threshold, int increaseRate){
 
-            if(frontLeftVal>100){
+            if(frontLeftVal>threshold){
                 speedDifference += increaseRate;
             }
-            if(frontRightVal>100){
+            if(frontRightVal>threshold){
                 speedDifference -= increaseRate;
             }
             else{
                 speedDifference = 0;
+            }
+            if(abs(speedDifference)>motorSpeed){
+                speedDifference = motorSpeed;
             }
 
 
@@ -84,10 +90,10 @@ class Robot{
             motorSpeedLeft = motorSpeed-speedDifference;
             motorSpeedRight = motorSpeed + speedDifference;
             
-            myMotor1->setSpeed(motorSpeedLeft);
-            myMotor1->run(FORWARD);
-            myMotor2->setSpeed(motorSpeedRight);
-            myMotor2->run(FORWARD);
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(FORWARD);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(FORWARD);
         }
 
         float checkAllSensorValues(){
@@ -120,6 +126,32 @@ class Robot{
 
         void turnOneEighty(){
             //code here
+        }
+
+        void turnInCircle(){
+            //THE CONTROLLER SECTION
+            motorSpeedLeft = motorSpeed;
+            motorSpeedRight =  motorSpeed;
+
+            motorDirectionLeft = FORWARD;
+            motorDirectionRight = BACKWARD;
+            
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+        }
+
+        void moveForward(){
+
+            //THE CONTROLLER SECTION
+            motorSpeedLeft = motorSpeed;
+            motorSpeedRight = motorSpeed;
+
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(FORWARD);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(FORWARD);
         }
 
         void runCurrentNeededAction(){
@@ -171,6 +203,7 @@ void loop() {
 
     Bot.checkAllSensorValues();
     //Bot.PIDfollowLine(2,0.5,0.5);
-    Bot.binaryFollowLine(100,20);
-
+    //Bot.binaryFollowLine(100,20);
+    //Bot.turnInCircle();
+    Bot.moveForward();
 }

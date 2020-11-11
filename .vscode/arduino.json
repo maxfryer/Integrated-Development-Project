@@ -1,3 +1,5 @@
 {
-    "board": "arduino:avr:uno"
+    "board": "arduino:avr:uno",
+    "sketch": "read_data_pinA0.ino",
+    "port": "COM4"
 }

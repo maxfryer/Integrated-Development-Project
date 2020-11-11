@@ -13,35 +13,40 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *myMotor1 = AFMS.getMotor(1);
 Adafruit_DCMotor *myMotor2 = AFMS.getMotor(2);
 
-float motorSpeed = 200;
 
 class Robot{
     public:
         Robot(float a, float b, float c){
-            CONTROLLER_GAIN = a;
+            PROPORTIONAL_GAIN = a;
             INTEGRAL_GAIN = b;
             DERIVATIVE_GAIN = c;
         }
 
         float orientation; //The orientation NESW of the robot - 0,N 90,E 180,S 360,W  
 
-        int frontLeftVal = 0;  // variable for light sensor 1
-        int frontRightVal = 0;  // variable for light sensor 2
-        int farRightVal = 0;  // variable for light sensor 3
-        int backMiddleVal = 0;  // variable for light sensor 4
+        int frontLeftVal = 0; //sensor values
+        int frontRightVal = 0;  
+        int farRightVal = 0;  
+        int backMiddleVal = 0;  
 
-        float CONTROLLER_GAIN;
+        float PROPORTIONAL_GAIN;
         float INTEGRAL_GAIN;
         float DERIVATIVE_GAIN;
 
-        float motorSpeedLeft = 200;
-        float motorSpeedRight = 200;
+
+        float motorSpeed = 200; //EDIT THIS 
+        float motorSpeedLeft;
+        float motorSpeedRight;
         float speedDifference = 0;
 
         int frontLeft = A0;    // input pin for FRONT LEFT light sensor
         int frontRight = A1;    // input pin for light sensor
         int offAxisRight = A2;    // input pin for light sensor
         int backMiddle = A3;    // input pin for light sensor
+
+        int FAR_RIGHT_THRESHOLD = 100;
+
+
 
         enum class ActionType{LINE,TURN_LEFT,TURN_RIGHT,TURN_ONE_EIGHTY,PICKUP,BLUE_PLACE,RED_PLACE};  //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
         ActionType Action;
@@ -50,21 +55,21 @@ class Robot{
         void PIDfollowLine(){
             static float speedDiff;
             static float lastOffset;
-            static float lineOffsetSum;
+            static int lineOffsetSum;
 
             int lineOffset = frontLeftVal-frontRightVal;
             lineOffsetSum = lineOffsetSum + lineOffset;
 
-            int Integral = INTEGRAL_GAIN * lineOffsetSum;
-            int Derivative = DERIVATIVE_GAIN * (lineOffset-lastOffset);
-            int Proportional = CONTROLLER_GAIN * (lineOffset);
+            float Integral = INTEGRAL_GAIN * lineOffsetSum;
+            float Derivative = DERIVATIVE_GAIN * (lineOffset-lastOffset);
+            float Proportional = PROPORTIONAL_GAIN * (lineOffset);
 
             lastOffset = lineOffset;
 
             //THE CONTROLLER SECTION
             speedDifference = Proportional + Integral + Derivative;
-            motorSpeedLeft = speedDifference+motorSpeed;
-            motorSpeedRight = speedDifference-motorSpeed;
+            motorSpeedLeft = speedDifference + motorSpeed;
+            motorSpeedRight = speedDifference - motorSpeed;
             
             myMotor1->setSpeed(motorSpeedLeft);
             myMotor1->run(FORWARD);
@@ -79,6 +84,13 @@ class Robot{
             frontRightVal = analogRead(frontRight);
             farRightVal = analogRead(offAxisRight);
             backMiddleVal = analogRead(backMiddle);
+
+            Serial.println("front left val:  " + frontLeftVal);
+            Serial.println("front right val:  " + frontRightVal);
+            Serial.println("far right val:   " + farRightVal);
+            Serial.println("back middle Val: " + backMiddleVal);
+            Serial.println("                                     ");
+            Serial.println("                                     ");
         }
 
         void decideActionToPerform(){
@@ -86,15 +98,15 @@ class Robot{
         }
 
         void turnLeft(){
-
+            //code here
         }
 
         void turnRight(){
-
+            //code here
         }
 
         void turnOneEighty(){
-
+            //code here
         }
 
         void runCurrentNeededAction(){

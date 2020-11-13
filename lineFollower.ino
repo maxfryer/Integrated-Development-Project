@@ -24,20 +24,27 @@ class Robot{
         int farRightVal = 0;  
         int backMiddleVal = 0;  
 
-        float motorSpeed = 100; //EDIT THIS 
+        int distanceFrontVal = 0;
+
+        float motorSpeed = 70; //EDIT THIS 
         float motorSpeedLeft;
         float motorSpeedRight;
         float speedDifference = 0;
 
-        int motorDirectionLeft = FORWARD;
-        int motorDirectionRight = FORWARD;
+        int motorDirectionLeft = BACKWARD;
+        int motorDirectionRight = BACKWARD;
 
         int frontLeft = A0;    // input pin for FRONT LEFT light sensor
         int frontRight = A1;    // input pin for light sensor
         int offAxisRight = A2;    // input pin for light sensor
         int backMiddle = A3;    // input pin for light sensor
 
+        int distanceSensor = A5;
+        
+
         int FAR_RIGHT_THRESHOLD = 100;
+
+        int startProgram = 1;
 
 
 
@@ -64,35 +71,43 @@ class Robot{
             motorSpeedRight = motorSpeed + speedDifference;
             
             myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(FORWARD);
+            myMotorLeft->run(motorDirectionLeft);
             myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(FORWARD);
+            myMotorRight->run(motorDirectionRight);
         }
 
         void binaryFollowLine(int threshold, int increaseRate){
-
+            static bool leftTurn = true;
             if(frontLeftVal>threshold){
-                speedDifference += increaseRate;
+                speedDifference = increaseRate;
+                leftTurn = true;
             }
             if(frontRightVal>threshold){
-                speedDifference -= increaseRate;
+                speedDifference = -1 * increaseRate;
+                leftTurn = false;
             }
+            /*
             else{
-                speedDifference = 0;
+              if(leftTurn = true && speedDifference > increaseRate){
+                speedDifference -= increaseRate;
+              }
+              else if(speedDifference < (-1 * increaseRate)) {
+                speedDifference += increaseRate;
+              }
             }
             if(abs(speedDifference)>motorSpeed){
                 speedDifference = motorSpeed;
             }
-
+            */
 
             //THE CONTROLLER SECTION
             motorSpeedLeft = motorSpeed-speedDifference;
             motorSpeedRight = motorSpeed + speedDifference;
             
             myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(FORWARD);
+            myMotorLeft->run(motorDirectionLeft);
             myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(FORWARD);
+            myMotorRight->run(motorDirectionRight);
         }
 
         float checkAllSensorValues(){
@@ -103,10 +118,19 @@ class Robot{
             farRightVal = analogRead(offAxisRight);
             backMiddleVal = analogRead(backMiddle);
 
-            Serial.println("front left val:  " + frontLeftVal);
-            Serial.println("front right val:  " + frontRightVal);
-            Serial.println("far right val:   " + farRightVal);
-            Serial.println("back middle Val: " + backMiddleVal);
+            distanceFrontVal = analogRead(distanceSensor);
+
+            Serial.print("front left val:  ");
+            Serial.println(frontLeftVal);
+            Serial.print("front right val: ");
+            Serial.println(frontRightVal);
+            
+            Serial.print("far right val:" );
+            Serial.println(farRightVal);            
+            Serial.print("back middle Val: ");
+            Serial.println(backMiddleVal);
+            Serial.print("distanceSensor: ");
+            Serial.println(distanceFrontVal);
             Serial.println("                                     ");
             Serial.println("                                     ");
         }
@@ -142,15 +166,15 @@ class Robot{
         }
 
         void moveForward(){
-
+    
             //THE CONTROLLER SECTION
             motorSpeedLeft = motorSpeed;
             motorSpeedRight = motorSpeed;
 
             myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(FORWARD);
+            myMotorLeft->run(motorDirectionLeft);
             myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(FORWARD);
+            myMotorRight->run(motorDirectionRight);
         }
 
         void runCurrentNeededAction(){
@@ -181,7 +205,21 @@ class Robot{
             default:
                 break;
             }
+          
         }
+        /*
+        void OnOffSwitch(){
+            int isOn = digitalRead(2);
+            static int lock = 0;
+            if(isOn == 1){
+              startProgram = startProgram * -1;
+              while (isOn == 1){
+                delay(1);
+             }
+            }
+    
+           }
+        */
 };
 
 /*!
@@ -191,6 +229,10 @@ void setup() {
 
     AFMS.begin();
     Serial.begin(9600); 
+
+    pinMode(2, INPUT);
+
+    pinMode(A5, INPUT);
 }
 
 Robot Bot;
@@ -199,10 +241,11 @@ Robot Bot;
     @brief This is the main control loop for THE ENTIRE PROJECT
 */
 void loop() {
-
+    //Bot.OnOffSwitch();
     Bot.checkAllSensorValues();
-    //Bot.PIDfollowLine(2,0.5,0.5);
-    //Bot.binaryFollowLine(100,20);
+    delay(1000);
+    //Bot.PIDfollowLine(1,0.0,0.0);
+    //Bot.binaryFollowLine(100,50);
     //Bot.turnInCircle();
-    Bot.moveForward();
+    // Bot.moveForward();
 }

@@ -22,6 +22,7 @@ class Robot{
         int frontLeftVal = 0; //sensor values
         int frontRightVal = 0;  
         int farRightVal = 0;  
+        int farLeftVal = 0;
         int backMiddleVal = 0;  
 
         int distanceFrontVal = 0;
@@ -35,9 +36,11 @@ class Robot{
         int motorDirectionRight = BACKWARD;
 
         int frontLeft = A0;    // input pin for FRONT LEFT light sensor
-        int frontRight = A1;    // input pin for light sensor
-        int offAxisRight = A2;    // input pin for light sensor
-        int backMiddle = A3;    // input pin for light sensor
+        int frontRight = A1;  
+        int offAxisRight = A2;    
+        int offAxisLeft = A3;
+        int backMiddle = A4;    
+        
 
         int distanceSensor = A5;
         
@@ -137,6 +140,7 @@ class Robot{
 
         void decideActionToPerform(){
             //this takes the sensor values and works out which stage of the algorithm the robot needs to be in at any particular point
+            if(farRightVal == 0 and farL)
 
             
         }

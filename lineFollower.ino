@@ -78,19 +78,6 @@ class Robot {
             speedDifference = -1 * increaseRate;
             leftTurn = false;
         }
-        /*
-        else{
-          if(leftTurn = true && speedDifference > increaseRate){
-            speedDifference -= increaseRate;
-          }
-          else if(speedDifference < (-1 * increaseRate)) {
-            speedDifference += increaseRate;
-          }
-        }
-        if(abs(speedDifference)>motorSpeed){
-            speedDifference = motorSpeed;
-        }
-        */
 
         //THE CONTROLLER SECTION
         motorSpeedLeft = motorSpeed - speedDifference;

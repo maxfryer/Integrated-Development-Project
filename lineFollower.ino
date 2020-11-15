@@ -6,188 +6,177 @@
 //(proportional, integral, derivative)
 
 #include <Wire.h>
+
 #include <Adafruit_MotorShield.h>
+
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
-Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
-Adafruit_DCMotor *myMotorLeft = AFMS.getMotor(1);
-Adafruit_DCMotor *myMotorRight = AFMS.getMotor(2);
+Adafruit_MotorShield AFMS = Adafruit_MotorShield();
+Adafruit_DCMotor * myMotorLeft = AFMS.getMotor(1);
+Adafruit_DCMotor * myMotorRight = AFMS.getMotor(2);
 
 
-class Robot{
+class Robot {
     public:
-    
+
         float orientation; //The orientation NESW of the robot - 0,N 90,E 180,S 360,W  
 
-        int frontLeftVal = 0; //sensor values
-        int frontRightVal = 0;  
-        int farRightVal = 0;  
-        int farLeftVal = 0;
-        int backMiddleVal = 0;  
+    /* Initialise sensor values*/
 
-        int distanceFrontVal = 0;
+    int frontLeftVal = 0; //sensor values
+    int frontRightVal = 0;
+    int farRightVal = 0;
+    int farLeftVal = 0;
+    int backMiddleVal = 0;
 
-        float motorSpeed = 70; //EDIT THIS 
-        float motorSpeedLeft;
-        float motorSpeedRight;
-        float speedDifference = 0;
+    int distanceFrontVal = 0;
 
-        int motorDirectionLeft = BACKWARD;
-        int motorDirectionRight = BACKWARD;
+    /* end value initialisation */
 
-        int frontLeft = A0;    // input pin for FRONT LEFT light sensor
-        int frontRight = A1;  
-        int offAxisRight = A2;    
-        int offAxisLeft = A3;
-        int backMiddle = A4;    
-        
+    /* MOTORS */
+    float motorSpeed = 70; //EDIT THIS 
+    float motorSpeedLeft;
+    float motorSpeedRight;
+    float speedDifference = 0;
 
-        int distanceSensor = A5;
-        
+    int motorDirectionLeft = BACKWARD;
+    int motorDirectionRight = BACKWARD;
 
-        int FAR_RIGHT_THRESHOLD = 100;
+    /* END MOTORS*/
 
-        int startProgram = 1;
+    int lineSensorThreshold = 100;
 
+    /*ALL PINS */
+    int frontLeft = A0; // input pin for FRONT LEFT light sensor
+    int frontRight = A1;
+    int offAxisRight = A2;
+    int offAxisLeft = A3;
+    int backMiddle = A4;
 
+    int startButtonPin = 2;
 
-        enum class ActionType{LINE,TURN_LEFT,TURN_RIGHT,TURN_ONE_EIGHTY,PICKUP,BLUE_PLACE,RED_PLACE};  //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
-        ActionType Action;
+    int distanceSensor = A5;
 
+    /*END PINS*/
 
-        void PIDfollowLine(int PROPORTIONAL_GAIN, int INTEGRAL_GAIN, int DERIVATIVE_GAIN){
-            static float lastOffset;
-            static int lineOffsetSum = 0;
+    int FAR_RIGHT_THRESHOLD = 100;
 
-            int lineOffset = frontLeftVal-frontRightVal;
-            lineOffsetSum = lineOffsetSum + lineOffset;
+    bool startProgram = true;
 
-            float Integral = INTEGRAL_GAIN * lineOffsetSum;
-            float Derivative = DERIVATIVE_GAIN * (lineOffset-lastOffset);
-            float Proportional = PROPORTIONAL_GAIN * (lineOffset);
+    enum class ActionType {
+        LINE, TURN_LEFT, TURN_RIGHT, TURN_ONE_EIGHTY, PICKUP, BLUE_PLACE, RED_PLACE
+    }; //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
+    ActionType Action;
 
-            lastOffset = lineOffset;
-
-            //THE CONTROLLER SECTION
-            speedDifference = Proportional + Integral + Derivative;
-            motorSpeedLeft = motorSpeed-speedDifference;
-            motorSpeedRight = motorSpeed + speedDifference;
-            
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
+    void binaryFollowLine( int increaseRate) {
+        static bool leftTurn = true;
+        if (frontLeftVal > lineSensorThreshold) {
+            speedDifference = increaseRate;
+            leftTurn = true;
         }
-
-        void binaryFollowLine(int threshold, int increaseRate){
-            static bool leftTurn = true;
-            if(frontLeftVal>threshold){
-                speedDifference = increaseRate;
-                leftTurn = true;
-            }
-            if(frontRightVal>threshold){
-                speedDifference = -1 * increaseRate;
-                leftTurn = false;
-            }
-            /*
-            else{
-              if(leftTurn = true && speedDifference > increaseRate){
-                speedDifference -= increaseRate;
-              }
-              else if(speedDifference < (-1 * increaseRate)) {
-                speedDifference += increaseRate;
-              }
-            }
-            if(abs(speedDifference)>motorSpeed){
-                speedDifference = motorSpeed;
-            }
-            */
-
-            //THE CONTROLLER SECTION
-            motorSpeedLeft = motorSpeed-speedDifference;
-            motorSpeedRight = motorSpeed + speedDifference;
-            
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
+        if (frontRightVal > lineSensorThreshold) {
+            speedDifference = -1 * increaseRate;
+            leftTurn = false;
         }
-
-        float checkAllSensorValues(){
-            
-            //Check ALL the sensor values
-            frontLeftVal = analogRead(frontLeft);
-            frontRightVal = analogRead(frontRight);
-            farRightVal = analogRead(offAxisRight);
-            backMiddleVal = analogRead(backMiddle);
-
-            distanceFrontVal = analogRead(distanceSensor);
-
-            Serial.print("front left val:  ");
-            Serial.println(frontLeftVal);
-            Serial.print("front right val: ");
-            Serial.println(frontRightVal);
-            
-            Serial.print("far right val:" );
-            Serial.println(farRightVal);            
-            Serial.print("back middle Val: ");
-            Serial.println(backMiddleVal);
-            Serial.print("distanceSensor: ");
-            Serial.println(distanceFrontVal);
-            Serial.println("                                     ");
-            Serial.println("                                     ");
+        /*
+        else{
+          if(leftTurn = true && speedDifference > increaseRate){
+            speedDifference -= increaseRate;
+          }
+          else if(speedDifference < (-1 * increaseRate)) {
+            speedDifference += increaseRate;
+          }
         }
-
-        void decideActionToPerform(){
-            //this takes the sensor values and works out which stage of the algorithm the robot needs to be in at any particular point
-            if(farRightVal == 0 and farL)
-
-            
+        if(abs(speedDifference)>motorSpeed){
+            speedDifference = motorSpeed;
         }
+        */
 
-        void turnLeft(){
-            //code here
-        }
+        //THE CONTROLLER SECTION
+        motorSpeedLeft = motorSpeed - speedDifference;
+        motorSpeedRight = motorSpeed + speedDifference;
 
-        void turnRight(){
-            //code here
-        }
+        myMotorLeft->setSpeed(motorSpeedLeft);
+        myMotorLeft->run(motorDirectionLeft);
+        myMotorRight->setSpeed(motorSpeedRight);
+        myMotorRight->run(motorDirectionRight);
+    }
 
-        void turnOneEighty(){
-            //code here
-        }
+    float checkAllSensorValues() {
 
-        void turnInCircle(){
-            //THE CONTROLLER SECTION
-            motorSpeedLeft = motorSpeed;
-            motorSpeedRight =  motorSpeed;
+        //Check ALL the sensor values
+        frontLeftVal = analogRead(frontLeft);
+        frontRightVal = analogRead(frontRight);
+        farRightVal = analogRead(offAxisRight);
+        backMiddleVal = analogRead(backMiddle);
 
-            motorDirectionLeft = FORWARD;
-            motorDirectionRight = BACKWARD;
-            
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
-        }
+        distanceFrontVal = analogRead(distanceSensor);
 
-        void moveForward(){
-    
-            //THE CONTROLLER SECTION
-            motorSpeedLeft = motorSpeed;
-            motorSpeedRight = motorSpeed;
+        Serial.print("front left val:  ");
+        Serial.println(frontLeftVal);
+        Serial.print("front right val: ");
+        Serial.println(frontRightVal);
 
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
-        }
+        Serial.print("far right val:");
+        Serial.println(farRightVal);
+        Serial.print("back middle Val: ");
+        Serial.println(backMiddleVal);
+        Serial.print("distanceSensor: ");
+        Serial.println(distanceFrontVal);
+        Serial.println("                                     ");
+        Serial.println("                                     ");
+    }
 
-        void runCurrentNeededAction(){
-            switch (Action)
-            {
+    void decideActionToPerform() {
+        //this takes the sensor values and works out which stage of the algorithm the robot needs to be in at any particular point
+
+        //line follow until first junction
+        //turn left 
+
+    }
+
+    void turnLeft() {
+        //code here
+    }
+
+    void turnRight() {
+        //code here
+    }
+
+    void turnOneEighty() {
+        //code here
+    }
+
+    void turnInCircle() {
+        //THE CONTROLLER SECTION
+        motorSpeedLeft = motorSpeed;
+        motorSpeedRight = motorSpeed;
+
+        motorDirectionLeft = FORWARD;
+        motorDirectionRight = BACKWARD;
+
+        myMotorLeft->setSpeed(motorSpeedLeft);
+        myMotorLeft->run(motorDirectionLeft);
+        myMotorRight->setSpeed(motorSpeedRight);
+        myMotorRight->run(motorDirectionRight);
+    }
+
+    void moveForward() {
+
+        //THE CONTROLLER SECTION
+        motorSpeedLeft = motorSpeed;
+        motorSpeedRight = motorSpeed;
+
+        myMotorLeft->setSpeed(motorSpeedLeft);
+        myMotorLeft->run(motorDirectionLeft);
+        myMotorRight->setSpeed(motorSpeedRight);
+        myMotorRight->run(motorDirectionRight);
+    }
+
+    void runCurrentNeededAction() {
+        switch (Action) {
             case ActionType::LINE:
-                PIDfollowLine(2,0.5,0.5);
+                PIDfollowLine(2, 0.5, 0.5);
                 break;
             case ActionType::TURN_LEFT:
                 turnLeft();
@@ -203,55 +192,61 @@ class Robot{
                 break;
             case ActionType::RED_PLACE:
                 /* code */
-                break;  
+                break;
             case ActionType::TURN_ONE_EIGHTY:
                 turnOneEighty();
-                break;   
+                break;
 
             default:
                 break;
-            }
-          
         }
-        /*
-        void OnOffSwitch(){
-            int isOn = digitalRead(2);
-            static int lock = 0;
-            if(isOn == 1){
-              startProgram = startProgram * -1;
-              while (isOn == 1){
-                delay(1);
-             }
+
+    }
+
+    void OnOffSwitch() {
+        //sets start program to true at the push of the button
+        int buttonState = digitalRead(2);
+
+        if (buttonState == 1) {
+            startProgram = startProgram == true ? false : true;
+            while (buttonState == 1) {
+                int buttonState = digitalRead(2);
             }
-    
-           }
-        */
+        }
+    }
+
 };
 
 /*!
     @brief Initialise the pins for the arduino, and begin serial communications
 */
+
+Robot Bot;
+
+
 void setup() {
 
     AFMS.begin();
-    Serial.begin(9600); 
+    Serial.begin(9600);
 
-    pinMode(2, INPUT);
+    pinMode(Bot.startButtonPin, INPUT);
 
-    pinMode(A5, INPUT);
 }
 
-Robot Bot;
+
 
 /*!
     @brief This is the main control loop for THE ENTIRE PROJECT
 */
 void loop() {
-    //Bot.OnOffSwitch();
+    Bot.OnOffSwitch();
     Bot.checkAllSensorValues();
-    //delay(1000);
-    //Bot.PIDfollowLine(1,0.0,0.0);
-    //Bot.binaryFollowLine(100,50);
-    //Bot.turnInCircle();
-    // Bot.moveForward();
+    if(Bot.startProgram == true){
+        //delay(1000);
+        //Bot.PIDfollowLine(1,0.0,0.0);
+        //Bot.binaryFollowLine(50);
+        //Bot.turnInCircle();
+        // Bot.moveForward();
+    }
+
 }

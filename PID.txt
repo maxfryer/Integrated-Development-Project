@@ -1,0 +1,23 @@
+void PIDfollowLine(int PROPORTIONAL_GAIN, int INTEGRAL_GAIN, int DERIVATIVE_GAIN){
+            static float lastOffset;
+            static int lineOffsetSum = 0;
+
+            int lineOffset = frontLeftVal-frontRightVal;
+            lineOffsetSum = lineOffsetSum + lineOffset;
+
+            float Integral = INTEGRAL_GAIN * lineOffsetSum;
+            float Derivative = DERIVATIVE_GAIN * (lineOffset-lastOffset);
+            float Proportional = PROPORTIONAL_GAIN * (lineOffset);
+
+            lastOffset = lineOffset;
+
+            //THE CONTROLLER SECTION
+            speedDifference = Proportional + Integral + Derivative;
+            motorSpeedLeft = motorSpeed-speedDifference;
+            motorSpeedRight = motorSpeed + speedDifference;
+            
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+        }

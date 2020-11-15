@@ -137,6 +137,8 @@ class Robot{
 
         void decideActionToPerform(){
             //this takes the sensor values and works out which stage of the algorithm the robot needs to be in at any particular point
+
+            
         }
 
         void turnLeft(){
@@ -243,7 +245,7 @@ Robot Bot;
 void loop() {
     //Bot.OnOffSwitch();
     Bot.checkAllSensorValues();
-    delay(1000);
+    //delay(1000);
     //Bot.PIDfollowLine(1,0.0,0.0);
     //Bot.binaryFollowLine(100,50);
     //Bot.turnInCircle();

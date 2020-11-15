@@ -67,37 +67,47 @@ class Robot {
         }; //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
         ActionType Action;
 
-        enum class positionList {
+        enum class PositionList {
             START,FIRST_JUNCTION,MAIN_T_JUNCTION,BLUE_T_JUNCTION,PILL
         };
-        positionList position = positionList::START;
+        PositionList position = PositionList::START;
+
+        enum class TaskList {
+            FIND_BOX,
+            PLACE_FIRST_RED_BOX,
+            PLACE_FIRST_BLUE_BOX,
+            PLACE_SECOND_RED_BOX,
+            PLACE_SECOND_BLUE_BOX,
+            RETURN_HOME
+        };
+        TaskList currentTask = TaskList::FIND_BOX;
 
         int redBoxesCollected = 0;
         int blueBoxesCollected = 0;
 
         void checkForNextLocation(){
             switch (position) {
-                case positionList::START:
+                case PositionList::START:
                     if(farLeftVal > lineSensorThreshold){
-                        position = positionList::FIRST_JUNCTION;
+                        position = PositionList::FIRST_JUNCTION;
                     }
 
                     break;
-                case positionList::FIRST_JUNCTION:
+                case PositionList::FIRST_JUNCTION:
                     if(farLeftVal > lineSensorThreshold && farRightVal > lineSensorThreshold){
-                        position = positionList::MAIN_T_JUNCTION;
+                        position = PositionList::MAIN_T_JUNCTION;
                     }
                     //check for the sensor positions that would give rise to the next state from here
                     break;
-                case positionList::MAIN_T_JUNCTION:
+                case PositionList::MAIN_T_JUNCTION:
                     //check for the sensor positions that would give rise to the next state from here
                     if(farLeftVal < lineSensorThreshold && farRightVal < lineSensorThreshold){
-                        position = positionList:: PILL;
+                        position = PositionList:: PILL;
                     }
                     break;
-                case positionList::PILL:
+                case PositionList::PILL:
                     break;
-                case positionList::BLUE_T_JUNCTION:
+                case PositionList::BLUE_T_JUNCTION:
                     //check for the sensor positions that would give rise to the next state from here
                     break;
                 default:
@@ -151,14 +161,26 @@ class Robot {
         }
 
         void decideActionToPerform() {
-            //this takes the sensor values and works out which stage of the algorithm the robot needs to be in at any particular point
-            if(position == positionList::PILL){
-                if(distanceSensor < distanceSensorThreshold){
-                    //pick up box and then return back home
-                }
+            switch (currentTask) {
+                case TaskList::FIND_BOX:
+                    /* code */
+                    break;
+                case TaskList::PLACE_FIRST_BLUE_BOX:
+                    /* code */
+                    break;
+                case TaskList::PLACE_FIRST_RED_BOX:
+                /* code */
+                    break;
+                case TaskList::PLACE_SECOND_BLUE_BOX:
+                    /* code */
+                    break;
+                case TaskList::PLACE_SECOND_RED_BOX:
+                    /* code */
+                    break;
+                case TaskList::RETURN_HOME:
+                    /* code */
+                    break;
             }
-
-
         }
 
         void turnLeft() {
@@ -221,9 +243,6 @@ class Robot {
                     break;
                 case ActionType::TURN_ONE_EIGHTY:
                     turnOneEighty();
-                    break;
-
-                default:
                     break;
             }
 

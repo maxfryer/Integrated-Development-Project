@@ -17,17 +17,6 @@ Adafruit_DCMotor * myMotorRight = AFMS.getMotor(2);
 
 
 
-class MazeStructure {
-    public:
-        
-};
-
-
-
-
-
-
-
 
 class Robot {
     public:
@@ -45,7 +34,7 @@ class Robot {
         /* end value initialisation */
 
         /* MOTORS */
-        float motorSpeed = 70; //EDIT THIS 
+        float motorSpeed = 120; //EDIT THIS 
         float motorSpeedLeft;
         float motorSpeedRight;
         float speedDifference = 0;
@@ -56,6 +45,7 @@ class Robot {
         /* END MOTORS*/
 
         int lineSensorThreshold = 100;
+        int distanceSensorThreshold = 100;
 
         /*ALL PINS */
         int frontLeft = A0; // input pin for FRONT LEFT light sensor
@@ -70,8 +60,6 @@ class Robot {
 
         /*END PINS*/
 
-        int FAR_RIGHT_THRESHOLD = 100;
-
         bool startProgram = true;
 
         enum class ActionType {
@@ -80,26 +68,34 @@ class Robot {
         ActionType Action;
 
         enum class positionList {
-            START,FIRST_CURVE,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,BLUE_T_JUNCTION 
+            START,FIRST_JUNCTION,MAIN_T_JUNCTION,BLUE_T_JUNCTION,PILL
         };
-        positionList position;
+        positionList position = positionList::START;
+
+        int redBoxesCollected = 0;
+        int blueBoxesCollected = 0;
 
         void checkForNextLocation(){
             switch (position) {
                 case positionList::START:
-                    //check for the sensor positions that would give rise to the next state from here
-                    break;
-                case positionList::FIRST_CURVE:
-                    //check for the sensor positions that would give rise to the next state from here
+                    if(farLeftVal > lineSensorThreshold){
+                        position = positionList::FIRST_JUNCTION;
+                    }
+
                     break;
                 case positionList::FIRST_JUNCTION:
-                    //check for the sensor positions that would give rise to the next state from here
-                    break;
-                case positionList::TUNNEL:
+                    if(farLeftVal > lineSensorThreshold && farRightVal > lineSensorThreshold){
+                        position = positionList::MAIN_T_JUNCTION;
+                    }
                     //check for the sensor positions that would give rise to the next state from here
                     break;
                 case positionList::MAIN_T_JUNCTION:
                     //check for the sensor positions that would give rise to the next state from here
+                    if(farLeftVal < lineSensorThreshold && farRightVal < lineSensorThreshold){
+                        position = positionList:: PILL;
+                    }
+                    break;
+                case positionList::PILL:
                     break;
                 case positionList::BLUE_T_JUNCTION:
                     //check for the sensor positions that would give rise to the next state from here
@@ -156,21 +152,12 @@ class Robot {
 
         void decideActionToPerform() {
             //this takes the sensor values and works out which stage of the algorithm the robot needs to be in at any particular point
-            if(farLeftVal < lineSensorThreshold && farRightVal < lineSensorThreshold){
-                Action = ActionType::LINE;
-            }
-            else if (farLeftVal > lineSensorThreshold && farRightVal > lineSensorThreshold){
-                //record at T junction
-            }
-            else if(farLeftVal > lineSensorThreshold){
-                //record left turn here
-            }
-            else if(farRightVal > lineSensorThreshold){
-                //record right turn here
+            if(position == positionList::PILL){
+                if(distanceSensor < distanceSensorThreshold){
+                    //pick up box and then return back home
+                }
             }
 
-            //line follow until first junction
-            //turn left 
 
         }
 
@@ -254,10 +241,11 @@ class Robot {
             }
         }
 
+        
+
 };
 
 Robot Bot;
-
 
 void setup() {
 
@@ -265,6 +253,7 @@ void setup() {
     Serial.begin(9600);
 
     pinMode(Bot.startButtonPin, INPUT);
+    
 
 }
 

@@ -84,6 +84,7 @@ class Robot {
 
         int redBoxesCollected = 0;
         int blueBoxesCollected = 0;
+        int boxColour = 0;
 
         void checkForNextLocation(){
             switch (position) {
@@ -163,23 +164,55 @@ class Robot {
         void decideActionToPerform() {
             switch (currentTask) {
                 case TaskList::FIND_BOX:
-                    /* code */
+                    /*If at start, line follow to T-junction and then turn clockwise, travelling until a box is reached.
+                    If at blue location, then line follow until mini T junction reached. Then travel to T junction and turn clockwise until box reached.
+                    If at red location, then line follow until big T junction reached. Then turn clockwise and look for another box.
+                    
+                    
+                    Then pick up the box and determine its colour. If blue then run blue placer
+                    If red then run red placer. 
+                    
+                    */
                     break;
                 case TaskList::PLACE_FIRST_BLUE_BOX:
-                    /* code */
+                    /*
+                    If box is blue then 180 degree turn and line follow until t junction hit. 
+                    turn along path then turn right at first junction and line follow till blue T junction
+                    turn clockwise and deposit box at first box location.
+                    180 degree turn. Then run find box.
+                    
+                    */
                     break;
                 case TaskList::PLACE_FIRST_RED_BOX:
-                /* code */
+
                     break;
                 case TaskList::PLACE_SECOND_BLUE_BOX:
-                    /* code */
+                    /*If box is red then continue clockwise, avoiding boxes placed in the way, until a target location is reached. 
+                    Then deposit box, 180 degree turn and continue go back to find box.
+                    */
                     break;
                 case TaskList::PLACE_SECOND_RED_BOX:
-                    /* code */
+                    /*for second red box continue 
+                    */ 
                     break;
                 case TaskList::RETURN_HOME:
-                    /* code */
+                    /* Wherever you are, line follow whilst avoiding obstacles until one of the t-junctions is reached. 
+                    Then pick the right direction for going home, then line follow home.
+                    Continue straight after the last junction until home you have reached the home line, then travel forward until your distance sensors hit the back wall, and reverse a bit.
+                    Then stop!!
+                    */
                     break;
+            }
+        }
+
+
+        void pickUpBox(){
+            //pick up box here
+            if(boxColour == 'BLUE'){
+
+            }
+            else if (boxColour == 'RED'){
+
             }
         }
 

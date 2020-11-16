@@ -85,6 +85,9 @@ class Robot {
         int redBoxesCollected = 0;
         int blueBoxesCollected = 0;
 
+        //int timer = 0; 16/11 I THINK WE COULD ADD A REDUNDENCY TIMER TO PROCESSES SO THEY DONT CONTINUE
+        //FOREVER IN CASE OF SENSOR FAILURE
+
         void checkForNextLocation(){
             switch (position) {
                 case PositionList::START:
@@ -183,16 +186,96 @@ class Robot {
             }
         }
 
-        void turnLeft() {
-            //code here
+        void turnLeft() {            
+            //THE CONTROLLER SECTION
+            motorSpeedLeft = motorSpeed;
+            motorSpeedRight = motorSpeed;
+
+            motorDirectionLeft = BACKWARD;
+            motorDirectionRight = FORWARD;           
+
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+
+            while (ActionType::TURN_LEFT){
+                //WAIT FOR FAR LEFT TO TRIGGER
+                if (farLeftVal > lineSensorThreshold) {
+                motorSpeedLeft = 0;
+                motorSpeedRight = 0;
+                motorDirectionLeft = FORWARD;
+                motorDirectionRight = FORWARD;
+                break;
+                }
+            }
+
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+
         }
 
-        void turnRight() {
-            //code here
+        void turnRight() {            
+            //THE CONTROLLER SECTION
+            motorSpeedLeft = motorSpeed;
+            motorSpeedRight = motorSpeed;
+
+            motorDirectionLeft = FORWARD;
+            motorDirectionRight = BACKWARD;           
+
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+
+            while (ActionType::TURN_RIGHT){
+                //WAIT FOR FAR RIGHT TO TRIGGER
+                if (farRightVal > lineSensorThreshold) {
+                motorSpeedLeft = 0;
+                motorSpeedRight = 0;
+                motorDirectionLeft = FORWARD;
+                motorDirectionRight = FORWARD;
+                break;
+                }
+            }
+
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+
         }
 
         void turnOneEighty() {
-            //code here
+            //THE CONTROLLER SECTION
+            motorSpeedLeft = motorSpeed;
+            motorSpeedRight = motorSpeed;
+
+            motorDirectionLeft = FORWARD;
+            motorDirectionRight = BACKWARD;           
+
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+
+            while (ActionType::TURN_ONE_EIGHTY){
+                //WAIT FOR BACK TO TRIGGER BUT ONLY IF RIGHT IS NOT ALSO TRIGGERED
+                if (backMiddleVal > lineSensorThreshold && farRightVal < lineSensorThreshold) {
+                motorSpeedLeft = 0;
+                motorSpeedRight = 0;
+                motorDirectionLeft = FORWARD;
+                motorDirectionRight = FORWARD;
+                break;
+                }
+            }
+
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
         }
 
         void turnInCircle() {

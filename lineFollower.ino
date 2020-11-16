@@ -86,6 +86,9 @@ class Robot {
         int blueBoxesCollected = 0;
         int boxColour = 0;
 
+        //int timer = 0; 16/11 I THINK WE COULD ADD A REDUNDENCY TIMER TO PROCESSES SO THEY DONT CONTINUE
+        //FOREVER IN CASE OF SENSOR FAILURE
+
         void checkForNextLocation(){
             switch (position) {
                 case PositionList::START:
@@ -205,27 +208,96 @@ class Robot {
             }
         }
 
+        void turnLeft() {            
+            //THE CONTROLLER SECTION
+            motorSpeedLeft = motorSpeed;
+            motorSpeedRight = motorSpeed;
 
-        void pickUpBox(){
-            //pick up box here
-            if(boxColour == 'BLUE'){
+            motorDirectionLeft = BACKWARD;
+            motorDirectionRight = FORWARD;           
 
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+
+            while (Action == ActionType::TURN_LEFT){
+                //WAIT FOR FAR LEFT TO TRIGGER
+                if (farLeftVal > lineSensorThreshold) {
+                motorSpeedLeft = 0;
+                motorSpeedRight = 0;
+                motorDirectionLeft = FORWARD;
+                motorDirectionRight = FORWARD;
+                break;
+                }
             }
-            else if (boxColour == 'RED'){
 
-            }
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+
         }
 
-        void turnLeft() {
-            //code here
-        }
+        void turnRight() {            
+            //THE CONTROLLER SECTION
+            motorSpeedLeft = motorSpeed;
+            motorSpeedRight = motorSpeed;
 
-        void turnRight() {
-            //code here
+            motorDirectionLeft = FORWARD;
+            motorDirectionRight = BACKWARD;           
+
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+
+            while (Action == ActionType::TURN_RIGHT){
+                //WAIT FOR FAR RIGHT TO TRIGGER
+                if (farRightVal > lineSensorThreshold) {
+                motorSpeedLeft = 0;
+                motorSpeedRight = 0;
+                motorDirectionLeft = FORWARD;
+                motorDirectionRight = FORWARD;
+                break;
+                }
+            }
+
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+
         }
 
         void turnOneEighty() {
-            //code here
+            //THE CONTROLLER SECTION
+            motorSpeedLeft = motorSpeed;
+            motorSpeedRight = motorSpeed;
+
+            motorDirectionLeft = FORWARD;
+            motorDirectionRight = BACKWARD;           
+
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
+
+            while (Action == ActionType::TURN_ONE_EIGHTY){
+                //WAIT FOR BACK TO TRIGGER BUT ONLY IF RIGHT IS NOT ALSO TRIGGERED
+                if (backMiddleVal > lineSensorThreshold && farRightVal < lineSensorThreshold) {
+                motorSpeedLeft = 0;
+                motorSpeedRight = 0;
+                motorDirectionLeft = FORWARD;
+                motorDirectionRight = FORWARD;
+                break;
+                }
+            }
+
+            myMotorLeft->setSpeed(motorSpeedLeft);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorSpeedRight);
+            myMotorRight->run(motorDirectionRight);
         }
 
         void turnInCircle() {

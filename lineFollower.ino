@@ -39,8 +39,6 @@ class Robot {
         float motorSpeedRight;
         float speedDifference = 0;
 
-        int motorDirectionLeft = BACKWARD;
-        int motorDirectionRight = BACKWARD;
 
         /* END MOTORS*/
 
@@ -90,28 +88,43 @@ class Robot {
         //FOREVER IN CASE OF SENSOR FAILURE
 
         void checkForNextLocation(){
+            
+            static PositionList lastPosition = PositionList::START;
+            static char place[20];
+            
+
+            if(position != lastPosition){
+                Serial.println(place);
+            }
+            lastPosition = position;
+            
             switch (position) {
                 case PositionList::START:
+                    strcpy(place,"start");
                     if(farLeftVal > lineSensorThreshold){
                         position = PositionList::FIRST_JUNCTION;
                     }
 
                     break;
                 case PositionList::FIRST_JUNCTION:
+                    strcpy(place,"junction1");
                     if(farLeftVal > lineSensorThreshold && farRightVal > lineSensorThreshold){
                         position = PositionList::MAIN_T_JUNCTION;
                     }
                     //check for the sensor positions that would give rise to the next state from here
                     break;
                 case PositionList::MAIN_T_JUNCTION:
+                    strcpy(place,"mainJunc");
                     //check for the sensor positions that would give rise to the next state from here
                     if(farLeftVal < lineSensorThreshold && farRightVal < lineSensorThreshold){
                         position = PositionList:: PILL;
                     }
                     break;
                 case PositionList::PILL:
+                    strcpy(place,"pill");
                     break;
                 case PositionList::BLUE_T_JUNCTION:
+                    strcpy(place,"blueTJunc");
                     //check for the sensor positions that would give rise to the next state from here
                     break;
                 default:
@@ -133,10 +146,7 @@ class Robot {
             motorSpeedLeft = motorSpeed - speedDifference;
             motorSpeedRight = motorSpeed + speedDifference;
 
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
+            runMotors(motorSpeedLeft,motorSpeedRight);
         }
 
         float checkAllSensorValues() {
@@ -149,6 +159,7 @@ class Robot {
 
             distanceFrontVal = analogRead(distanceSensor);
 
+            /*
             Serial.print("front left val:  ");
             Serial.println(frontLeftVal);
             Serial.print("front right val: ");
@@ -162,11 +173,16 @@ class Robot {
             Serial.println(distanceFrontVal);
             Serial.println("                                     ");
             Serial.println("                                     ");
+            */
         }
 
         void decideActionToPerform() {
             switch (currentTask) {
                 case TaskList::FIND_BOX:
+                    Action = ActionType::LINE;
+                    if(position == PositionList::MAIN_T_JUNCTION){
+                        Action = ActionType::TURN_LEFT;
+                    }
                     /*If at start, line follow to T-junction and then turn clockwise, travelling until a box is reached.
                     If at blue location, then line follow until mini T junction reached. Then travel to T junction and turn clockwise until box reached.
                     If at red location, then line follow until big T junction reached. Then turn clockwise and look for another box.
@@ -210,123 +226,76 @@ class Robot {
 
         void turnLeft() {            
             //THE CONTROLLER SECTION
-            motorSpeedLeft = motorSpeed;
-            motorSpeedRight = motorSpeed;
 
-            motorDirectionLeft = BACKWARD;
-            motorDirectionRight = FORWARD;           
 
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
+            runMotors(motorSpeed,-1*motorSpeed);
 
             while (Action == ActionType::TURN_LEFT){
                 //WAIT FOR FAR LEFT TO TRIGGER
                 if (farLeftVal > lineSensorThreshold) {
                 motorSpeedLeft = 0;
                 motorSpeedRight = 0;
-                motorDirectionLeft = FORWARD;
-                motorDirectionRight = FORWARD;
+
                 break;
                 }
             }
+            runMotors(-1*motorSpeedLeft,-1*motorSpeedRight);
 
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
 
         }
 
         void turnRight() {            
             //THE CONTROLLER SECTION
-            motorSpeedLeft = motorSpeed;
-            motorSpeedRight = motorSpeed;
 
-            motorDirectionLeft = FORWARD;
-            motorDirectionRight = BACKWARD;           
 
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
+            runMotors(-1*motorSpeed,motorSpeed);
 
             while (Action == ActionType::TURN_RIGHT){
                 //WAIT FOR FAR RIGHT TO TRIGGER
                 if (farRightVal > lineSensorThreshold) {
                 motorSpeedLeft = 0;
                 motorSpeedRight = 0;
-                motorDirectionLeft = FORWARD;
-                motorDirectionRight = FORWARD;
+
                 break;
                 }
             }
 
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
+           runMotors(-1*motorSpeedLeft,-1*motorSpeedRight);
 
         }
 
         void turnOneEighty() {
             //THE CONTROLLER SECTION
-            motorSpeedLeft = motorSpeed;
-            motorSpeedRight = motorSpeed;
-
-            motorDirectionLeft = FORWARD;
-            motorDirectionRight = BACKWARD;           
-
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
+            runMotors(-1*motorSpeed,motorSpeed);
 
             while (Action == ActionType::TURN_ONE_EIGHTY){
                 //WAIT FOR BACK TO TRIGGER BUT ONLY IF RIGHT IS NOT ALSO TRIGGERED
                 if (backMiddleVal > lineSensorThreshold && farRightVal < lineSensorThreshold) {
                 motorSpeedLeft = 0;
                 motorSpeedRight = 0;
-                motorDirectionLeft = FORWARD;
-                motorDirectionRight = FORWARD;
+
                 break;
                 }
             }
 
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
+            runMotors(-1*motorSpeedLeft,-1*motorSpeedRight);
+
         }
 
         void turnInCircle() {
             //THE CONTROLLER SECTION
-            motorSpeedLeft = motorSpeed;
-            motorSpeedRight = motorSpeed;
-
-            motorDirectionLeft = FORWARD;
-            motorDirectionRight = BACKWARD;
-
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
+            runMotors(-1*motorSpeed,motorSpeed);
         }
 
         void moveForward() {
-
-            //THE CONTROLLER SECTION
-            motorSpeedLeft = motorSpeed;
-            motorSpeedRight = motorSpeed;
-
-            myMotorLeft->setSpeed(motorSpeedLeft);
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorSpeedRight);
-            myMotorRight->run(motorDirectionRight);
+            runMotors(motorSpeed,motorSpeed);
         }
 
         void runCurrentNeededAction() {
+
+            //testing 
+            Action = ActionType::TURN_LEFT;
+            //testing 
             switch (Action) {
                 case ActionType::LINE:
                     binaryFollowLine(50);
@@ -350,7 +319,6 @@ class Robot {
                     turnOneEighty();
                     break;
             }
-
         }
 
         void OnOffSwitch() {
@@ -359,13 +327,23 @@ class Robot {
 
             if (buttonState == 1) {
                 startProgram = startProgram == true ? false : true;
+                if (startProgram == true) Serial.println("starting");
+                if(startProgram == false) Serial.println("finishing");
                 while (buttonState == 1) {
                     int buttonState = digitalRead(2);
                 }
             }
         }
 
-        
+        void runMotors(int motorLeftVal,int motorRightVal){
+            int motorDirectionLeft = motorLeftVal > 0 ? BACKWARD : FORWARD;
+            int motorDirectionRight = motorRightVal > 0 ? BACKWARD : FORWARD;
+
+            myMotorLeft->setSpeed(motorLeftVal);
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(motorRightVal);
+            myMotorRight->run(motorDirectionRight);
+        }
 
 };
 
@@ -377,8 +355,6 @@ void setup() {
     Serial.begin(9600);
 
     pinMode(Bot.startButtonPin, INPUT);
-    
-
 }
 
 
@@ -387,13 +363,12 @@ void loop() {
     Bot.checkAllSensorValues();
     if(Bot.startProgram == true){
         //delay(1000);
-        //Bot.PIDfollowLine(1,0.0,0.0);
-        //Bot.binaryFollowLine(50);
+        Bot.binaryFollowLine(50);
         //Bot.turnInCircle();
         // Bot.moveForward();
         Bot.checkForNextLocation();
-        Bot.decideActionToPerform();
-        Bot.runCurrentNeededAction();
+        //Bot.decideActionToPerform();
+        //Bot.runCurrentNeededAction();
     }
 
 }

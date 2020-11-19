@@ -192,7 +192,18 @@ class Robot {
                         Action = ActionType::TURN_LEFT;
                     }
                     if(position == PositionList::PILL){
-                        Action = ActionType::LINE;
+                        static int numTargetLocationPassed = 0;
+                        if((farLeftVal == 1  || farRightVal == 0 ) && Action == ActionType::LINE ){
+                            /*if(boxTargetLocation < 2){}
+                                numTargetLocationPassed +=1;
+                                Serial.println("passed target location")
+                            } else {*/
+                                position == PositionList::MAIN_T_JUNCTION;
+                                Action = ActionType::TURN_LEFT;
+                            //}
+                            
+                            //congrats you've found a box, increment. If increment already equals 2 then you've hit the T junction again
+                        }
                     }
                     /*If at start, line follow to T-junction and then turn clockwise, travelling until a box is reached.
                     If at blue location, then line follow until mini T junction reached. Then travel to T junction and turn clockwise until box reached.
@@ -335,7 +346,15 @@ class Robot {
 
         void OnOffSwitch() {
             //sets start program to true at the push of the button
-            int buttonState = digitalRead(startButtonPin);
+            static bool lockSwitch = false;
+            if (digitalRead(startButtonPin)==1 && lockSwitch==false) {
+                startProgram = startProgram == true ? false: true;
+                lockSwitch = true;
+                Serial.println("changing state");
+            } else if (digitalRead(startButtonPin)==0 && lockSwitch == true) {
+                lockSwitch = false;
+            }
+            
             //Serial.println(buttonState);
             /*
             if (buttonState == 1) {
@@ -362,6 +381,8 @@ class Robot {
 
 };
 
+
+
 Robot Bot;
 
 void setup() {
@@ -377,9 +398,9 @@ void setup() {
 
 void loop() {
     Bot.OnOffSwitch();
-    Bot.checkAllSensorValues(false);
+    Bot.checkAllSensorValues(true);
     //delay(1000);
-    //if(Bot.startProgram == false){
+    //if(Bot.startProgram == true){
         //delay(1000);
         //Bot.binaryFollowLine(100);
         //Bot.turnInCircle();

@@ -192,9 +192,17 @@ class Robot {
                         Action = ActionType::TURN_LEFT;
                     }
                     if(position == PositionList::PILL){
-                        Action = ActionType::LINE;
-                        if(farLeftVal == 1  && farRightVal == 1 ){
+                        static int numTargetLocationPassed = 0;
+                        if((farLeftVal == 1  || farRightVal == 0 ) && Action == ActionType::LINE ){
+                            /*if(boxTargetLocation < 2){}
+                                numTargetLocationPassed +=1;
+                                Serial.println("passed target location")
+                            } else {*/
+                                position == PositionList::MAIN_T_JUNCTION;
+                                Action = ActionType::TURN_LEFT;
+                            //}
                             
+                            //congrats you've found a box, increment. If increment already equals 2 then you've hit the T junction again
                         }
                     }
                     /*If at start, line follow to T-junction and then turn clockwise, travelling until a box is reached.
@@ -338,11 +346,11 @@ class Robot {
 
         void OnOffSwitch() {
             //sets start program to true at the push of the button
-            static bool lockSwitch = false
-            if (digitalRead(startButtonPin)==1 && lockSwitch=false) {
+            static bool lockSwitch = false;
+            if (digitalRead(startButtonPin)==1 && lockSwitch==false) {
                 startProgram = startProgram == true ? false: true;
                 lockSwitch = true;
-            } else if (digitalRead(startButtonPin)==0 && lockSwitch=true) {
+            } else if (digitalRead(startButtonPin)==0 && lockSwitch ==true) {
                 lockSwitch = false;
             }
             

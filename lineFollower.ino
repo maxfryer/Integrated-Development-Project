@@ -106,18 +106,29 @@ class Robot {
             }
             lastPosition = position;
             
-            switch (position) {
+            
+            if(Action == ActionType::LINE){  // can only ake changes to postiion when on a line following path so as not tocaue problems with 180 tunrs etc
+                switch (position) {
                 case PositionList::START:
                     
-                    if((farLeftVal ==1) && (direction == Directions::TOWARDS_PILL)){
+                    if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
                         position = PositionList::FIRST_JUNCTION;
                         strcpy(place,"reached junction1");
                     }
 
                     break;
+                case PositionList::FIRST_JUNCTION:
+
+                    if((farLeftVal == 0) && (direction == Directions::TOWARDS_PILL)){
+                        position = PositionList::TUNNEL;
+                        strcpy(place,"on tunnel track towards pill");
+                    }
+
+                    break;
+
                 case PositionList::TUNNEL:
                     
-                    if((farLeftVal ==1  && farRightVal ==1) && (direction == Directions::TOWARDS_PILL) ){
+                    if((farLeftVal == 1  && farRightVal == 1) && (direction == Directions::TOWARDS_PILL) ){
                         position = PositionList::MAIN_T_JUNCTION;
                         strcpy(place,"reached mainJunc");
                     }
@@ -135,16 +146,28 @@ class Robot {
                     }
                     break;
                 case PositionList::PILL:
-                    strcpy(place,"pill");
                     break;
                 case PositionList::BLUE_T_JUNCTION:
-                    strcpy(place,"blueTJunc");
                     //check for the sensor positions that would give rise to the next state from here
+                    if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL)){
+                        position = PositionList::BLUE_BOX;
+                    }
+                    if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL)){
+                        position = PositionList::BLUE_TRACK;
+                    }
                     break;
-                case PositionList::FIRST_JUNCTION:
+
+                case PositionList::BLUE_TRACK:
+                    if((direction == Directions::AWAY_FROM_PILL )&&(farLeftVal == 1  && farRightVal == 1)){
+                        position = PositionList::BLUE_T_JUNCTION;
+                    }
+                    if((direction == Directions::TOWARDS_PILL) && (farRightVal == 1)){
+                        position = PositionList::FIRST_JUNCTION;
+                    }
                     break;
-                default:
+                case PositionList::BLUE_BOX:
                     break;
+                }
             }
         }
         void binaryFollowLine( int increaseRate) {

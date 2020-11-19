@@ -69,7 +69,7 @@ class Robot {
         ActionType Action;
 
         enum class PositionList {
-            START,TUNNEL,FIRST_JUNCTION,BLUE_TRACK,BLUE_BOX,MAIN_T_JUNCTION,BLUE_T_JUNCTION,PILL
+            START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL,BLUE_TRACK,BLUE_BOX,BLUE_T_JUNCTION
         };
         PositionList position = PositionList::START;
 
@@ -238,7 +238,6 @@ class Robot {
                                     currentTask = TaskList::PLACE_SECOND_BLUE_BOX;
                                 }
                             }
-
                         }
                     }
                     /*If at start, line follow to T-junction and then turn clockwise, travelling until a box is reached.

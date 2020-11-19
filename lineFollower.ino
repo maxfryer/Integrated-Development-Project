@@ -223,6 +223,7 @@ class Robot {
                     180 degree turn. Then run find box.
                     
                     */
+                    
                     break;
                 case TaskList::PLACE_FIRST_RED_BOX:
 
@@ -346,9 +347,15 @@ class Robot {
 
         void OnOffSwitch() {
             //sets start program to true at the push of the button
+<<<<<<< HEAD
             static bool lockSwitch = false;
             if (digitalRead(startButtonPin)==1 && lockSwitch==false) {
                 startProgram = startProgram == true ? false: true;
+=======
+            static bool lockSwitch = false
+            if (digitalRead(startButtonPin)==1 && lockSwitch=false) {
+                startProgram = !startProgram;
+>>>>>>> 79be79809a66063f55913cf54dcf5d3cd1d11ab2
                 lockSwitch = true;
             } else if (digitalRead(startButtonPin)==0 && lockSwitch ==true) {
                 lockSwitch = false;

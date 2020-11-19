@@ -193,6 +193,9 @@ class Robot {
                     }
                     if(position == PositionList::PILL){
                         Action = ActionType::LINE;
+                        if(farLeftVal == 1  && farRightVal == 1 ){
+                            
+                        }
                     }
                     /*If at start, line follow to T-junction and then turn clockwise, travelling until a box is reached.
                     If at blue location, then line follow until mini T junction reached. Then travel to T junction and turn clockwise until box reached.
@@ -362,6 +365,8 @@ class Robot {
 
 };
 
+
+
 Robot Bot;
 
 void setup() {
@@ -379,7 +384,7 @@ void loop() {
     Bot.OnOffSwitch();
     Bot.checkAllSensorValues(false);
     //delay(1000);
-    //if(Bot.startProgram == false){
+    if(Bot.startProgram == true){
         //delay(1000);
         //Bot.binaryFollowLine(100);
         //Bot.turnInCircle();
@@ -387,6 +392,6 @@ void loop() {
         Bot.checkForNextLocation();
         Bot.decideActionToPerform();
         Bot.runCurrentNeededAction();
-    //}
+    }
 
 }

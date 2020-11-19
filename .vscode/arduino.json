@@ -1,5 +1,6 @@
 {
     "board": "arduino:avr:uno",
-    "sketch": "read_data_pinA0.ino",
-    "port": "COM4"
+    "sketch": "lineFollower.ino",
+    "port": "COM4",
+    "programmer": "AVR ISP"
 }

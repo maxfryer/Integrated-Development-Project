@@ -43,6 +43,7 @@ class Robot {
         int backMiddleVal = 0;
 
         int distanceFrontVal = 0;
+        int distanceThreshold = 0;
 
         /* end value initialisation */
 
@@ -68,7 +69,7 @@ class Robot {
         ActionType Action;
 
         enum class PositionList {
-            START,FIRST_JUNCTION,MAIN_T_JUNCTION,BLUE_T_JUNCTION,PILL
+            START,TUNNEL,FIRST_JUNCTION,BLUE_TRACK,BLUE_BOX,MAIN_T_JUNCTION,BLUE_T_JUNCTION,PILL
         };
         PositionList position = PositionList::START;
 
@@ -82,9 +83,14 @@ class Robot {
         };
         TaskList currentTask = TaskList::FIND_BOX;
 
+
+        enum class Directions {TOWARDS_PILL,AWAY_FROM_PILL};
+        Directions direction = Directions::TOWARDS_PILL;
+
         int redBoxesCollected = 0;
         int blueBoxesCollected = 0;
-        int boxColour = 0;
+        enum class boxColours {NONE,RED,BLUE};
+        boxColours boxColour = boxColours::NONE;
 
         //int timer = 0; 16/11 I THINK WE COULD ADD A REDUNDENCY TIMER TO PROCESSES SO THEY DONT CONTINUE
         //FOREVER IN CASE OF SENSOR FAILURE
@@ -103,18 +109,22 @@ class Robot {
             switch (position) {
                 case PositionList::START:
                     
-                    if(farLeftVal ==1 ){
+                    if((farLeftVal ==1) && (direction == Directions::TOWARDS_PILL)){
                         position = PositionList::FIRST_JUNCTION;
-                        strcpy(place,"junction1");
+                        strcpy(place,"reached junction1");
                     }
 
                     break;
-                case PositionList::FIRST_JUNCTION:
+                case PositionList::TUNNEL:
                     
-                    if(farLeftVal ==1  && farRightVal ==1 ){
+                    if((farLeftVal ==1  && farRightVal ==1) && (direction == Directions::TOWARDS_PILL) ){
                         position = PositionList::MAIN_T_JUNCTION;
-                        strcpy(place,"mainJunc");
+                        strcpy(place,"reached mainJunc");
                     }
+                    if((direction == Directions::AWAY_FROM_PILL) && (farRightVal == 1)){
+                        position = PositionList::FIRST_JUNCTION;
+                    }
+
                     //check for the sensor positions that would give rise to the next state from here
                     break;
                 case PositionList::MAIN_T_JUNCTION:
@@ -130,6 +140,8 @@ class Robot {
                 case PositionList::BLUE_T_JUNCTION:
                     strcpy(place,"blueTJunc");
                     //check for the sensor positions that would give rise to the next state from here
+                    break;
+                case PositionList::FIRST_JUNCTION:
                     break;
                 default:
                     break;
@@ -192,17 +204,41 @@ class Robot {
                         Action = ActionType::TURN_LEFT;
                     }
                     if(position == PositionList::PILL){
+                        static bool onTargetBox; 
                         static int numTargetLocationPassed = 0;
-                        if((farLeftVal == 1  || farRightVal == 0 ) && Action == ActionType::LINE ){
-                            /*if(boxTargetLocation < 2){}
-                                numTargetLocationPassed +=1;
-                                Serial.println("passed target location")
-                            } else {*/
+                        if((farLeftVal == 1  || farRightVal == 1 ) && Action == ActionType::LINE ){
+                            if(numTargetLocationPassed < 2){
+                                if(onTargetBox == false){
+                                    numTargetLocationPassed +=1;
+                                    Serial.println("passed target location");
+                                    onTargetBox = true;
+                                }
+                            } else {
                                 position == PositionList::MAIN_T_JUNCTION;
                                 Action = ActionType::TURN_LEFT;
-                            //}
-                            
-                            //congrats you've found a box, increment. If increment already equals 2 then you've hit the T junction again
+                            }
+                        } else {
+                            onTargetBox = false;
+                        }
+
+                        if(distanceFrontVal < distanceThreshold){
+                            //this is picking up the box
+                            Action = ActionType::PICKUP;
+                            if(boxColour == boxColours::RED){
+                                if (redBoxesCollected == 0){
+                                    currentTask = TaskList::PLACE_FIRST_RED_BOX;
+                                } else {
+                                    currentTask = TaskList::PLACE_SECOND_RED_BOX;
+                                }
+                                
+                            } else {
+                                if(blueBoxesCollected == 0){
+                                    currentTask = TaskList::PLACE_FIRST_BLUE_BOX;
+                                } else {
+                                    currentTask = TaskList::PLACE_SECOND_BLUE_BOX;
+                                }
+                            }
+
                         }
                     }
                     /*If at start, line follow to T-junction and then turn clockwise, travelling until a box is reached.
@@ -223,19 +259,30 @@ class Robot {
                     180 degree turn. Then run find box.
                     
                     */
+
+
+                    // at the end go back to finding a box
+                    currentTask = TaskList::FIND_BOX;
                     
                     break;
                 case TaskList::PLACE_FIRST_RED_BOX:
-
+                    // at the end go back to finding a box
+                    currentTask = TaskList::FIND_BOX;
                     break;
                 case TaskList::PLACE_SECOND_BLUE_BOX:
                     /*If box is red then continue clockwise, avoiding boxes placed in the way, until a target location is reached. 
                     Then deposit box, 180 degree turn and continue go back to find box.
                     */
+                    
+                    // at the end go back to finding a box
+                    currentTask = TaskList::FIND_BOX;
                     break;
                 case TaskList::PLACE_SECOND_RED_BOX:
                     /*for second red box continue 
                     */ 
+                    
+                    // at the end go back to finding a box
+                    currentTask = TaskList::FIND_BOX;
                     break;
                 case TaskList::RETURN_HOME:
                     /* Wherever you are, line follow whilst avoiding obstacles until one of the t-junctions is reached. 
@@ -247,12 +294,9 @@ class Robot {
             }
         }
 
-        void turnLeft() {            
-            //THE CONTROLLER SECTION
-
+        void turnLeft() {       
 
             runMotors(-1*motorSpeed,1*motorSpeed);
-
             while (Action == ActionType::TURN_LEFT){
                 //WAIT FOR FAR LEFT TO TRIGGER
                 if (farLeftVal == 1) {
@@ -263,16 +307,11 @@ class Robot {
                 }
             }
             Action == ActionType::LINE;
-
-
         }
 
-        void turnRight() {            
-            //THE CONTROLLER SECTION
-
+        void turnRight() {           
 
             runMotors(1*motorSpeed,-1*motorSpeed);
-
             while (Action == ActionType::TURN_RIGHT){
                 //WAIT FOR FAR RIGHT TO TRIGGER
                 if (farRightVal == 1) {
@@ -285,7 +324,6 @@ class Robot {
 
            Action == ActionType::LINE;
            position = PositionList::PILL;
-
         }
 
         void turnOneEighty() {
@@ -303,7 +341,6 @@ class Robot {
             }
 
             runMotors(-1*motorSpeedLeft,-1*motorSpeedRight);
-
         }
 
         void turnInCircle() {
@@ -317,9 +354,6 @@ class Robot {
 
         void runCurrentNeededAction() {
 
-            //testing 
-            //Action = ActionType::TURN_LEFT;
-            //testing 
             switch (Action) {
                 case ActionType::LINE:
                     binaryFollowLine(100);
@@ -331,7 +365,7 @@ class Robot {
                     turnRight();
                     break;
                 case ActionType::PICKUP:
-                    turnRight();
+                    pickupBox();
                     break;
                 case ActionType::BLUE_PLACE:
                     /* code */
@@ -345,34 +379,19 @@ class Robot {
             }
         }
 
+        void pickupBox(){
+            //picks up the box AND AND AND checks it colour
+        }
+
         void OnOffSwitch() {
             //sets start program to true at the push of the button
-<<<<<<< HEAD
             static bool lockSwitch = false;
             if (digitalRead(startButtonPin)==1 && lockSwitch==false) {
                 startProgram = startProgram == true ? false: true;
-=======
-            static bool lockSwitch = false
-            if (digitalRead(startButtonPin)==1 && lockSwitch=false) {
-                startProgram = !startProgram;
->>>>>>> 79be79809a66063f55913cf54dcf5d3cd1d11ab2
                 lockSwitch = true;
             } else if (digitalRead(startButtonPin)==0 && lockSwitch ==true) {
                 lockSwitch = false;
             }
-            
-            //Serial.println(buttonState);
-            /*
-            if (buttonState == 1) {
-                startProgram = (startProgram == true) ? false : true;
-                if (startProgram == true) {Serial.println("starting");
-                }
-                else if(startProgram == false) Serial.println("finishing");
-                while (buttonState == 1) {
-                    int buttonState = digitalRead(startButtonPin);
-                }
-            }*/
-            
         }
 
         void runMotors(int motorLeftVal,int motorRightVal){

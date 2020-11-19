@@ -21,6 +21,19 @@ Adafruit_DCMotor * myMotorRight = AFMS.getMotor(2);
 class Robot {
     public:
 
+
+        /*ALL PINS */
+        int frontLeft = A0; // input pin for FRONT LEFT light sensor
+        int frontRight = A1;
+        int offAxisRight = 3;
+        int offAxisLeft = 4;
+        int backMiddle = 5;
+
+        int startButtonPin = 2;
+
+        int distanceSensor = A5;
+
+        /*END PINS*/
         /* Initialise sensor values*/
 
         int frontLeftVal = 0; //sensor values
@@ -34,7 +47,7 @@ class Robot {
         /* end value initialisation */
 
         /* MOTORS */
-        float motorSpeed = 120; //EDIT THIS 
+        float motorSpeed = 150; //EDIT THIS 
         float motorSpeedLeft;
         float motorSpeedRight;
         float speedDifference = 0;
@@ -42,23 +55,12 @@ class Robot {
 
         /* END MOTORS*/
 
-        int lineSensorThreshold = 100;
+        int lineSensorThreshold = 300;
         int distanceSensorThreshold = 100;
 
-        /*ALL PINS */
-        int frontLeft = A0; // input pin for FRONT LEFT light sensor
-        int frontRight = A1;
-        int offAxisRight = A2;
-        int offAxisLeft = A3;
-        int backMiddle = A4;
+        
 
-        int startButtonPin = 2;
-
-        int distanceSensor = A5;
-
-        /*END PINS*/
-
-        bool startProgram = true;
+        bool startProgram = false;
 
         enum class ActionType {
             LINE, TURN_LEFT, TURN_RIGHT, TURN_ONE_EIGHTY, PICKUP, BLUE_PLACE, RED_PLACE
@@ -90,7 +92,7 @@ class Robot {
         void checkForNextLocation(){
             
             static PositionList lastPosition = PositionList::START;
-            static char place[20];
+            static char place[20] = "start";
             
 
             if(position != lastPosition){
@@ -100,21 +102,23 @@ class Robot {
             
             switch (position) {
                 case PositionList::START:
-                    strcpy(place,"start");
-                    if(farLeftVal > lineSensorThreshold){
+                    
+                    if(farLeftVal ==1 ){
                         position = PositionList::FIRST_JUNCTION;
+                        strcpy(place,"junction1");
                     }
 
                     break;
                 case PositionList::FIRST_JUNCTION:
-                    strcpy(place,"junction1");
-                    if(farLeftVal > lineSensorThreshold && farRightVal > lineSensorThreshold){
+                    
+                    if(farLeftVal ==1  && farRightVal ==1 ){
                         position = PositionList::MAIN_T_JUNCTION;
+                        strcpy(place,"mainJunc");
                     }
                     //check for the sensor positions that would give rise to the next state from here
                     break;
                 case PositionList::MAIN_T_JUNCTION:
-                    strcpy(place,"mainJunc");
+                    
                     //check for the sensor positions that would give rise to the next state from here
                     if(farLeftVal < lineSensorThreshold && farRightVal < lineSensorThreshold){
                         position = PositionList:: PILL;
@@ -149,31 +153,35 @@ class Robot {
             runMotors(motorSpeedLeft,motorSpeedRight);
         }
 
-        float checkAllSensorValues() {
+        float checkAllSensorValues(bool listVals) {
 
             //Check ALL the sensor values
             frontLeftVal = analogRead(frontLeft);
             frontRightVal = analogRead(frontRight);
-            farRightVal = analogRead(offAxisRight);
-            backMiddleVal = analogRead(backMiddle);
+            farRightVal = digitalRead(offAxisRight);
+            farLeftVal = digitalRead(offAxisLeft);
+            backMiddleVal = digitalRead(backMiddle);
 
             distanceFrontVal = analogRead(distanceSensor);
 
-            /*
-            Serial.print("front left val:  ");
-            Serial.println(frontLeftVal);
-            Serial.print("front right val: ");
-            Serial.println(frontRightVal);
+            if(listVals){
+                Serial.print("front left val:  ");
+                Serial.println(frontLeftVal);
+                Serial.print("front right val: ");
+                Serial.println(frontRightVal);
 
-            Serial.print("far right val:");
-            Serial.println(farRightVal);
-            Serial.print("back middle Val: ");
-            Serial.println(backMiddleVal);
-            Serial.print("distanceSensor: ");
-            Serial.println(distanceFrontVal);
-            Serial.println("                                     ");
-            Serial.println("                                     ");
-            */
+                Serial.print("far right val:");
+                Serial.println(farRightVal);
+                Serial.print("far left val:");
+                Serial.println(farLeftVal);
+                Serial.print("back middle Val: ");
+                Serial.println(backMiddleVal);
+                Serial.print("distanceSensor: ");
+                Serial.println(distanceFrontVal);
+                Serial.println("                                     ");
+                Serial.println("                                     ");
+            }
+ 
         }
 
         void decideActionToPerform() {
@@ -182,6 +190,9 @@ class Robot {
                     Action = ActionType::LINE;
                     if(position == PositionList::MAIN_T_JUNCTION){
                         Action = ActionType::TURN_LEFT;
+                    }
+                    if(position == PositionList::PILL){
+                        Action = ActionType::LINE;
                     }
                     /*If at start, line follow to T-junction and then turn clockwise, travelling until a box is reached.
                     If at blue location, then line follow until mini T junction reached. Then travel to T junction and turn clockwise until box reached.
@@ -228,18 +239,18 @@ class Robot {
             //THE CONTROLLER SECTION
 
 
-            runMotors(motorSpeed,-1*motorSpeed);
+            runMotors(-1*motorSpeed,1*motorSpeed);
 
             while (Action == ActionType::TURN_LEFT){
                 //WAIT FOR FAR LEFT TO TRIGGER
-                if (farLeftVal > lineSensorThreshold) {
+                if (farLeftVal == 1) {
                 motorSpeedLeft = 0;
                 motorSpeedRight = 0;
 
                 break;
                 }
             }
-            runMotors(-1*motorSpeedLeft,-1*motorSpeedRight);
+            Action == ActionType::LINE;
 
 
         }
@@ -248,11 +259,11 @@ class Robot {
             //THE CONTROLLER SECTION
 
 
-            runMotors(-1*motorSpeed,motorSpeed);
+            runMotors(1*motorSpeed,-1*motorSpeed);
 
             while (Action == ActionType::TURN_RIGHT){
                 //WAIT FOR FAR RIGHT TO TRIGGER
-                if (farRightVal > lineSensorThreshold) {
+                if (farRightVal == 1) {
                 motorSpeedLeft = 0;
                 motorSpeedRight = 0;
 
@@ -260,7 +271,8 @@ class Robot {
                 }
             }
 
-           runMotors(-1*motorSpeedLeft,-1*motorSpeedRight);
+           Action == ActionType::LINE;
+           position = PositionList::PILL;
 
         }
 
@@ -270,7 +282,7 @@ class Robot {
 
             while (Action == ActionType::TURN_ONE_EIGHTY){
                 //WAIT FOR BACK TO TRIGGER BUT ONLY IF RIGHT IS NOT ALSO TRIGGERED
-                if (backMiddleVal > lineSensorThreshold && farRightVal < lineSensorThreshold) {
+                if (backMiddleVal == 1 && farRightVal == 1) {
                 motorSpeedLeft = 0;
                 motorSpeedRight = 0;
 
@@ -294,11 +306,11 @@ class Robot {
         void runCurrentNeededAction() {
 
             //testing 
-            Action = ActionType::TURN_LEFT;
+            //Action = ActionType::TURN_LEFT;
             //testing 
             switch (Action) {
                 case ActionType::LINE:
-                    binaryFollowLine(50);
+                    binaryFollowLine(100);
                     break;
                 case ActionType::TURN_LEFT:
                     turnLeft();
@@ -323,25 +335,28 @@ class Robot {
 
         void OnOffSwitch() {
             //sets start program to true at the push of the button
-            int buttonState = digitalRead(2);
-
+            int buttonState = digitalRead(startButtonPin);
+            //Serial.println(buttonState);
+            /*
             if (buttonState == 1) {
-                startProgram = startProgram == true ? false : true;
-                if (startProgram == true) Serial.println("starting");
-                if(startProgram == false) Serial.println("finishing");
-                while (buttonState == 1) {
-                    int buttonState = digitalRead(2);
+                startProgram = (startProgram == true) ? false : true;
+                if (startProgram == true) {Serial.println("starting");
                 }
-            }
+                else if(startProgram == false) Serial.println("finishing");
+                while (buttonState == 1) {
+                    int buttonState = digitalRead(startButtonPin);
+                }
+            }*/
+            
         }
 
         void runMotors(int motorLeftVal,int motorRightVal){
             int motorDirectionLeft = motorLeftVal > 0 ? BACKWARD : FORWARD;
             int motorDirectionRight = motorRightVal > 0 ? BACKWARD : FORWARD;
-
-            myMotorLeft->setSpeed(motorLeftVal);
+            //Serial.println("running");
+            myMotorLeft->setSpeed(abs(motorLeftVal));
             myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(motorRightVal);
+            myMotorRight->setSpeed(abs(motorRightVal));
             myMotorRight->run(motorDirectionRight);
         }
 
@@ -355,20 +370,23 @@ void setup() {
     Serial.begin(9600);
 
     pinMode(Bot.startButtonPin, INPUT);
+    pinMode(Bot.offAxisLeft,INPUT);
+    pinMode(Bot.offAxisRight,INPUT);
 }
 
 
 void loop() {
     Bot.OnOffSwitch();
-    Bot.checkAllSensorValues();
-    if(Bot.startProgram == true){
+    Bot.checkAllSensorValues(false);
+    //delay(1000);
+    //if(Bot.startProgram == false){
         //delay(1000);
-        Bot.binaryFollowLine(50);
+        //Bot.binaryFollowLine(100);
         //Bot.turnInCircle();
         // Bot.moveForward();
         Bot.checkForNextLocation();
-        //Bot.decideActionToPerform();
-        //Bot.runCurrentNeededAction();
-    }
+        Bot.decideActionToPerform();
+        Bot.runCurrentNeededAction();
+    //}
 
 }

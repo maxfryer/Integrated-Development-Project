@@ -338,7 +338,14 @@ class Robot {
 
         void OnOffSwitch() {
             //sets start program to true at the push of the button
-            int buttonState = digitalRead(startButtonPin);
+            static bool lockSwitch = false
+            if (digitalRead(startButtonPin)==1 && lockSwitch=false) {
+                startProgram = startProgram == true ? false: true;
+                lockSwitch = true;
+            } else if (digitalRead(startButtonPin)==0 && lockSwitch=true) {
+                lockSwitch = false;
+            }
+            
             //Serial.println(buttonState);
             /*
             if (buttonState == 1) {

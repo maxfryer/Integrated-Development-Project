@@ -132,7 +132,7 @@ class Robot {
                         position = PositionList::MAIN_T_JUNCTION;
                         strcpy(place,"reached mainJunc");
                     }
-                    if((direction == Directions::AWAY_FROM_PILL) && (farRightVal == 1)){
+                    if((direction == Directions::AWAY_FROM_PILL) && (farRightVal == 1)){ //Shouldn't this be farLeftVAl?
                         position = PositionList::FIRST_JUNCTION;
                     }
 
@@ -158,7 +158,7 @@ class Robot {
                         position = PositionList::BLUE_BOX;
                     }
                     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL)){
-                        position = PositionList::BLUE_TRACK;
+                        position = PositionList::BLUE_TRACK;//these are the same 
                     }
                     break;
 
@@ -244,14 +244,14 @@ class Robot {
                                 }
                             } else {
                                 position == PositionList::MAIN_T_JUNCTION;
-                                Action = ActionType::TURN_LEFT;
+                                Action = ActionType::TURN_LEFT; //is this for if robot goes all the way around pill?
                             }
                         } else {
                             onTargetBox = false;
                         }
 
                         if(distanceFrontVal < distanceThreshold){
-                            //this is picking up the box
+                            //this is picking up the box this
                             Action = ActionType::PICKUP;
                             if(boxColour == boxColours::RED){
                                 if (redBoxesCollected == 0){

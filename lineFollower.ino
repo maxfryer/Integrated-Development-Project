@@ -141,12 +141,17 @@ class Robot {
                 case PositionList::MAIN_T_JUNCTION:
                     
                     //check for the sensor positions that would give rise to the next state from here
-                    if(farLeftVal < lineSensorThreshold && farRightVal < lineSensorThreshold){
-                        position = PositionList:: PILL;
+                    if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::TOWARDS_PILL )){
+                        position = PositionList::PILL;
+                    }
+                    if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL )){
+                        position = PositionList::TUNNEL;
                     }
                     break;
                 case PositionList::PILL:
+                    //if line following can take care of position from here!
                     break;
+                    
                 case PositionList::BLUE_T_JUNCTION:
                     //check for the sensor positions that would give rise to the next state from here
                     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL)){
@@ -166,6 +171,7 @@ class Robot {
                     }
                     break;
                 case PositionList::BLUE_BOX:
+                    //if line following can take care of box checking from here!
                     break;
                 }
             }

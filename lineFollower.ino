@@ -21,7 +21,7 @@ Adafruit_DCMotor * myMotorRight = AFMS.getMotor(2);
 class Robot {
     public:
 
-
+        int processTime = 0;
         /*ALL PINS */
         int frontLeft = A0; // input pin for FRONT LEFT light sensor
         int frontRight = A1;
@@ -48,7 +48,7 @@ class Robot {
         /* end value initialisation */
 
         /* MOTORS */
-        float motorSpeed = 150; //EDIT THIS 
+        float motorSpeed = 70; //EDIT THIS 
         float motorSpeedLeft;
         float motorSpeedRight;
         float speedDifference = 0;
@@ -324,34 +324,30 @@ class Robot {
 
         void turnLeft() {       
 
-            runMotors(-1*motorSpeed,1*motorSpeed);
             while (Action == ActionType::TURN_LEFT){
+                runMotors(-1*motorSpeed,1*motorSpeed);
                 //WAIT FOR FAR LEFT TO TRIGGER
                 if (farLeftVal == 1) {
-                motorSpeedLeft = 0;
-                motorSpeedRight = 0;
-
-                break;
+                runMotors(motorSpeed,motorSpeed);
+                Action == ActionType::LINE;
+                Serial.println("done left junction");
+                return;
                 }
             }
-            Action == ActionType::LINE;
         }
 
         void turnRight() {           
 
-            runMotors(1*motorSpeed,-1*motorSpeed);
             while (Action == ActionType::TURN_RIGHT){
+                runMotors(1*motorSpeed,-1*motorSpeed);
                 //WAIT FOR FAR RIGHT TO TRIGGER
                 if (farRightVal == 1) {
-                motorSpeedLeft = 0;
-                motorSpeedRight = 0;
-
-                break;
+                runMotors(motorSpeed,motorSpeed);
+                Action == ActionType::LINE;
+                Serial.println("done right junction");
+                return;
                 }
             }
-
-           Action == ActionType::LINE;
-           position = PositionList::PILL;
         }
 
         void turnOneEighty() {
@@ -384,7 +380,7 @@ class Robot {
 
             switch (Action) {
                 case ActionType::LINE:
-                    binaryFollowLine(100);
+                    binaryFollowLine(70);
                     break;
                 case ActionType::TURN_LEFT:
                     turnLeft();
@@ -413,11 +409,15 @@ class Robot {
 
         void OnOffSwitch() {
             //sets start program to true at the push of the button
+            int buttonState = digitalRead(startButtonPin);
+            //Serial.println(buttonState);
             static bool lockSwitch = false;
-            if (digitalRead(startButtonPin)==1 && lockSwitch==false) {
-                startProgram = startProgram == true ? false: true;
+            if (buttonState ==0 && lockSwitch==false) {
+                startProgram = startProgram == true ? false : true;
                 lockSwitch = true;
-            } else if (digitalRead(startButtonPin)==0 && lockSwitch ==true) {
+                Serial.println("changing program");
+            }
+            if (buttonState == 1 && lockSwitch ==true) {
                 lockSwitch = false;
             }
         }
@@ -425,6 +425,10 @@ class Robot {
         void runMotors(int motorLeftVal,int motorRightVal){
             int motorDirectionLeft = motorLeftVal > 0 ? BACKWARD : FORWARD;
             int motorDirectionRight = motorRightVal > 0 ? BACKWARD : FORWARD;
+            if(motorLeftVal == 0 && motorRightVal == 0){
+                motorDirectionLeft = 0;
+                motorDirectionRight = 0;
+            }
             //Serial.println("running");
             myMotorLeft->setSpeed(abs(motorLeftVal));
             myMotorLeft->run(motorDirectionLeft);
@@ -453,7 +457,7 @@ void loop() {
     Bot.OnOffSwitch();
     Bot.checkAllSensorValues(false);
     //delay(1000);
-    if(Bot.startProgram == true){
+    //if(Bot.startProgram == true){
         //delay(1000);
         //Bot.binaryFollowLine(100);
         //Bot.turnInCircle();
@@ -461,6 +465,11 @@ void loop() {
         Bot.checkForNextLocation();
         Bot.decideActionToPerform();
         Bot.runCurrentNeededAction();
-    }
+    /*} else {
+        myMotorLeft->setSpeed(0);
+        myMotorRight->setSpeed(0);
+        Serial.println("stopped");
+    }*/
+
 
 }

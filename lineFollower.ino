@@ -157,10 +157,10 @@ class Robot {
                 case PositionList::BLUE_T_JUNCTION:
                     //check for the sensor positions that would give rise to the next state from here
                     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL)){
-                        position = PositionList::BLUE_BOX;
+                        position = PositionList::BLUE_BOX_BOTTOM;
                     }
-                    if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL)){
-                        position = PositionList::BLUE_TRACK;//these are the same 
+                    if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::TOWARDS_PILL)){
+                        position = PositionList::BLUE_TRACK;
                     }
                     break;
 
@@ -172,8 +172,42 @@ class Robot {
                         position = PositionList::FIRST_JUNCTION;
                     }
                     break;
-                case PositionList::BLUE_BOX:
-                    //if line following can take care of box checking from here!
+                case PositionList::BLUE_BOX_BOTTOM:
+                    if(farLeftVal == 1 && direction == Directions::AWAY_FROM_PILL && currentTask == TaskList::PLACE_SECOND_BLUE_BOX){
+                        position = PositionList::BLUE_BOX_BOTTOM_RIGHT;
+                    }
+                    if((farLeftVal == 1 || farRightVal == 1) && direction == Directions::TOWARDS_PILL){
+                        position = PositionList::BLUE_T_JUNCTION;
+                    }
+                    break;
+                case PositionList::BLUE_BOX_BOTTOM_RIGHT:
+                    if(farLeftVal == 0 && direction == Directions::AWAY_FROM_PILL){
+                        position = PositionList::BLUE_BOX_RIGHT;
+                    }
+                    if(farRightVal == 0 && direction == Directions::TOWARDS_PILL){
+                        position = PositionList::BLUE_BOX_BOTTOM;
+                    }
+                    break;
+                case PositionList::BLUE_BOX_RIGHT:
+                    if(farLeftVal == 1 && direction == Directions::AWAY_FROM_PILL){
+                        position = PositionList::BLUE_BOX_TOP_RIGHT;
+                    }
+                    if(farRightVal == 1 && direction == Directions::TOWARDS_PILL){
+                        position = PositionList::BLUE_BOX_BOTTOM_RIGHT;
+                    }
+                    break;
+                case PositionList::BLUE_BOX_TOP_RIGHT:
+                    if(farLeftVal == 0 && direction == Directions::AWAY_FROM_PILL){
+                        position = PositionList::BLUE_BOX_TOP;
+                    }
+                    if(farRightVal == 0 && direction == Directions::TOWARDS_PILL){
+                        position = PositionList::BLUE_BOX_RIGHT;
+                    }
+                    break;
+                case PositionList::BLUE_BOX_TOP:
+                    if(farRightVal == 1 && direction == Directions::TOWARDS_PILL){
+                        position = PositionList::BLUE_BOX_TOP_RIGHT;
+                    }
                     break;
                 }
             }
@@ -323,7 +357,7 @@ class Robot {
                     if (farLeftVal == 1 && position == PositionList::BLUE_BOX_TOP_RIGHT && direction == Directions::AWAY_FROM_PILL){
                         Action = ActionType::TURN_LEFT;
                     }
-                    if ((farLeftVal == 1  || farRightVal == 1 ) && position == PositionList::BLUE_BOX_TOP && direction == Directions::AWAY_FROM_PILL){
+                    if ((farLeftVal == 1 || farRightVal == 1 ) && position == PositionList::BLUE_BOX_TOP && direction == Directions::AWAY_FROM_PILL){
                         Action = ActionType::BLUE_PLACE;
                     }
                     if (farRightVal == 1 && position == PositionList::BLUE_BOX_TOP_RIGHT && direction == Directions::TOWARDS_PILL){

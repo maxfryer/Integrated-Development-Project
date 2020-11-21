@@ -69,7 +69,9 @@ class Robot {
         ActionType Action;
 
         enum class PositionList {
-            START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL,BLUE_TRACK,BLUE_BOX,BLUE_T_JUNCTION
+            START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL,
+            BLUE_TRACK,BLUE_BOX_BOTTOM,BLUE_BOX_BOTTOM_RIGHT,BLUE_BOX_RIGHT,
+            BLUE_BOX_TOP_RIGHT, BLUE_BOX_TOP, BLUE_T_JUNCTION
         };
         PositionList position = PositionList::START;
 
@@ -132,7 +134,7 @@ class Robot {
                         position = PositionList::MAIN_T_JUNCTION;
                         strcpy(place,"reached mainJunc");
                     }
-                    if((direction == Directions::AWAY_FROM_PILL) && (farRightVal == 1)){ //Shouldn't this be farLeftVAl?
+                    if((direction == Directions::AWAY_FROM_PILL) && (farRightVal == 1)){
                         position = PositionList::FIRST_JUNCTION;
                     }
 
@@ -243,7 +245,7 @@ class Robot {
                                     onTargetBox = true;
                                 }
                             } else {
-                                position == PositionList::MAIN_T_JUNCTION;
+                                position == PositionList::MAIN_T_JUNCTION; //should this be single =
                                 Action = ActionType::TURN_LEFT; //is this for if robot goes all the way around pill?
                             }
                         } else {
@@ -287,24 +289,58 @@ class Robot {
                     180 degree turn. Then run find box.
                     
                     */
-
-
+                    if (position == PositionList::BLUE_T_JUNCTION && direction == Directions::AWAY_FROM_PILL){
+                        Action = ActionType::TURN_LEFT;
+                    }
+                    if ((farLeftVal == 1  || farRightVal == 1 ) && position == PositionList::BLUE_BOX_BOTTOM && direction == Directions::AWAY_FROM_PILL){
+                        Action = ActionType::BLUE_PLACE;
+                    }
+                    if (position == PositionList::BLUE_T_JUNCTION && direction == Directions::TOWARDS_PILL){
+                        Action = ActionType::TURN_RIGHT;
+                    }
                     // at the end go back to finding a box
-                    currentTask = TaskList::FIND_BOX;
-                    
+                    if (position == PositionList::BLUE_TRACK && direction == Directions::TOWARDS_PILL){
+                        currentTask = TaskList::FIND_BOX;
+                    }
+
                     break;
+                    
                 case TaskList::PLACE_FIRST_RED_BOX:
                     // at the end go back to finding a box
                     currentTask = TaskList::FIND_BOX;
                     break;
+
                 case TaskList::PLACE_SECOND_BLUE_BOX:
                     /*If box is red then continue clockwise, avoiding boxes placed in the way, until a target location is reached. 
                     Then deposit box, 180 degree turn and continue go back to find box.
                     */
-                    
+                    if (position == PositionList::BLUE_T_JUNCTION && direction == Directions::AWAY_FROM_PILL){
+                        Action = ActionType::TURN_RIGHT;
+                    }
+                    if (farLeftVal == 1 && position == PositionList::BLUE_BOX_BOTTOM_RIGHT && direction == Directions::AWAY_FROM_PILL){
+                        Action = ActionType::TURN_LEFT;
+                    }
+                    if (farLeftVal == 1 && position == PositionList::BLUE_BOX_TOP_RIGHT && direction == Directions::AWAY_FROM_PILL){
+                        Action = ActionType::TURN_LEFT;
+                    }
+                    if ((farLeftVal == 1  || farRightVal == 1 ) && position == PositionList::BLUE_BOX_TOP && direction == Directions::AWAY_FROM_PILL){
+                        Action = ActionType::BLUE_PLACE;
+                    }
+                    if (farRightVal == 1 && position == PositionList::BLUE_BOX_TOP_RIGHT && direction == Directions::TOWARDS_PILL){
+                        Action = ActionType::TURN_RIGHT;
+                    }
+                    if (farRightVal == 1 && position == PositionList::BLUE_BOX_BOTTOM_RIGHT && direction == Directions::TOWARDS_PILL){
+                        Action = ActionType::TURN_RIGHT;
+                    }
+                    if (farLeftVal == 1 && position == PositionList::BLUE_BOX_BOTTOM && direction == Directions::TOWARDS_PILL){
+                        Action = ActionType::TURN_LEFT;
+                    }
                     // at the end go back to finding a box
-                    currentTask = TaskList::FIND_BOX;
+                    if (position == PositionList::BLUE_TRACK && direction == Directions::TOWARDS_PILL){
+                        currentTask = TaskList::FIND_BOX;
+                    }
                     break;
+
                 case TaskList::PLACE_SECOND_RED_BOX:
                     /*for second red box continue 
                     */ 

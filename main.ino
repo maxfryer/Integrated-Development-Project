@@ -406,18 +406,31 @@ class Robot {
         }
 
         void turnLeft() {
-
-            while (Action == ActionType::TURN_LEFT){
-                runMotors(-1*motorSpeed,1*motorSpeed);
-                //WAIT FOR FAR RIGHT TO TRIGGER
-                if (farLeftVal == 1) {
-                runMotors(motorSpeed,motorSpeed);
+            runMotors(-1*motorSpeed,1*motorSpeed);
+            //WAIT FOR FAR LEFT TO TRIGGER
+            if (farLeftVal == 1) {
                 Action == ActionType::LINE;
+                if(position == PositionList::MAIN_T_JUNCTION && direction == Directions::TOWARDS_PILL){
+                    position = PositionList::PILL;
+                }
+                if(position == PositionList::MAIN_T_JUNCTION && direction == Directions::AWAY_FROM_PILL){
+                    position = PositionList::TUNNEL;
+                }
+                if(position == PositionList::BLUE_T_JUNCTION && direction == Directions::AWAY_FROM_PILL){
+                    position = PositionList::BLUE_BOX_BOTTOM;
+                }
+                if(position == PositionList::BLUE_T_JUNCTION && direction == Directions::TOWARDS_PILL){
+                    position = PositionList::BLUE_TRACK;
+                }
+                if(position == PositionList::BLUE_BOX_BOTTOM_RIGHT && direction == Directions::AWAY_FROM_PILL){
+                    position = PositionList::BLUE_BOX_RIGHT;
+                }
+                if(position == PositionList::BLUE_BOX_TOP_RIGHT && direction == Directions::AWAY_FROM_PILL){
+                    position = PositionList::BLUE_BOX_TOP;
+                }
                 Serial.println("done left junction");
                 return;
-                }
             }
-            
         }
 
         void turnRight() {           
@@ -556,5 +569,36 @@ void loop() {
     }*/
 
 
+}
+
+
+
+void decideActionToPerform() {
+    switch(currentTask) {
+        case ActionType::FirstBlueBox{
+            switch(decideActionToPerform){
+                case decideAction:
+                case Turnleft
+                    do the things to turn left;
+                    action = decide action
+                    break;
+
+            
+            }
+        }
+        case ACtionType::SecondBlue Box{
+            switch(decideActionToPerform){
+                case decideAction:
+                case TurnLeft 
+                case Turn Right
+            }
+        }
+    }
+}
+
+functionTurn left
+motor left faster than motor right
+if left sensor registers 1{
+    return
 }
 

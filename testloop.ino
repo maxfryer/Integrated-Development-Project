@@ -20,32 +20,23 @@ Adafruit_DCMotor * myMotorRight = AFMS.getMotor(2);
 
 class Robot {
     public:
-
-        int processTime = 0;
         /*ALL PINS */
         int frontLeft = A0; // input pin for FRONT LEFT light sensor
         int frontRight = A1;
         int offAxisRight = 3;
         int offAxisLeft = 4;
         int backMiddle = 5;
-
         int startButtonPin = 2;
-
         int distanceSensor = A5;
 
-        /*END PINS*/
-        /* Initialise sensor values*/
-
+        /* SENSOR VALUES */
         int frontLeftVal = 0; //sensor values
         int frontRightVal = 0;
         int farRightVal = 0;
         int farLeftVal = 0;
         int backMiddleVal = 0;
-
         int distanceFrontVal = 0;
         int distanceThreshold = 0;
-
-        /* end value initialisation */
 
         /* MOTORS */
         float motorSpeed = 70; //EDIT THIS 
@@ -53,21 +44,18 @@ class Robot {
         float motorSpeedRight;
         float speedDifference = 0;
 
-
-        /* END MOTORS*/
-
+        /* THRESHOLDS */
         int lineSensorThreshold = 300;
         int distanceSensorThreshold = 100;
 
-        
-
-        bool startProgram = false;
-
+        /* SUBROUTINES */
         enum class ActionType {
-            LINE, TURN_LEFT, TURN_RIGHT, TURN_ONE_EIGHTY,DETECT, PICKUP, BLUE_PLACE, RED_PLACE
+            LINE, TURN_LEFT, TURN_RIGHT, TURN_ONE_EIGHTY, DETECT, PICKUP, BLUE_PLACE, RED_PLACE,
+            CONTROL_ONE, CONTROL_TWO, CONTROL_TEST
         }; //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
-        ActionType Action;
+        ActionType Action = ActionType::CONTROL_ONE
 
+        /* POSITIONS */
         enum class PositionList {
             START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL,
             BLUE_TRACK,BLUE_BOX_BOTTOM,BLUE_BOX_BOTTOM_RIGHT,BLUE_BOX_RIGHT,
@@ -75,174 +63,19 @@ class Robot {
         };
         PositionList position = PositionList::START;
 
-        enum class TaskList {
-            FIND_BOX,
-            DETECT_COLOUR
-            REJECT_RED_BOX
-            PLACE_FIRST_RED_BOX,
-            PLACE_FIRST_BLUE_BOX,
-            PLACE_SECOND_RED_BOX,
-            PLACE_SECOND_BLUE_BOX,
-            RETURN_HOME
-        };
-        TaskList currentTask = TaskList::FIND_BOX;
-
-
+        /* DIRECTIONS */
         enum class Directions {TOWARDS_PILL,AWAY_FROM_PILL};
         Directions direction = Directions::TOWARDS_PILL;
 
+        /* VARIABLES */
+        int processTime = 0;
+        bool run = false;
         int redBoxesCollected = 0;
         int blueBoxesCollected = 0;
         enum class boxColours {NONE,RED,BLUE};
         boxColours boxColour = boxColours::NONE;
 
-        //int timer = 0; 16/11 I THINK WE COULD ADD A REDUNDENCY TIMER TO PROCESSES SO THEY DONT CONTINUE
-        //FOREVER IN CASE OF SENSOR FAILURE
-
-        void checkForNextLocation(){
-            
-            static PositionList lastPosition = PositionList::START;
-            static char place[20] = "start";
-            
-
-            if(position != lastPosition){
-                Serial.println(place);
-            }
-            lastPosition = position;
-            
-            
-            if(Action == ActionType::LINE){  // can only ake changes to postiion when on a line following path so as not tocaue problems with 180 tunrs etc
-                switch (position) {
-                case PositionList::START:
-                    
-                    if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
-                        position = PositionList::FIRST_JUNCTION;
-                        strcpy(place,"reached junction1");
-                    }
-
-                    break;
-                case PositionList::FIRST_JUNCTION:
-
-                    if((farLeftVal == 0) && (direction == Directions::TOWARDS_PILL)){
-                        position = PositionList::TUNNEL;
-                        strcpy(place,"on tunnel track towards pill");
-                    }
-
-                    break;
-
-                case PositionList::TUNNEL:
-                    
-                    if((farLeftVal == 1  && farRightVal == 1) && (direction == Directions::TOWARDS_PILL) ){
-                        position = PositionList::MAIN_T_JUNCTION;
-                        strcpy(place,"reached mainJunc");
-                    }
-                    if((direction == Directions::AWAY_FROM_PILL) && (farRightVal == 1)){
-                        position = PositionList::FIRST_JUNCTION;
-                    }
-
-                    //check for the sensor positions that would give rise to the next state from here
-                    break;
-                case PositionList::MAIN_T_JUNCTION:
-                    
-                    //check for the sensor positions that would give rise to the next state from here
-                    if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::TOWARDS_PILL )){
-                        position = PositionList::PILL;
-                    }
-                    if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL )){
-                        position = PositionList::TUNNEL;
-                    }
-                    break;
-                case PositionList::PILL:
-                    //if line following can take care of position from here!
-                    break;
-                    
-                case PositionList::BLUE_T_JUNCTION:
-                    //check for the sensor positions that would give rise to the next state from here
-                    if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL)){
-                        position = PositionList::BLUE_BOX_BOTTOM;
-                    }
-                    if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::TOWARDS_PILL)){
-                        position = PositionList::BLUE_TRACK;
-                    }
-                    break;
-
-                case PositionList::BLUE_TRACK:
-                    if((direction == Directions::AWAY_FROM_PILL )&&(farLeftVal == 1  && farRightVal == 1)){
-                        position = PositionList::BLUE_T_JUNCTION;
-                    }
-                    if((direction == Directions::TOWARDS_PILL) && (farRightVal == 1)){
-                        position = PositionList::FIRST_JUNCTION;
-                    }
-                    break;
-                case PositionList::BLUE_BOX_BOTTOM:
-                    if(farLeftVal == 1 && direction == Directions::AWAY_FROM_PILL && currentTask == TaskList::PLACE_SECOND_BLUE_BOX){
-                        position = PositionList::BLUE_BOX_BOTTOM_RIGHT;
-                        strcpy(place,"reached blu btm right");
-                    }
-                    if((farLeftVal == 1 || farRightVal == 1) && direction == Directions::TOWARDS_PILL){
-                        position = PositionList::BLUE_T_JUNCTION;
-                        strcpy(place,"reached blu T");
-                    }
-                    break;
-                case PositionList::BLUE_BOX_BOTTOM_RIGHT:
-                    if(farLeftVal == 0 && direction == Directions::AWAY_FROM_PILL){
-                        position = PositionList::BLUE_BOX_RIGHT;
-                        strcpy(place,"reached blu right side");
-                    }
-                    if(farRightVal == 0 && direction == Directions::TOWARDS_PILL){
-                        position = PositionList::BLUE_BOX_BOTTOM;
-                        strcpy(place,"reached blu btm side");
-                    }
-                    break;
-                case PositionList::BLUE_BOX_RIGHT:
-                    if(farLeftVal == 1 && direction == Directions::AWAY_FROM_PILL){
-                        position = PositionList::BLUE_BOX_TOP_RIGHT;
-                        strcpy(place,"reached blu top right");
-                    }
-                    if(farRightVal == 1 && direction == Directions::TOWARDS_PILL){
-                        position = PositionList::BLUE_BOX_BOTTOM_RIGHT;
-                        strcpy(place,"reached blu btm right");
-                    }
-                    break;
-                case PositionList::BLUE_BOX_TOP_RIGHT:
-                    if(farLeftVal == 0 && direction == Directions::AWAY_FROM_PILL){
-                        position = PositionList::BLUE_BOX_TOP;
-                        strcpy(place,"reached blu box top");
-                    }
-                    if(farRightVal == 0 && direction == Directions::TOWARDS_PILL){
-                        position = PositionList::BLUE_BOX_RIGHT;
-                        strcpy(place,"reached blu right side");
-                    }
-                    break;
-                case PositionList::BLUE_BOX_TOP:
-                    if(farRightVal == 1 && direction == Directions::TOWARDS_PILL){
-                        position = PositionList::BLUE_BOX_TOP_RIGHT;
-                        strcpy(place,"reached blu top right");
-                    }
-                    break;
-                }
-            }
-        }
-        void binaryFollowLine( int increaseRate) {
-            static bool leftTurn = true;
-            if (frontLeftVal > lineSensorThreshold) {
-                speedDifference = increaseRate;
-                leftTurn = true;
-            }
-            if (frontRightVal > lineSensorThreshold) {
-                speedDifference = -1 * increaseRate;
-                leftTurn = false;
-            }
-
-            //THE CONTROLLER SECTION
-            motorSpeedLeft = motorSpeed - speedDifference;
-            motorSpeedRight = motorSpeed + speedDifference;
-
-            runMotors(motorSpeedLeft,motorSpeedRight);
-        }
-
         float checkAllSensorValues(bool listVals) {
-
             //Check ALL the sensor values
             frontLeftVal = analogRead(frontLeft);
             frontRightVal = analogRead(frontRight);
@@ -271,6 +104,72 @@ class Robot {
             }
  
         }
+
+        void checkForNextLocation(){
+            
+            static PositionList lastPosition = PositionList::START;
+            static char place[20] = "start";
+            
+
+            if(position != lastPosition){
+                Serial.println(place);
+            }
+            lastPosition = position;
+            
+            
+            if(Action == ActionType::LINE){  
+                switch (position) {
+                    case PositionList::START:
+                        if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
+                            position = PositionList::TUNNEL;
+                            strcpy(place,"reached junction1");
+                        }
+                        break;
+
+                    case PositionList::FIRST_JUNCTION:
+
+                        if((farLeftVal == 0) && (direction == Directions::TOWARDS_PILL)){
+                            position = PositionList::TUNNEL;
+                            strcpy(place,"on tunnel track towards pill");
+                        }
+
+                        break;
+
+                    case PositionList::TUNNEL:
+                        
+                        if((farLeftVal == 1  && farRightVal == 1) && (direction == Directions::TOWARDS_PILL) ){
+                            position = PositionList::MAIN_T_JUNCTION;
+                            strcpy(place,"reached mainJunc");
+                        }
+                        if((direction == Directions::AWAY_FROM_PILL) && (farRightVal == 1)){
+                            position = PositionList::FIRST_JUNCTION;
+                        }
+
+                        //check for the sensor positions that would give rise to the next state from here
+                        break;
+                
+                }
+            }
+        }
+        void binaryFollowLine( int increaseRate) {
+            static bool leftTurn = true;
+            if (frontLeftVal > lineSensorThreshold) {
+                speedDifference = increaseRate;
+                leftTurn = true;
+            }
+            if (frontRightVal > lineSensorThreshold) {
+                speedDifference = -1 * increaseRate;
+                leftTurn = false;
+            }
+
+            //THE CONTROLLER SECTION
+            motorSpeedLeft = motorSpeed - speedDifference;
+            motorSpeedRight = motorSpeed + speedDifference;
+
+            runMotors(motorSpeedLeft,motorSpeedRight);
+        }
+
+
 
         void decideActionToPerform() {
             switch (currentTask) {
@@ -406,18 +305,31 @@ class Robot {
         }
 
         void turnLeft() {
-
-            while (Action == ActionType::TURN_LEFT){
-                runMotors(-1*motorSpeed,1*motorSpeed);
-                //WAIT FOR FAR RIGHT TO TRIGGER
-                if (farLeftVal == 1) {
-                runMotors(motorSpeed,motorSpeed);
+            runMotors(-1*motorSpeed,1*motorSpeed);
+            //WAIT FOR FAR LEFT TO TRIGGER
+            if (farLeftVal == 1) {
                 Action == ActionType::LINE;
+                if(position == PositionList::MAIN_T_JUNCTION && direction == Directions::TOWARDS_PILL){
+                    position = PositionList::PILL;
+                }
+                if(position == PositionList::MAIN_T_JUNCTION && direction == Directions::AWAY_FROM_PILL){
+                    position = PositionList::TUNNEL;
+                }
+                if(position == PositionList::BLUE_T_JUNCTION && direction == Directions::AWAY_FROM_PILL){
+                    position = PositionList::BLUE_BOX_BOTTOM;
+                }
+                if(position == PositionList::BLUE_T_JUNCTION && direction == Directions::TOWARDS_PILL){
+                    position = PositionList::BLUE_TRACK;
+                }
+                if(position == PositionList::BLUE_BOX_BOTTOM_RIGHT && direction == Directions::AWAY_FROM_PILL){
+                    position = PositionList::BLUE_BOX_RIGHT;
+                }
+                if(position == PositionList::BLUE_BOX_TOP_RIGHT && direction == Directions::AWAY_FROM_PILL){
+                    position = PositionList::BLUE_BOX_TOP;
+                }
                 Serial.println("done left junction");
                 return;
-                }
             }
-            
         }
 
         void turnRight() {           
@@ -494,12 +406,21 @@ class Robot {
         void OnOffSwitch() {
             //sets start program to true at the push of the button
             int buttonState = digitalRead(startButtonPin);
-            //Serial.println(buttonState);
+
             static bool lockSwitch = false;
-            if (buttonState ==0 && lockSwitch==false) {
-                startProgram = startProgram == true ? false : true;
+            if (buttonState ==1 && lockSwitch==false) {
+                run = run == true ? false : true;
                 lockSwitch = true;
-                Serial.println("changing program");
+                if(run = true){
+                    Serial.println("Running Program");
+                    switch (blueBoxesCollected) {
+                        case 0:
+                            action = ActionType::
+                    }
+                } else {
+                    Serial.println("Pausing Program");
+                    runMotors(0,0);
+                }
             }
             if (buttonState == 1 && lockSwitch ==true) {
                 lockSwitch = false;
@@ -540,21 +461,8 @@ void setup() {
 void loop() {
     Bot.OnOffSwitch();
     Bot.checkAllSensorValues(false);
-    //delay(1000);
-    //if(Bot.startProgram == true){
-        //delay(1000);
-        //Bot.binaryFollowLine(100);
-        //Bot.turnInCircle();
-        // Bot.moveForward();
-        Bot.checkForNextLocation();
-        Bot.decideActionToPerform();
-        Bot.runCurrentNeededAction();
-    /*} else {
-        myMotorLeft->setSpeed(0);
-        myMotorRight->setSpeed(0);
-        Serial.println("stopped");
-    }*/
-
-
+    Bot.checkForNextLocation();
+    Bot.decideActionToPerform();
+    Bot.runCurrentNeededAction();
 }
 

@@ -237,14 +237,18 @@ class Robot {
             }
         }
 
-        void binaryFollowLine(int increaseRate) {
+        void binaryFollowLine(int increaseRate,int ignoreSide = 0) { 
             //COULD WE USE PROPORTIONAL CONTROL FOR THIS IE SPEED DIFFERENCE IS PROPORTIONAL TO LINESENSOR READING (POTENTIALLY ONLY IF ITS ABOVE THRESHOLD)
             //THIS WILL ALLOW US TO BE REALLY STRAIGHT ON THE STRAGHT BITS AND SO BLOCK PLACEMENT WILL BECOME SIMPLER...
-            if (frontLeftVal > lineSensorThreshold) {
-                speedDifference = increaseRate;
+            if(ignoreSide != 1){
+                if (frontLeftVal > lineSensorThreshold) {
+                    speedDifference = increaseRate;
+                }
             }
-            if (frontRightVal > lineSensorThreshold) {
-                speedDifference = -1 * increaseRate;
+            if(ignoreSide !=2) {
+                if (frontRightVal > lineSensorThreshold) {
+                    speedDifference = -1 * increaseRate;
+                }
             }
             speedDifference *= lineFollowDampingFactor;
             motorSpeedLeft = motorSpeed - speedDifference;
@@ -256,12 +260,13 @@ class Robot {
 
         void turnLeft() {
             //WAIT FOR FAR LEFT TO TRIGGER
+            /*
             static bool leftLine;
             if(farLeftVal == 1 && leftLine == false){
                 runMotors(-1*motorSpeed,1*motorSpeed);
             }
             if(farLeftVal == 0){
-                leftLine == true;
+                leftLine = true;
             }
             if (farLeftVal == 1 && leftLine == true) {
                 currentRoutine == ActionType::DECIDE_CONTROL;
@@ -279,6 +284,25 @@ class Robot {
                     return;
                 }
             }
+            */
+            if(farLeftVal == 1){
+                binaryFollowLine(120,1);
+            }
+            if(farLeftVal == 0){
+                if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL){
+                    position = PositionList::PILL;
+                    Serial.println("Joined Pill");
+                    return;
+                }
+                if(position == PositionList::PILL){
+                    position == PositionList::TUNNEL;
+                    direction == Directions::AWAY_FROM_PILL;
+                    Serial.println("Turned onto Tunnel");
+                    return;
+                }
+            }
+
+            
             
             return;
         }

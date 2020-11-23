@@ -15,7 +15,7 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor * myMotorLeft = AFMS.getMotor(1);
 Adafruit_DCMotor * myMotorRight = AFMS.getMotor(2);
 
-
+bool run = false;
 
 
 class Robot {
@@ -40,7 +40,7 @@ class Robot {
 
         /* MOTORS */
         float motorSpeed = 70; //EDIT THIS 
-        float lineFollowDampingFactor = 0.9
+        float lineFollowDampingFactor = 0.9;
         float motorSpeedLeft;
         float motorSpeedRight;
         float speedDifference = 0;
@@ -66,14 +66,18 @@ class Robot {
         /* VARIABLES */
         int processTime = 0;
         bool testMode = true;
-        static bool run = false;
-        static int boxesCollected = 0;
-        static bool clockwise = true;
-        static bool onTargetBox; 
-        static int numTargetLocationPassed = 0;
+        int boxesCollected = 0;
+        bool clockwise = true;
+        bool onTargetBox; 
+        int numTargetLocationPassed = 0;
 
         enum class boxColours {NONE,RED,BLUE};
         boxColours boxColour = boxColours::NONE;
+
+        enum class ActionType {
+        CONTROL_ONE, CONTROL_TWO, CONTROL_TEST, DECIDE_CONTROL,TURN_HOME,TURN_LEFT,
+        }; //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
+        ActionType currentRoutine = ActionType::DECIDE_CONTROL;
 
         void OnOffSwitch() {
             //sets start program to true at the push of the button
@@ -86,12 +90,12 @@ class Robot {
                 if(run = true){
                     Serial.println("Running Program");
                     if(testMode == true){
-                        action = ActionType::CONTROL_TEST;
+                        currentRoutine = ActionType::CONTROL_TEST;
                         return;
                     }
-                    switch (blueBoxesCollected) {
+                    switch (boxesCollected) {
                         case 0:
-                            action = ActionType::CONTROL_ONE;
+                            currentRoutine = ActionType::CONTROL_ONE;
                             return;
                         //add other cases here;
                         
@@ -155,13 +159,7 @@ class Robot {
                 Serial.println("Reached Blue Track");
                 return;
             }
-
         }
-
-        enum class ActionType {
-            CONTROL_ONE, CONTROL_TWO, CONTROL_TEST, DECIDE_CONTROL,TURN_HOME,TURN_LEFT,
-        }; //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
-        ActionType currentRoutine = ActionType::DECIDE_CONTROL;
 
         void subRoutine() {
             switch(currentRoutine) {
@@ -258,7 +256,7 @@ class Robot {
         void turnLeft() {
             //WAIT FOR FAR LEFT TO TRIGGER
             if (farLeftVal == 1) {
-                Action == ActionType::DECIDE_CONTROL;
+                currentRoutine == ActionType::DECIDE_CONTROL;
                 runMotors(0,0);
 
                 if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL){

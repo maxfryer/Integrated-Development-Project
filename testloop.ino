@@ -84,10 +84,10 @@ class Robot {
             int buttonState = digitalRead(startButtonPin);
             static bool lockSwitch = false;
 
-            if (buttonState ==1 && lockSwitch==false) {
+            if (buttonState ==0 && lockSwitch==false) {
                 run = run == true ? false : true;
                 lockSwitch = true;
-                if(run = true){
+                if(run == true){
                     Serial.println("Running Program");
                     if(testMode == true){
                         currentRoutine = ActionType::CONTROL_TEST;
@@ -105,7 +105,7 @@ class Robot {
                     runMotors(0,0);
                 }
             }
-            if (buttonState == 0 && lockSwitch ==true) {
+            if (buttonState == 1 && lockSwitch ==true) {
                 lockSwitch = false;
             }
         }
@@ -256,12 +256,12 @@ class Robot {
 
         void turnLeft() {
             //WAIT FOR FAR LEFT TO TRIGGER
-            static bool leftLine;
+            static bool leftLine = false;
             if(farLeftVal == 1 && leftLine == false){
                 runMotors(-1*motorSpeed,1*motorSpeed);
             }
             if(farLeftVal == 0){
-                leftLine == true;
+                leftLine = true;
             }
             if (farLeftVal == 1 && leftLine == true) {
                 currentRoutine == ActionType::DECIDE_CONTROL;
@@ -340,7 +340,7 @@ void setup() {
 void loop() {
     Bot.OnOffSwitch();
     if(run == true){
-        Bot.checkAllSensorValues(true);
+        Bot.checkAllSensorValues(false);
         Bot.checkForNextLocation(); 
         Bot.subRoutine();
     }

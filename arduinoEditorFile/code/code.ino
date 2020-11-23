@@ -27,7 +27,7 @@ class Robot {
         int offAxisLeft = 4;
         int backMiddle = 5;
         int startButtonPin = 2;
-        int distanceSensor = A5;
+        int distanceSensor = A2;
 
         /* SENSOR VALUES */
         int frontLeftVal = 0; //sensor values
@@ -207,6 +207,7 @@ class Robot {
 
         void followLine() {
             //what to do if robot goes over target box note sensors must be in line for this code to work
+            //incorperate in decision code
             if(position == PositionList::PILL) {
                 if(onTargetBox == true){
                     if((frontLeftVal > lineSensorThreshold || frontRightVal > lineSensorThreshold) && farRightVal == 0 && farLeftVal == 0) {
@@ -217,7 +218,7 @@ class Robot {
                         return;
                     }
                 }
-                else if(farLeftVal > lineSensorThreshold && farRightVal > lineSensorThreshold){
+                else if(farLeftVal == 1 && farRightVal == 1){
                     //Might not trigger if very angled, see proportional control though was originally 'or' not 'and'
                     Serial.println("On Target Location");
                     onTargetBox = true;
@@ -255,7 +256,14 @@ class Robot {
 
         void turnLeft() {
             //WAIT FOR FAR LEFT TO TRIGGER
-            if (farLeftVal == 1) {
+            static bool leftLine;
+            if(farLeftVal == 1 && leftLine == false){
+                runMotors(-1*motorSpeed,1*motorSpeed);
+            }
+            if(farLeftVal == 0){
+                leftLine == true;
+            }
+            if (farLeftVal == 1 && leftLine == true) {
                 currentRoutine == ActionType::DECIDE_CONTROL;
                 runMotors(0,0);
 
@@ -271,7 +279,7 @@ class Robot {
                     return;
                 }
             }
-            runMotors(-1*motorSpeed,1*motorSpeed);
+            
             return;
         }
 

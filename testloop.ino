@@ -218,7 +218,7 @@ class Robot {
                         return;
                     }
                 }
-                else if(farLeftVal == 1 && farRightVal == 1{
+                else if(farLeftVal == 1 && farRightVal == 1){
                     //Might not trigger if very angled, see proportional control though was originally 'or' not 'and'
                     Serial.println("On Target Location");
                     onTargetBox = true;

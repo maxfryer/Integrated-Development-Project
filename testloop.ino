@@ -207,6 +207,7 @@ class Robot {
 
         void followLine() {
             //what to do if robot goes over target box note sensors must be in line for this code to work
+            //incorperate in decision code
             if(position == PositionList::PILL) {
                 if(onTargetBox == true){
                     if((frontLeftVal > lineSensorThreshold || frontRightVal > lineSensorThreshold) && farRightVal == 0 && farLeftVal == 0) {
@@ -217,7 +218,7 @@ class Robot {
                         return;
                     }
                 }
-                else if(farLeftVal > lineSensorThreshold && farRightVal > lineSensorThreshold){
+                else if(farLeftVal == 1 && farRightVal == 1{
                     //Might not trigger if very angled, see proportional control though was originally 'or' not 'and'
                     Serial.println("On Target Location");
                     onTargetBox = true;
@@ -330,8 +331,8 @@ void setup() {
 
 
 void loop() {
+    Bot.OnOffSwitch();
     if(run == true){
-        Bot.OnOffSwitch();
         Bot.checkAllSensorValues(true);
         Bot.checkForNextLocation(); 
         Bot.subRoutine();

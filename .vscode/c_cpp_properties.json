@@ -1,11 +1,10 @@
-
 {
     "configurations": [
         {
             "name": "Win32",
             "defines": [
                 "ARDUINO=10800",
-                "USBCON" 
+                "USBCON"
             ],
             "includePath": [
                 "${workspaceRoot}",
@@ -13,7 +12,8 @@
                 "C:\\Program Files (x86)\\Arduino\\tools\\**",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\**",
                 "C:\\Program Files (x86)\\Arduino\\libraries\\**",
-                "C:\\Users\\Carl1\\Documents\\Arduino\\libraries\\**"
+                "C:\\Users\\Carl1\\Documents\\Arduino\\libraries\\**",
+                "C:\\Users\\maxfr\\OneDrive\\Documents\\Arduino\\libraries\\**"
             ],
             "forcedInclude": [
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino\\Arduino.h"

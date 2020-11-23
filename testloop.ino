@@ -137,45 +137,29 @@ class Robot {
         }
 
         void checkForNextLocation(){
-            //ENSURES LOCATION IS KEPT UP TO DATE WHEN FOLLOWING A LINE
-
+            //ENSURES LOCATION IS KEPT UP TO DATE WHEN FOLLOWING A LINE MAYBE COULD BE INTEGRATED WITH LINE FOLLOWING CODE, IN FACT PROBABLY SHOULD BE
             static PositionList lastPosition = PositionList::START;
-            static char place[20] = "start";
-
-            if(position != lastPosition){
-                Serial.println(place);
-            }
-            lastPosition = position;
             
-            
-            if(Action == ActionType::LINE){  
-                switch (position) {
-                    case PositionList::START:
-                        if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
-                            position = PositionList::TUNNEL;
-                            strcpy(place,"reached junction1");
-                        }
-                        break;
-
-                    case PositionList::TUNNEL:
-                        
-                        if((farLeftVal == 1  && farRightVal == 1) && (direction == Directions::TOWARDS_PILL) ){
-                            position = PositionList::MAIN_T_JUNCTION;
-                            strcpy(place,"reached mainJunc");
-                        }
-                        if((direction == Directions::AWAY_FROM_PILL) && (farRightVal == 1)){
-                            position = PositionList::FIRST_JUNCTION;
-                        }
-
-                        //check for the sensor positions that would give rise to the next state from here
-                        break;
-                }
+            if(position==PositionList::START && (farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
+                position = PositionList::TUNNEL;
+                Serial.println("Reached Tunnel");
+                return;
             }
+            if(position == PositionList::BLUE_TRACK && farRightVal == 1 && direction == Directions::TOWARDS_PILL){
+                position = PositionList::TUNNEL;
+                Serial.println("Reached Tunnel");
+                return;
+            }
+            if(position == PositionList::TUNNEL && direction == Directions::AWAY_FROM_PILL && farLeftVal == 1){
+                position = PositionList::BLUE_TRACK;
+                Serial.println("Reached Blue Track");
+                return;
+            }
+
         }
 
         enum class ActionType {
-            LINE, TURN_LEFT, TURN_RIGHT, TURN_ONE_EIGHTY, DETECT, PICKUP, BLUE_PLACE, RED_PLACE,
-            CONTROL_ONE, CONTROL_TWO, CONTROL_TEST, DECIDE_CONTROL,TURN_HOME,
+            CONTROL_ONE, CONTROL_TWO, CONTROL_TEST, DECIDE_CONTROL,TURN_HOME,TURN_LEFT,
         }; //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
         ActionType currentRoutine = ActionType::DECIDE_CONTROL;
 

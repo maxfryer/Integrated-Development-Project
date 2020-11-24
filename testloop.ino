@@ -72,7 +72,7 @@ class Robot {
         Directions direction = Directions::TOWARDS_PILL;
 
         /* VARIABLES */
-        int testNumber = 0;
+        
         // 0 -- Test left turns 
         // 1 -- Test right turns
         // 2 -- 180 degree turns
@@ -80,6 +80,7 @@ class Robot {
         // 4 -- line follow and detect and pickup if blue
         // 5 -- line follow and detect and reverse if red
         // 6 -- line follow round pill then turn back to start
+        int testNumber = 0;
         bool testMode = true;
         int boxesCollected = 0;
         bool clockwise = true;
@@ -160,9 +161,42 @@ class Robot {
             frontRightVal = analogRead(frontRight);
             
             backMiddleVal = digitalRead(backMiddle);
-            
-
             distanceFrontVal = analogRead(distanceSensor);
+
+            //NEW METHOD OF ENSURING RELIABILITY (TLDR:TAKES AT LEAST 5 OF LAST 10 READINGS TO CHANGE)
+            static int farLeftTotal = 0;
+            static int farRightTotal = 0;
+
+            for(int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-2; i++){
+                //shifts last 9 readings
+                leftVals[i] = leftVals[i+1];
+                rightVals[i] = rightVals[i+1];
+            }
+
+            //adds most recent reading
+            leftVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisLeft);
+            rightVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisRight);
+
+            for(int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-1; i++){
+                //adds total number of 1s (and by extension 0s)
+                farLeftTotal += leftVals[i];
+                farRightTotal += rightVals[i];
+            }
+
+            //N.B "5" MUST BE CHANGED TO HALF THE NUMBER OF SENSORS
+            if(farLeftTotal>5){
+                farLeftVal = 1;
+            }
+            if(farLeftTotal<5){
+                farLeftVal= 0;
+            }
+            if(farRightTotal>5){
+                farRightVal = 1;
+            }
+            if(farRightTotal<5){
+                farRightVal = 0;
+            }
+            //IF 5 DOENSN'T CHANGE...
 
             if(listVals){
                 Serial.print("front left val:  ");

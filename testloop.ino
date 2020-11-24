@@ -33,14 +33,16 @@ class Robot {
         int ledPinSecond = 10;
         int ledPinThird = 8;
 
+        static const int NUMBER_OF_SENSOR_POSITIVES = 10;
+
         /* SENSOR VALUES */
         int frontLeftVal = 0; //sensor values
         
         int frontRightVal = 0;
         int farRightVal = 0;
-        int rightVals[10];
+        int rightVals[NUMBER_OF_SENSOR_POSITIVES];
         int farLeftVal = 0;
-        int leftVals[10];
+        int leftVals[NUMBER_OF_SENSOR_POSITIVES];
         int backMiddleVal = 0;
         int distanceFrontVal = 0;
         int distanceThreshold = 0;
@@ -126,28 +128,28 @@ class Robot {
         float checkAllSensorValues(bool listVals) {
             //Check ALL the sensor values
             farLeftVal = 1;
-            for (int i = 0; i <9; i++){
+            for (int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-1; i++){
                 leftVals[i] = leftVals[i+1];
                 if(leftVals[i] == 0){
                     farLeftVal = 0;
                 }
             }
-            leftVals[9] = digitalRead(offAxisLeft);
+            leftVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisLeft);
             if(farLeftVal == 1){
-                farLeftVal = leftVals[9];
+                farLeftVal = leftVals[NUMBER_OF_SENSOR_POSITIVES-1];
             }
 
 
             farRightVal = 1;
-            for (int i = 0; i <9; i++){
+            for (int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-1; i++){
                 rightVals[i] = rightVals[i+1];
                 if(rightVals[i] == 0){
                     farRightVal = 0;
                 }
             }
-            rightVals[9] = digitalRead(offAxisRight);
+            rightVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisRight);
             if(farRightVal == 1){
-                farRightVal = rightVals[9];
+                farRightVal = rightVals[NUMBER_OF_SENSOR_POSITIVES-1];
             }
 
 

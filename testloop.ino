@@ -44,7 +44,6 @@ class Robot {
         int leftVals[10];
         int backMiddleVal = 0;
         int distanceFrontVal = 0;
-        int distanceThreshold = 0;
 
         /* MOTORS */
         float motorSpeed = 70; //EDIT THIS 
@@ -65,7 +64,7 @@ class Robot {
             BLUE_TRACK,BLUE_BOX_BOTTOM,BLUE_BOX_RIGHT,
             BLUE_BOX_TOP,
         };
-        PositionList position = PositionList::START;
+        PositionList position = PositionList::TUNNEL;
 
         /* DIRECTIONS */
         enum class Directions {TOWARDS_PILL,AWAY_FROM_PILL};
@@ -92,7 +91,8 @@ class Robot {
         enum class ActionType {
         CONTROL_TEST_ZERO, CONTROL_TEST_ONE, CONTROL_TEST_TWO,
         CONTROL_TEST_THREE, CONTROL_TEST_FOUR, CONTROL_TEST_FIVE, CONTROL_TEST_SIX, 
-        DECIDE_CONTROL, TURN_HOME, TURN_LEFT, TURN_RIGHT, CONTROL_ONE, CONTROL_TWO, 
+        DECIDE_CONTROL, TURN_HOME, TURN_LEFT, TURN_RIGHT, TURN_ONEEIGHTY,
+        CONTROL_ONE, CONTROL_TWO, 
         }; //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
         ActionType currentRoutine = ActionType::DECIDE_CONTROL;
 
@@ -183,7 +183,7 @@ class Robot {
 
         void subRoutine() {
             switch(currentRoutine) {
-                case ActionType:: DECIDE_CONTROL:
+                case ActionType::DECIDE_CONTROL:
                     //if test mode activated will go straight there without considering no. boxes collected
                     if(testMode == true){
                         if(testNumber == 0){
@@ -193,13 +193,21 @@ class Robot {
                         }
                         if(testNumber == 1){
                             currentRoutine = ActionType::CONTROL_TEST_ONE;
-                            Serial.println("Continuing to Test Loop 0");
+                            Serial.println("Continuing to Test Loop 1");
+                            break;
+                        }
+                        if(testNumber == 2){
+                            currentRoutine = ActionType::CONTROL_TEST_TWO;
+                            Serial.println("Continuing to Test Loop 2");
                             break;
                         }
                         if(testNumber == 6){
                             currentRoutine = ActionType::CONTROL_TEST_SIX;
                             Serial.println("Continuing to Test Loop 6");
                             break;
+                        }
+                        else{
+                            Serial.println("Reached end of Decide Control and nothing has been Decided");
                         }
                     }else {
                         if(boxesCollected == 0){
@@ -211,7 +219,8 @@ class Robot {
                             break;
                         }
                     }
-                case ActionType:: CONTROL_TEST_ZERO:
+                case ActionType::CONTROL_TEST_ZERO:
+                    //TESTS TURNING LEFT
                     if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
                         Serial.println("Control Loop 0 - TURN LEFT ONTO PILL");
                         currentRoutine = ActionType::TURN_LEFT;
@@ -221,17 +230,29 @@ class Robot {
                         //n.b followLine includes binaryfollowline(70)
                         break;
                     }
-                case ActionType:: CONTROL_TEST_ZERO:
+                case ActionType:: CONTROL_TEST_ONE:
+                    //TESTS TURNING RIGHT
                     if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
-                        Serial.println("Control Loop 0 - TURN LEFT ONTO PILL");
-                        currentRoutine = ActionType::TURN_LEFT;
+                        Serial.println("Control Loop 1 - TURN RIGHT ONTO PILL");
+                        currentRoutine = ActionType::TURN_RIGHT;
                         break;
                     }else {
                         followLine();
                         //n.b followLine includes binaryfollowline(70)
                         break;
                     }
-                case ActionType:: CONTROL_TEST_SIX:
+                case ActionType::CONTROL_TEST_TWO:
+                    //TESTS TURNING FULL 180 DEGREES
+                    if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && distanceFrontVal> distanceSensorThreshold){
+                        Serial.println("Control Loop 2 - TURN 180");
+                        currentRoutine = ActionType::TURN_ONEEIGHTY;
+                        break;
+                    }else {
+                        followLine();
+                        //n.b followLine includes binaryfollowline(70)
+                        break;
+                    }
+                case ActionType::CONTROL_TEST_SIX:
                 
                     if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
                         Serial.println("Turn onto pill");
@@ -256,13 +277,20 @@ class Robot {
                         //n.b followLine includes binaryfollowline(70)
                         break;
                     }
-                case ActionType:: TURN_LEFT:
+                case ActionType::TURN_LEFT:
                     turnLeft();
                     break;
-                case ActionType:: TURN_HOME:
+                case ActionType::TURN_RIGHT:
+                    turnRight();
+                    break;
+                case ActionType::TURN_ONEEIGHTY:
+                    turnAround();
+                    break;
+                case ActionType::TURN_HOME:
                     turnHome(70);
                     break;
-                
+                    
+            
 
             }
         }
@@ -320,6 +348,13 @@ class Robot {
             return;
         }
 
+        void turnAround() {
+            return;
+        }
+
+        void turnRight() {
+            return;
+        }
 
         void turnLeft() {
             //WAIT FOR FAR LEFT TO TRIGGER

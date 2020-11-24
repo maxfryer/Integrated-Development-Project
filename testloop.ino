@@ -4,7 +4,6 @@
 //SET THE CONTROLLER GAINS AT THE START on the line Robot Bot(2,0.5,0.5)
 //these can be changed, eg for a pure proportional, choose (2,0,0)
 //(proportional, integral, derivative)
-
 #include <Wire.h>
 
 #include <Adafruit_MotorShield.h>
@@ -34,14 +33,16 @@ class Robot {
         int ledPinSecond = 10;
         int ledPinThird = 8;
 
+        static const int NUMBER_OF_SENSOR_POSITIVES = 10;
+
         /* SENSOR VALUES */
         int frontLeftVal = 0; //sensor values
         
         int frontRightVal = 0;
         int farRightVal = 0;
-        int rightVals[10];
+        int rightVals[NUMBER_OF_SENSOR_POSITIVES];
         int farLeftVal = 0;
-        int leftVals[10];
+        int leftVals[NUMBER_OF_SENSOR_POSITIVES];
         int backMiddleVal = 0;
         int distanceFrontVal = 0;
 
@@ -129,10 +130,35 @@ class Robot {
 
         float checkAllSensorValues(bool listVals) {
             //Check ALL the sensor values
+            farLeftVal = 1;
+            for (int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-1; i++){
+                leftVals[i] = leftVals[i+1];
+                if(leftVals[i] == 0){
+                    farLeftVal = 0;
+                }
+            }
+            leftVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisLeft);
+            if(farLeftVal == 1){
+                farLeftVal = leftVals[NUMBER_OF_SENSOR_POSITIVES-1];
+            }
+
+
+            farRightVal = 1;
+            for (int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-1; i++){
+                rightVals[i] = rightVals[i+1];
+                if(rightVals[i] == 0){
+                    farRightVal = 0;
+                }
+            }
+            rightVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisRight);
+            if(farRightVal == 1){
+                farRightVal = rightVals[NUMBER_OF_SENSOR_POSITIVES-1];
+            }
+
+
             frontLeftVal = analogRead(frontLeft);
             frontRightVal = analogRead(frontRight);
-            farRightVal = digitalRead(offAxisRight);
-            farLeftVal = digitalRead(offAxisLeft);
+            
             backMiddleVal = digitalRead(backMiddle);
             
 
@@ -358,10 +384,7 @@ class Robot {
 
         void turnLeft() {
             //WAIT FOR FAR LEFT TO TRIGGER
-            for (int i = 1; i <10; i++){
-                leftVals[i] = leftVals[i+1];
-            }
-            leftVals[9] = farLeftVal;
+
             static bool leftLine =false;
             if(farLeftVal == 1 && leftLine == false){
                 runMotors(-1*motorSpeed,1*motorSpeed);
@@ -385,30 +408,7 @@ class Robot {
                     Serial.println("Turned onto Tunnel");
                     return;
                 }
-            }
-            
-            // runMotors(-1*motorSpeed,1*motorSpeed);
-
-            // if(farLeftVal == 0){
-            //     currentRoutine == ActionType::DECIDE_CONTROL;
-                // runMotors(0,0);
-
-            //     if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL){
-            //         position = PositionList::PILL;
-            //         Serial.println("Joined Pill");
-            //         return;
-            //     }
-
-            //     if(position == PositionList::PILL && numTargetLocationPassed==2){
-            //         position == PositionList::TUNNEL;
-            //         direction == Directions::AWAY_FROM_PILL;
-            //         Serial.println("Turned onto Tunnel");
-            //         return;
-            //     }
-            // }
-
-            
-            
+            }          
             return;
         }
 
@@ -449,7 +449,7 @@ class Robot {
             myMotorRight->setSpeed(abs(motorRightVal));
             myMotorRight->run(motorDirectionRight);
 
-            Serial.println("motors running");
+            //Serial.println("motors running");
         }
 };
 

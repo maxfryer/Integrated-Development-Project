@@ -509,9 +509,11 @@ void setup() {
 void loop() {
     Bot.OnOffSwitch();
     if(run == true){
-        Bot.checkAllSensorValues(false);
+        Bot.checkAllSensorValues(true);
         Bot.checkForNextLocation(); 
         Bot.subRoutine();
-    } 
+    } else {
+        Bot.runMotors(0,0);
+    }
 }
 

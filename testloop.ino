@@ -4,7 +4,6 @@
 //SET THE CONTROLLER GAINS AT THE START on the line Robot Bot(2,0.5,0.5)
 //these can be changed, eg for a pure proportional, choose (2,0,0)
 //(proportional, integral, derivative)
-
 #include <Wire.h>
 
 #include <Adafruit_MotorShield.h>
@@ -126,10 +125,35 @@ class Robot {
 
         float checkAllSensorValues(bool listVals) {
             //Check ALL the sensor values
+            farLeftVal = 1;
+            for (int i = 0; i <9; i++){
+                leftVals[i] = leftVals[i+1];
+                if(leftVals[i] == 0){
+                    farLeftVal = 0;
+                }
+            }
+            leftVals[9] = digitalRead(offAxisLeft);
+            if(farLeftVal == 1){
+                farLeftVal = leftVals[9];
+            }
+
+
+            farRightVal = 1;
+            for (int i = 0; i <9; i++){
+                rightVals[i] = rightVals[i+1];
+                if(rightVals[i] == 0){
+                    farRightVal = 0;
+                }
+            }
+            rightVals[9] = digitalRead(offAxisRight);
+            if(farRightVal == 1){
+                farRightVal = rightVals[9];
+            }
+
+
             frontLeftVal = analogRead(frontLeft);
             frontRightVal = analogRead(frontRight);
-            farRightVal = digitalRead(offAxisRight);
-            farLeftVal = digitalRead(offAxisLeft);
+            
             backMiddleVal = digitalRead(backMiddle);
             
 
@@ -282,10 +306,7 @@ class Robot {
 
         void turnLeft() {
             //WAIT FOR FAR LEFT TO TRIGGER
-            for (int i = 1; i <10; i++){
-                leftVals[i] = leftVals[i+1];
-            }
-            leftVals[9] = farLeftVal;
+
             static bool leftLine =false;
             if(farLeftVal == 1 && leftLine == false){
                 runMotors(-1*motorSpeed,1*motorSpeed);

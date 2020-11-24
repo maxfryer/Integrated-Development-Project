@@ -29,22 +29,24 @@ class Robot {
         int distanceSensor = A2;
         
 
-        int ledPinFirst = 9;
-        int ledPinSecond = 10;
-        int ledPinThird = 8;
+        int ledPinFirst = 13;
+        int ledPinSecond = 12;
+        int ledPinThird = 11;
 
         static const int NUMBER_OF_SENSOR_POSITIVES = 10;
 
         /* SENSOR VALUES */
-        int frontLeftVal = 0; //sensor values
-        
+        int frontLeftVal = 0;
         int frontRightVal = 0;
         int farRightVal = 0;
-        int rightVals[NUMBER_OF_SENSOR_POSITIVES];
+        int rightVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         int farLeftVal = 0;
-        int leftVals[NUMBER_OF_SENSOR_POSITIVES];
+        int leftVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         int backMiddleVal = 0;
+        int middleVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         int distanceFrontVal = 0;
+        int distanceVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
+        float distanceAvr;
 
         /* MOTORS */
         float motorSpeed = 70; //EDIT THIS 
@@ -55,7 +57,7 @@ class Robot {
 
         /* THRESHOLDS */
         int lineSensorThreshold = 300;
-        int distanceSensorThreshold = 100;
+        float distanceSensorThreshold = 460;
 
         /* SUBROUTINES */
         
@@ -65,14 +67,14 @@ class Robot {
             BLUE_TRACK,BLUE_BOX_BOTTOM,BLUE_BOX_RIGHT,
             BLUE_BOX_TOP,
         };
-        PositionList position = PositionList::TUNNEL;
+        PositionList position = PositionList::START;
 
         /* DIRECTIONS */
         enum class Directions {TOWARDS_PILL,AWAY_FROM_PILL};
         Directions direction = Directions::TOWARDS_PILL;
 
         /* VARIABLES */
-        int testNumber = 0;
+        
         // 0 -- Test left turns 
         // 1 -- Test right turns
         // 2 -- 180 degree turns
@@ -80,7 +82,8 @@ class Robot {
         // 4 -- line follow and detect and pickup if blue
         // 5 -- line follow and detect and reverse if red
         // 6 -- line follow round pill then turn back to start
-        bool testMode = true;
+        int testNumber = 6;
+        bool testMode = false;
         int boxesCollected = 0;
         bool clockwise = true;
         bool onTargetBox; 
@@ -107,9 +110,9 @@ class Robot {
                 lockSwitch = true;
                 if(run == true){
                     Serial.println("Running Program");
-                    digitalWrite(ledPinFirst, HIGH);
-                    digitalWrite(ledPinSecond, HIGH);
-                    digitalWrite(ledPinThird,HIGH);
+                    // digitalWrite(ledPinFirst, HIGH);
+                    // digitalWrite(ledPinSecond, HIGH);
+                    // digitalWrite(ledPinThird,HIGH);
 
                     currentRoutine = ActionType::DECIDE_CONTROL;
                     return;
@@ -130,39 +133,70 @@ class Robot {
 
         float checkAllSensorValues(bool listVals) {
             //Check ALL the sensor values
-            farLeftVal = 1;
-            for (int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-1; i++){
-                leftVals[i] = leftVals[i+1];
-                if(leftVals[i] == 0){
-                    farLeftVal = 0;
-                }
-            }
-            leftVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisLeft);
-            if(farLeftVal == 1){
-                farLeftVal = leftVals[NUMBER_OF_SENSOR_POSITIVES-1];
-            }
-
-
-            farRightVal = 1;
-            for (int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-1; i++){
-                rightVals[i] = rightVals[i+1];
-                if(rightVals[i] == 0){
-                    farRightVal = 0;
-                }
-            }
-            rightVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisRight);
-            if(farRightVal == 1){
-                farRightVal = rightVals[NUMBER_OF_SENSOR_POSITIVES-1];
-            }
-
 
             frontLeftVal = analogRead(frontLeft);
             frontRightVal = analogRead(frontRight);
             
-            backMiddleVal = digitalRead(backMiddle);
-            
+            //NEW METHOD OF ENSURING RELIABILITY (TLDR:TAKES AT LEAST 5 OF LAST 10 READINGS TO CHANGE)
+            static int farLeftTotal = 0;
+            static int farRightTotal = 0;
+            static int backMiddleTotal = 0;
+            static int distanceTotal = 0;
 
-            distanceFrontVal = analogRead(distanceSensor);
+            //subtracts 10th value
+            farLeftTotal -= leftVals[0];
+            farRightTotal -= rightVals[0];
+            backMiddleTotal -= middleVals[0];
+            distanceTotal -= distanceVals[0];
+
+            for(int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-2; i++){
+                //shifts last 9 readings
+                leftVals[i] = leftVals[i+1];
+                rightVals[i] = rightVals[i+1];
+                middleVals[i] = middleVals[i+1];
+                distanceVals[i] = distanceVals[i+1];
+            }
+
+            //adds most recent reading to array
+            leftVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisLeft);
+            rightVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisRight);
+            middleVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(backMiddle);
+            distanceVals[NUMBER_OF_SENSOR_POSITIVES-1] = analogRead(distanceSensor);
+
+            //adds this to total
+            farLeftTotal += leftVals[NUMBER_OF_SENSOR_POSITIVES-1];
+            farRightTotal += rightVals[NUMBER_OF_SENSOR_POSITIVES-1];
+            backMiddleTotal += middleVals[NUMBER_OF_SENSOR_POSITIVES-1];
+            distanceTotal += distanceVals[NUMBER_OF_SENSOR_POSITIVES-1];
+
+            //decides outcome based on totals
+            //N.B "5" MUST BE CHANGED TO HALF THE NUMBER OF SENSORS
+            //LEFT
+            if(farLeftTotal>5){
+                farLeftVal = 1;
+            }
+            if(farLeftTotal<5){
+                farLeftVal= 0;
+            }
+            //RIGHT
+            if(farRightTotal>5){
+                farRightVal = 1;
+            }
+            if(farRightTotal<5){
+                farRightVal = 0;
+            }
+            //BACK
+            if(backMiddleTotal>5){
+                backMiddleVal = 1;
+            }
+            if(backMiddleTotal<5){
+                backMiddleVal= 0;
+            }
+            //IF 5 DOENSN'T CHANGE... HYSTERESIS I GUESS
+            
+            //DISTANCE
+            distanceAvr = distanceTotal / NUMBER_OF_SENSOR_POSITIVES;
+            
 
             if(listVals){
                 Serial.print("front left val:  ");
@@ -451,6 +485,20 @@ class Robot {
 
             //Serial.println("motors running");
         }
+
+        void flashLED(){
+            static int timer = 0;
+            int state = LOW;
+            timer += 1;
+            if(timer > 100) timer = 1;
+            Serial.println(timer);
+            if(timer % 100 == 0 ){
+              Serial.println("flashing");
+                state = (state == HIGH) ? LOW : HIGH;
+            }
+
+            digitalWrite(ledPinFirst,state);
+        }
 };
 
 
@@ -475,9 +523,10 @@ void setup() {
 void loop() {
     Bot.OnOffSwitch();
     if(run == true){
-        Bot.checkAllSensorValues(true);
-        Bot.checkForNextLocation(); 
-        Bot.subRoutine();
+        Bot.flashLED();
+        Bot.checkAllSensorValues(false);
+        //Bot.checkForNextLocation(); 
+        //Bot.subRoutine();
     } else {
         Bot.runMotors(0,0);
     }

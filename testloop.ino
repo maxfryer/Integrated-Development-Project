@@ -29,9 +29,9 @@ class Robot {
         int distanceSensor = A2;
         
 
-        int ledPinFirst = 9;
-        int ledPinSecond = 10;
-        int ledPinThird = 8;
+        int ledPinFirst = 13;
+        int ledPinSecond = 12;
+        int ledPinThird = 11;
 
         static const int NUMBER_OF_SENSOR_POSITIVES = 10;
 
@@ -67,7 +67,7 @@ class Robot {
             BLUE_TRACK,BLUE_BOX_BOTTOM,BLUE_BOX_RIGHT,
             BLUE_BOX_TOP,
         };
-        PositionList position = PositionList::TUNNEL;
+        PositionList position = PositionList::START;
 
         /* DIRECTIONS */
         enum class Directions {TOWARDS_PILL,AWAY_FROM_PILL};
@@ -82,8 +82,8 @@ class Robot {
         // 4 -- line follow and detect and pickup if blue
         // 5 -- line follow and detect and reverse if red
         // 6 -- line follow round pill then turn back to start
-        int testNumber = 0;
-        bool testMode = true;
+        int testNumber = 6;
+        bool testMode = false;
         int boxesCollected = 0;
         bool clockwise = true;
         bool onTargetBox; 
@@ -487,7 +487,16 @@ class Robot {
         }
 
         void flashLED(){
-            state = (state == HIGH) ? LOW : HIGH;
+            static int timer = 0;
+            int state = LOW;
+            timer += 1;
+            if(timer > 100) timer = 1;
+            Serial.println(timer);
+            if(timer % 100 == 0 ){
+              Serial.println("flashing");
+                state = (state == HIGH) ? LOW : HIGH;
+            }
+
             digitalWrite(ledPinFirst,state);
         }
 };
@@ -514,12 +523,11 @@ void setup() {
 void loop() {
     Bot.OnOffSwitch();
     if(run == true){
-        Bot.flashLED;
+        Bot.flashLED();
         Bot.checkAllSensorValues(false);
-        Bot.checkForNextLocation(); 
-        Bot.subRoutine();
+        //Bot.checkForNextLocation(); 
+        //Bot.subRoutine();
     } else {
         Bot.runMotors(0,0);
     }
 }
-

@@ -72,7 +72,14 @@ class Robot {
         Directions direction = Directions::TOWARDS_PILL;
 
         /* VARIABLES */
-        int processTime = 0;
+        int testNumber = 0;
+        // 0 -- Test left turns 
+        // 1 -- Test right turns
+        // 2 -- 180 degree turns
+        // 3 -- line follow and detect
+        // 4 -- line follow and detect and pickup if blue
+        // 5 -- line follow and detect and reverse if red
+        // 6 -- line follow round pill then turn back to start
         bool testMode = true;
         int boxesCollected = 0;
         bool clockwise = true;
@@ -83,7 +90,9 @@ class Robot {
         boxColours boxColour = boxColours::NONE;
 
         enum class ActionType {
-        CONTROL_ONE, CONTROL_TWO, CONTROL_TEST, DECIDE_CONTROL,TURN_HOME,TURN_LEFT,
+        CONTROL_TEST_ZERO, CONTROL_TEST_ONE, CONTROL_TEST_TWO,
+        CONTROL_TEST_THREE, CONTROL_TEST_FOUR, CONTROL_TEST_FIVE, CONTROL_TEST_SIX, 
+        DECIDE_CONTROL, TURN_HOME, TURN_LEFT, TURN_RIGHT, CONTROL_ONE, CONTROL_TWO, 
         }; //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
         ActionType currentRoutine = ActionType::DECIDE_CONTROL;
 
@@ -100,23 +109,17 @@ class Robot {
                     digitalWrite(ledPinFirst, HIGH);
                     digitalWrite(ledPinSecond, HIGH);
                     digitalWrite(ledPinThird,HIGH);
-                    if(testMode == true){
-                        currentRoutine = ActionType::CONTROL_TEST;
-                        return;
-                    }
-                    switch (boxesCollected) {
-                        case 0:
-                            currentRoutine = ActionType::CONTROL_ONE;
-                            return;
-                        //add other cases here;
-                        
-                    }
+
+                    currentRoutine = ActionType::DECIDE_CONTROL;
+                    return;
+
                 } else {
                     Serial.println("Pausing Program");
                     runMotors(0,0);
                     digitalWrite(ledPinFirst, LOW);
                     digitalWrite(ledPinSecond, LOW);
                     digitalWrite(ledPinThird,LOW);
+                    return;
                 }
             }
             if (buttonState == 1 && lockSwitch ==true) {
@@ -183,15 +186,52 @@ class Robot {
                 case ActionType:: DECIDE_CONTROL:
                     //if test mode activated will go straight there without considering no. boxes collected
                     if(testMode == true){
-                        currentRoutine = ActionType::CONTROL_TEST;
-                        Serial.println("go to Control Test");
+                        if(testNumber == 0){
+                            currentRoutine = ActionType::CONTROL_TEST_ZERO;
+                            Serial.println("Continuing to Test Loop 0");
+                            break;
+                        }
+                        if(testNumber == 1){
+                            currentRoutine = ActionType::CONTROL_TEST_ONE;
+                            Serial.println("Continuing to Test Loop 0");
+                            break;
+                        }
+                        if(testNumber == 6){
+                            currentRoutine = ActionType::CONTROL_TEST_SIX;
+                            Serial.println("Continuing to Test Loop 6");
+                            break;
+                        }
+                    }else {
+                        if(boxesCollected == 0){
+                            currentRoutine = ActionType::CONTROL_ONE;
+                            break;
+                        }
+                        if(boxesCollected == 1){
+                            currentRoutine = ActionType::CONTROL_TWO;
+                            break;
+                        }
+                    }
+                case ActionType:: CONTROL_TEST_ZERO:
+                    if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
+                        Serial.println("Control Loop 0 - TURN LEFT ONTO PILL");
+                        currentRoutine = ActionType::TURN_LEFT;
+                        break;
+                    }else {
+                        followLine();
+                        //n.b followLine includes binaryfollowline(70)
                         break;
                     }
-                    if(boxesCollected == 0){
-                        currentRoutine = ActionType::CONTROL_ONE;
+                case ActionType:: CONTROL_TEST_ZERO:
+                    if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
+                        Serial.println("Control Loop 0 - TURN LEFT ONTO PILL");
+                        currentRoutine = ActionType::TURN_LEFT;
+                        break;
+                    }else {
+                        followLine();
+                        //n.b followLine includes binaryfollowline(70)
                         break;
                     }
-                case ActionType:: CONTROL_TEST:
+                case ActionType:: CONTROL_TEST_SIX:
                 
                     if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
                         Serial.println("Turn onto pill");
@@ -222,6 +262,7 @@ class Robot {
                 case ActionType:: TURN_HOME:
                     turnHome(70);
                     break;
+                
 
             }
         }

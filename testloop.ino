@@ -332,30 +332,7 @@ class Robot {
                     Serial.println("Turned onto Tunnel");
                     return;
                 }
-            }
-            
-            // runMotors(-1*motorSpeed,1*motorSpeed);
-
-            // if(farLeftVal == 0){
-            //     currentRoutine == ActionType::DECIDE_CONTROL;
-                // runMotors(0,0);
-
-            //     if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL){
-            //         position = PositionList::PILL;
-            //         Serial.println("Joined Pill");
-            //         return;
-            //     }
-
-            //     if(position == PositionList::PILL && numTargetLocationPassed==2){
-            //         position == PositionList::TUNNEL;
-            //         direction == Directions::AWAY_FROM_PILL;
-            //         Serial.println("Turned onto Tunnel");
-            //         return;
-            //     }
-            // }
-
-            
-            
+            }          
             return;
         }
 
@@ -396,7 +373,7 @@ class Robot {
             myMotorRight->setSpeed(abs(motorRightVal));
             myMotorRight->run(motorDirectionRight);
 
-            Serial.println("motors running");
+            //Serial.println("motors running");
         }
 };
 

@@ -21,3 +21,25 @@ void PIDfollowLine(int PROPORTIONAL_GAIN, int INTEGRAL_GAIN, int DERIVATIVE_GAIN
             myMotorRight->setSpeed(motorSpeedRight);
             myMotorRight->run(motorDirectionRight);
         }
+
+
+
+// runMotors(-1*motorSpeed,1*motorSpeed);
+
+// if(farLeftVal == 0){
+//     currentRoutine == ActionType::DECIDE_CONTROL;
+    // runMotors(0,0);
+
+//     if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL){
+//         position = PositionList::PILL;
+//         Serial.println("Joined Pill");
+//         return;
+//     }
+
+//     if(position == PositionList::PILL && numTargetLocationPassed==2){
+//         position == PositionList::TUNNEL;
+//         direction == Directions::AWAY_FROM_PILL;
+//         Serial.println("Turned onto Tunnel");
+//         return;
+//     }
+//

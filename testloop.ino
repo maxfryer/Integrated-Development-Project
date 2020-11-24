@@ -28,12 +28,20 @@ class Robot {
         int backMiddle = 5;
         int startButtonPin = 2;
         int distanceSensor = A2;
+        
+
+        int ledPinFirst = 9;
+        int ledPinSecond = 10;
+        int ledPinThird = 8;
 
         /* SENSOR VALUES */
         int frontLeftVal = 0; //sensor values
+        
         int frontRightVal = 0;
         int farRightVal = 0;
+        int rightVals[10];
         int farLeftVal = 0;
+        int leftVals[10];
         int backMiddleVal = 0;
         int distanceFrontVal = 0;
         int distanceThreshold = 0;
@@ -84,11 +92,14 @@ class Robot {
             int buttonState = digitalRead(startButtonPin);
             static bool lockSwitch = false;
 
-            if (buttonState ==1 && lockSwitch==false) {
+            if (buttonState ==0 && lockSwitch==false) {
                 run = run == true ? false : true;
                 lockSwitch = true;
-                if(run = true){
+                if(run == true){
                     Serial.println("Running Program");
+                    digitalWrite(ledPinFirst, HIGH);
+                    digitalWrite(ledPinSecond, HIGH);
+                    digitalWrite(ledPinThird,HIGH);
                     if(testMode == true){
                         currentRoutine = ActionType::CONTROL_TEST;
                         return;
@@ -103,9 +114,12 @@ class Robot {
                 } else {
                     Serial.println("Pausing Program");
                     runMotors(0,0);
+                    digitalWrite(ledPinFirst, LOW);
+                    digitalWrite(ledPinSecond, LOW);
+                    digitalWrite(ledPinThird,LOW);
                 }
             }
-            if (buttonState == 0 && lockSwitch ==true) {
+            if (buttonState == 1 && lockSwitch ==true) {
                 lockSwitch = false;
             }
         }
@@ -117,6 +131,7 @@ class Robot {
             farRightVal = digitalRead(offAxisRight);
             farLeftVal = digitalRead(offAxisLeft);
             backMiddleVal = digitalRead(backMiddle);
+            
 
             distanceFrontVal = analogRead(distanceSensor);
 
@@ -137,6 +152,8 @@ class Robot {
                 Serial.println("                                     ");
                 Serial.println("                                     ");
             }
+
+
  
         }
 
@@ -167,6 +184,7 @@ class Robot {
                     //if test mode activated will go straight there without considering no. boxes collected
                     if(testMode == true){
                         currentRoutine = ActionType::CONTROL_TEST;
+                        Serial.println("go to Control Test");
                         break;
                     }
                     if(boxesCollected == 0){
@@ -174,11 +192,14 @@ class Robot {
                         break;
                     }
                 case ActionType:: CONTROL_TEST:
+                
                     if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
+                        Serial.println("Turn onto pill");
                         currentRoutine = ActionType::TURN_LEFT;
                         break;
                     }
                     if(position == PositionList::PILL && numTargetLocationPassed == 2 && farLeftVal == 1){
+                        Serial.println("looping");
                         currentRoutine = ActionType::TURN_LEFT;
                         break;
                     }
@@ -223,6 +244,7 @@ class Robot {
                     Serial.println("On Target Location");
                     onTargetBox = true;
                     numTargetLocationPassed +=1;
+                    Serial.println("reached a target spot");
                     runMotors(motorSpeed,motorSpeed);
                     return;
                 }
@@ -240,12 +262,12 @@ class Robot {
         void binaryFollowLine(int increaseRate,int ignoreSide = 0) { 
             //COULD WE USE PROPORTIONAL CONTROL FOR THIS IE SPEED DIFFERENCE IS PROPORTIONAL TO LINESENSOR READING (POTENTIALLY ONLY IF ITS ABOVE THRESHOLD)
             //THIS WILL ALLOW US TO BE REALLY STRAIGHT ON THE STRAGHT BITS AND SO BLOCK PLACEMENT WILL BECOME SIMPLER...
-            if(ignoreSide != 1){
+            if(ignoreSide != 2){
                 if (frontLeftVal > lineSensorThreshold) {
                     speedDifference = increaseRate;
                 }
             }
-            if(ignoreSide !=2) {
+            if(ignoreSide !=1) {
                 if (frontRightVal > lineSensorThreshold) {
                     speedDifference = -1 * increaseRate;
                 }
@@ -260,47 +282,54 @@ class Robot {
 
         void turnLeft() {
             //WAIT FOR FAR LEFT TO TRIGGER
-            /*
-            static bool leftLine;
+            for (int i = 1; i <10; i++){
+                leftVals[i] = leftVals[i+1];
+            }
+            leftVals[9] = farLeftVal;
+            static bool leftLine =false;
             if(farLeftVal == 1 && leftLine == false){
                 runMotors(-1*motorSpeed,1*motorSpeed);
             }
-            if(farLeftVal == 0){
+            if(farLeftVal == 0 && leftLine == false){
                 leftLine = true;
             }
             if (farLeftVal == 1 && leftLine == true) {
-                currentRoutine == ActionType::DECIDE_CONTROL;
-                runMotors(0,0);
+                currentRoutine = ActionType::DECIDE_CONTROL;
+                //runMotors(0,0);
+                leftLine = false;
+                
+                if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL){
+                    position = PositionList::PILL;
+                    Serial.println("Joined Pill");
+                    return;
+                }
+                else if(position == PositionList::PILL){
+                    position = PositionList::TUNNEL;
+                    direction = Directions::AWAY_FROM_PILL;
+                    Serial.println("Turned onto Tunnel");
+                    return;
+                }
+            }
+            
+            // runMotors(-1*motorSpeed,1*motorSpeed);
 
-                if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL){
-                    position = PositionList::PILL;
-                    Serial.println("Joined Pill");
-                    return;
-                }
-                if(position == PositionList::PILL){
-                    position == PositionList::TUNNEL;
-                    direction == Directions::AWAY_FROM_PILL;
-                    Serial.println("Turned onto Tunnel");
-                    return;
-                }
-            }
-            */
-            if(farLeftVal == 1){
-                binaryFollowLine(120,1);
-            }
-            if(farLeftVal == 0){
-                if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL){
-                    position = PositionList::PILL;
-                    Serial.println("Joined Pill");
-                    return;
-                }
-                if(position == PositionList::PILL){
-                    position == PositionList::TUNNEL;
-                    direction == Directions::AWAY_FROM_PILL;
-                    Serial.println("Turned onto Tunnel");
-                    return;
-                }
-            }
+            // if(farLeftVal == 0){
+            //     currentRoutine == ActionType::DECIDE_CONTROL;
+                // runMotors(0,0);
+
+            //     if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL){
+            //         position = PositionList::PILL;
+            //         Serial.println("Joined Pill");
+            //         return;
+            //     }
+
+            //     if(position == PositionList::PILL && numTargetLocationPassed==2){
+            //         position == PositionList::TUNNEL;
+            //         direction == Directions::AWAY_FROM_PILL;
+            //         Serial.println("Turned onto Tunnel");
+            //         return;
+            //     }
+            // }
 
             
             
@@ -343,6 +372,8 @@ class Robot {
             myMotorLeft->run(motorDirectionLeft);
             myMotorRight->setSpeed(abs(motorRightVal));
             myMotorRight->run(motorDirectionRight);
+
+            Serial.println("motors running");
         }
 };
 
@@ -358,15 +389,19 @@ void setup() {
     pinMode(Bot.startButtonPin, INPUT);
     pinMode(Bot.offAxisLeft,INPUT);
     pinMode(Bot.offAxisRight,INPUT);
+
+    pinMode(Bot.ledPinFirst,OUTPUT);
+    pinMode(Bot.ledPinSecond,OUTPUT);
+    pinMode(Bot.ledPinThird,OUTPUT);
 }
 
 
 void loop() {
     Bot.OnOffSwitch();
     if(run == true){
-        Bot.checkAllSensorValues(true);
+        Bot.checkAllSensorValues(false);
         Bot.checkForNextLocation(); 
         Bot.subRoutine();
-    }
+    } 
 }
 

@@ -164,8 +164,8 @@ class Robot {
             distanceFrontVal = analogRead(distanceSensor);
 
             //NEW METHOD OF ENSURING RELIABILITY (TLDR:TAKES AT LEAST 5 OF LAST 10 READINGS TO CHANGE)
-            static farLeftTotal = 0;
-            static farRightTotal = 0;
+            static int farLeftTotal = 0;
+            static int farRightTotal = 0;
 
             for(int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-2; i++){
                 //shifts last 9 readings
@@ -180,7 +180,7 @@ class Robot {
             for(int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-1; i++){
                 //adds total number of 1s (and by extension 0s)
                 farLeftTotal += leftVals[i];
-                farRightTotal += RightVals[i];
+                farRightTotal += rightVals[i];
             }
 
             //N.B "5" MUST BE CHANGED TO HALF THE NUMBER OF SENSORS

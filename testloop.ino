@@ -108,9 +108,9 @@ class Robot {
                 lockSwitch = true;
                 if(run == true){
                     Serial.println("Running Program");
-                    digitalWrite(ledPinFirst, HIGH);
-                    digitalWrite(ledPinSecond, HIGH);
-                    digitalWrite(ledPinThird,HIGH);
+                    // digitalWrite(ledPinFirst, HIGH);
+                    // digitalWrite(ledPinSecond, HIGH);
+                    // digitalWrite(ledPinThird,HIGH);
 
                     currentRoutine = ActionType::DECIDE_CONTROL;
                     return;
@@ -485,6 +485,11 @@ class Robot {
 
             //Serial.println("motors running");
         }
+
+        void flashLED(){
+            state = (state == HIGH) ? LOW : HIGH;
+            digitalWrite(ledPinFirst,state);
+        }
 };
 
 
@@ -509,7 +514,8 @@ void setup() {
 void loop() {
     Bot.OnOffSwitch();
     if(run == true){
-        Bot.checkAllSensorValues(true);
+        Bot.flashLED;
+        Bot.checkAllSensorValues(false);
         Bot.checkForNextLocation(); 
         Bot.subRoutine();
     } else {

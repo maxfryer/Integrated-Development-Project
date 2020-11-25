@@ -177,8 +177,8 @@ class Robot {
         void binaryFollowLine(int increaseRate) { 
             //COULD WE USE PROPORTIONAL CONTROL FOR THIS IE SPEED DIFFERENCE IS PROPORTIONAL TO LINESENSOR READING (POTENTIALLY ONLY IF ITS ABOVE THRESHOLD)
             //THIS WILL ALLOW US TO BE REALLY STRAIGHT ON THE STRAGHT BITS AND SO BLOCK PLACEMENT WILL BECOME SIMPLER...
-            if(frontLeftVal > lineSensorThreshold && frontRightVal && lineSensorThreshold){
-                while (frontLeftVal > lineSensorThreshold && frontRightVal && lineSensorThreshold){
+            if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
+                while (frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
                     if(lastSensorTriggered == 2){ 
                         runMotors(-1*motorSpeed,1*motorSpeed);
                     } else if (lastSensorTriggered == 1) {

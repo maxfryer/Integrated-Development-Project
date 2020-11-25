@@ -222,7 +222,6 @@ class Robot {
 
         void checkForNextLocation(){
             //ENSURES LOCATION IS KEPT UP TO DATE WHEN FOLLOWING A LINE MAYBE COULD BE INTEGRATED WITH LINE FOLLOWING CODE, IN FACT PROBABLY SHOULD BE
-            static PositionList lastPosition = PositionList::START;
             
             if(position==PositionList::START && (farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
                 position = PositionList::TUNNEL;
@@ -360,20 +359,20 @@ class Robot {
             //incorperate in decision code
             if(position == PositionList::PILL) {
                 if(onTargetBox == true){
-                    if((frontLeftVal > lineSensorThreshold || frontRightVal > lineSensorThreshold) && farRightVal == 0 && farLeftVal == 0) {
+                    if((frontLeftVal > lineSensorThreshold || frontRightVal > lineSensorThreshold) && farRightVal == 0 && farLeftVal == 0){
                         onTargetBox = false;
+                        Serial.println("Left Target Location");
                         return;
                     }
                     else {
                         return;
                     }
                 }
-                else if(farLeftVal == 1 && farRightVal == 1){
+                else if(onTargetBox==false && farLeftVal == 1 && farRightVal == 1){
                     //Might not trigger if very angled, see proportional control though was originally 'or' not 'and'
                     Serial.println("On Target Location");
                     onTargetBox = true;
                     numTargetLocationPassed +=1;
-                    Serial.println("reached a target spot");
                     runMotors(motorSpeed,motorSpeed);
                     return;
                 }
@@ -418,17 +417,15 @@ class Robot {
 
         void turnLeft() {
             //WAIT FOR FAR LEFT TO TRIGGER
-
             static bool leftLine =false;
-            if(farLeftVal == 1 && leftLine == false){
-                runMotors(-1*motorSpeed,1*motorSpeed);
-            }
+            
             if(farLeftVal == 0 && leftLine == false){
                 leftLine = true;
             }
+
             if (farLeftVal == 1 && leftLine == true) {
                 currentRoutine = ActionType::DECIDE_CONTROL;
-                //runMotors(0,0);
+                runMotors(motorSpeed,motorSpeed);
                 leftLine = false;
                 
                 if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL){
@@ -436,13 +433,14 @@ class Robot {
                     Serial.println("Joined Pill");
                     return;
                 }
-                else if(position == PositionList::PILL){
-                    position = PositionList::TUNNEL;
-                    direction = Directions::AWAY_FROM_PILL;
-                    Serial.println("Turned onto Tunnel");
-                    return;
-                }
-            }          
+                // else if(position == PositionList::PILL){
+                //     position = PositionList::TUNNEL;
+                //     direction = Directions::AWAY_FROM_PILL;
+                //     Serial.println("Turned onto Tunnel");
+                //     return;
+                // }
+            }
+            runMotors(-1*motorSpeed,1*motorSpeed);        
             return;
         }
 

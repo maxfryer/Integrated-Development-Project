@@ -210,10 +210,23 @@ class Robot {
             digitalWrite(ledPinFirst,state);
         }
 
-        void runRelevantAction(){
+        void chooseAction(){
             currentRoutine = ActionType::LINE;
             if(farLeftVal ==1 & farRightVal ==1 ){
                 currentRoutine = ActionType::TURN_LEFT;
+            }
+
+            runAction();
+        }
+
+        void runAction(){
+            switch(currentRoutine){
+                case ActionType::LINE:
+                    binaryFollowLine(70);
+                    break;
+                case ActionType::TURN_LEFT:
+                    turnLeft();
+                    break;
             }
         }
 };
@@ -239,7 +252,7 @@ void loop() {
     if(run == true){
         Bot.flashLED();
         Bot.checkAllSensorValues(false);
-        Bot.runRelevantAction();
+        Bot.chooseAction();
     } else {
         Bot.runMotors(0,0);
     }

@@ -48,6 +48,8 @@ class Robot {
         int distanceVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         float distanceAvr;
 
+        int lastSensorTriggered = 0;  // 0 for no idea, 1 for left, 2 for right
+
         /* MOTORS */
         float motorSpeed = 70; //EDIT THIS 
         float lineFollowDampingFactor = 0.9;
@@ -162,6 +164,14 @@ class Robot {
                 Serial.println("                                     ");
                 Serial.println("                                     ");
             }
+
+
+            if(frontRightVal > lineSensorThreshold && frontLeftVal < lineSensorThreshold){
+                lastSensorTriggered = 2;
+            }
+            if(frontLeftVal > lineSensorThreshold && frontRightVal < lineSensorThreshold){
+                lastSensorTriggered = 1;
+            }
         }
 
         void binaryFollowLine(int increaseRate) { 
@@ -169,7 +179,12 @@ class Robot {
             //THIS WILL ALLOW US TO BE REALLY STRAIGHT ON THE STRAGHT BITS AND SO BLOCK PLACEMENT WILL BECOME SIMPLER...
             if(frontLeftVal > lineSensorThreshold && frontRightVal && lineSensorThreshold){
                 while (frontLeftVal > lineSensorThreshold && frontRightVal && lineSensorThreshold){
-                    runMotors(-1*motorSpeed,1*motorSpeed);
+                    if(lastSensorTriggered == 2){ 
+                        runMotors(-1*motorSpeed,1*motorSpeed);
+                    } else if (lastSensorTriggered == 1) {
+                        runMotors(1*motorSpeed,-1*motorSpeed);
+                    }
+                   
                     checkAllSensorValues(false);
                 }
             }

@@ -501,7 +501,7 @@ class Robot {
         }
 
         void pickupBox(){
-            //picks up the box AND AND AND checks it colour
+            //picks up the box AND AND checks it colour
         }
 
         void runMotors(int motorLeftVal,int motorRightVal){

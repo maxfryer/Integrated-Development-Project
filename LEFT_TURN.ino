@@ -179,12 +179,14 @@ class Robot {
             //THIS WILL ALLOW US TO BE REALLY STRAIGHT ON THE STRAGHT BITS AND SO BLOCK PLACEMENT WILL BECOME SIMPLER...
             if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
                 while (frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
+                    /*
                     if(lastSensorTriggered == 2){ 
                         runMotors(-1*motorSpeed,1*motorSpeed);
                     } else if (lastSensorTriggered == 1) {
                         runMotors(1*motorSpeed,-1*motorSpeed);
                     }
-                   
+                    */
+                    runMotors(50,50);
                     checkAllSensorValues(false);
                 }
             }

@@ -170,7 +170,7 @@ class Robot {
             if(frontLeftVal > lineSensorThreshold && frontRightVal && lineSensorThreshold){
                 while (frontLeftVal > lineSensorThreshold && frontRightVal && lineSensorThreshold){
                     runMotors(-1*motorSpeed,1*motorSpeed);
-                    checkAllSensorValues();
+                    checkAllSensorValues(false);
                 }
             }
             else if (frontLeftVal > lineSensorThreshold) {

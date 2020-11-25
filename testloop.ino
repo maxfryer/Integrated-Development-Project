@@ -33,7 +33,7 @@ class Robot {
         int ledPinSecond = 12;
         int ledPinThird = 11;
 
-        static const int NUMBER_OF_SENSOR_POSITIVES = 10;
+        static const int NUMBER_OF_SENSOR_POSITIVES = 6;
 
         /* SENSOR VALUES */
         int frontLeftVal = 0;
@@ -67,7 +67,7 @@ class Robot {
             BLUE_TRACK,BLUE_BOX_BOTTOM,BLUE_BOX_RIGHT,
             BLUE_BOX_TOP,
         };
-        PositionList position = PositionList::START;
+        PositionList position = PositionList::TUNNEL;
 
         /* DIRECTIONS */
         enum class Directions {TOWARDS_PILL,AWAY_FROM_PILL};
@@ -82,8 +82,8 @@ class Robot {
         // 4 -- line follow and detect and pickup if blue
         // 5 -- line follow and detect and reverse if red
         // 6 -- line follow round pill then turn back to start
-        int testNumber = 6;
-        bool testMode = false;
+        int testNumber = 0;
+        bool testMode = true;
         int boxesCollected = 0;
         bool clockwise = true;
         bool onTargetBox; 
@@ -110,9 +110,9 @@ class Robot {
                 lockSwitch = true;
                 if(run == true){
                     Serial.println("Running Program");
-                    // digitalWrite(ledPinFirst, HIGH);
-                    // digitalWrite(ledPinSecond, HIGH);
-                    // digitalWrite(ledPinThird,HIGH);
+                    digitalWrite(ledPinFirst, HIGH);
+                    digitalWrite(ledPinSecond, HIGH);
+                    digitalWrite(ledPinThird,HIGH);
 
                     currentRoutine = ActionType::DECIDE_CONTROL;
                     return;
@@ -136,8 +136,8 @@ class Robot {
 
             frontLeftVal = analogRead(frontLeft);
             frontRightVal = analogRead(frontRight);
-            
-            //NEW METHOD OF ENSURING RELIABILITY (TLDR:TAKES AT LEAST 5 OF LAST 10 READINGS TO CHANGE)
+            /*
+            //NEW METHOD OF ENSURING RELIABILITY (TLDR:TAKES AT LEAST 3 OF LAST 6 READINGS TO CHANGE)
             static int farLeftTotal = 0;
             static int farRightTotal = 0;
             static int backMiddleTotal = 0;
@@ -149,7 +149,7 @@ class Robot {
             backMiddleTotal -= middleVals[0];
             distanceTotal -= distanceVals[0];
 
-            for(int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-2; i++){
+            for(int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-1; i++){
                 //shifts last 9 readings
                 leftVals[i] = leftVals[i+1];
                 rightVals[i] = rightVals[i+1];
@@ -158,45 +158,55 @@ class Robot {
             }
 
             //adds most recent reading to array
-            leftVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisLeft);
-            rightVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisRight);
-            middleVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(backMiddle);
-            distanceVals[NUMBER_OF_SENSOR_POSITIVES-1] = analogRead(distanceSensor);
+            leftVals[NUMBER_OF_SENSOR_POSITIVES] = digitalRead(offAxisLeft);
+            rightVals[NUMBER_OF_SENSOR_POSITIVES] = digitalRead(offAxisRight);
+            middleVals[NUMBER_OF_SENSOR_POSITIVES] = digitalRead(backMiddle);
+            distanceVals[NUMBER_OF_SENSOR_POSITIVES] = analogRead(distanceSensor);
 
             //adds this to total
-            farLeftTotal += leftVals[NUMBER_OF_SENSOR_POSITIVES-1];
-            farRightTotal += rightVals[NUMBER_OF_SENSOR_POSITIVES-1];
-            backMiddleTotal += middleVals[NUMBER_OF_SENSOR_POSITIVES-1];
-            distanceTotal += distanceVals[NUMBER_OF_SENSOR_POSITIVES-1];
+            farLeftTotal += leftVals[NUMBER_OF_SENSOR_POSITIVES];
+            farRightTotal += rightVals[NUMBER_OF_SENSOR_POSITIVES];
+            backMiddleTotal += middleVals[NUMBER_OF_SENSOR_POSITIVES];
+            distanceTotal += distanceVals[NUMBER_OF_SENSOR_POSITIVES];
 
             //decides outcome based on totals
             //N.B "5" MUST BE CHANGED TO HALF THE NUMBER OF SENSORS
             //LEFT
-            if(farLeftTotal>5){
+            if(farLeftTotal>3){
                 farLeftVal = 1;
             }
-            if(farLeftTotal<5){
+            if(farLeftTotal<3){
                 farLeftVal= 0;
             }
             //RIGHT
-            if(farRightTotal>5){
+            if(farRightTotal>3){
                 farRightVal = 1;
             }
-            if(farRightTotal<5){
+            if(farRightTotal<3){
                 farRightVal = 0;
             }
             //BACK
-            if(backMiddleTotal>5){
+            if(backMiddleTotal>3){
                 backMiddleVal = 1;
             }
-            if(backMiddleTotal<5){
+            if(backMiddleTotal<3){
                 backMiddleVal= 0;
             }
-            //IF 5 DOENSN'T CHANGE... HYSTERESIS I GUESS
-            
+            Serial.println("far left total:");
+            Serial.println(farLeftTotal);
+            Serial.println(leftVals);
+            // Serial.println("far right total:");
+            // Serial.println(farRightTotal);
+            // Serial.println("back middle total:");
+            // Serial.println(backMiddleTotal);
+            //IF 3 DOENSN'T CHANGE... HYSTERESIS I GUESS
+           
             //DISTANCE
             distanceAvr = distanceTotal / NUMBER_OF_SENSOR_POSITIVES;
+            Serial.println("distanceAvr");
+            Serial.println(distanceAvr);
             
+            */
 
             if(listVals){
                 Serial.print("front left val:  ");
@@ -280,15 +290,18 @@ class Robot {
                     }
                 case ActionType::CONTROL_TEST_ZERO:
                     //TESTS TURNING LEFT
-                    if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
+                    // followLine();
+                    // break;
+                    if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1 && false){
                         Serial.println("Control Loop 0 - TURN LEFT ONTO PILL");
                         currentRoutine = ActionType::TURN_LEFT;
                         break;
-                    }else {
+                    } else{
                         followLine();
                         //n.b followLine includes binaryfollowline(70)
-                        break;
+                        break;  
                     }
+                    
                 case ActionType:: CONTROL_TEST_ONE:
                     //TESTS TURNING RIGHT
                     if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
@@ -382,30 +395,53 @@ class Robot {
                 }
             }
             else {
-                binaryFollowLine(70);
+                binaryFollowLine(100);
                 return;
             }
         }
 
-        void binaryFollowLine(int increaseRate,int ignoreSide = 0) { 
-            //COULD WE USE PROPORTIONAL CONTROL FOR THIS IE SPEED DIFFERENCE IS PROPORTIONAL TO LINESENSOR READING (POTENTIALLY ONLY IF ITS ABOVE THRESHOLD)
-            //THIS WILL ALLOW US TO BE REALLY STRAIGHT ON THE STRAGHT BITS AND SO BLOCK PLACEMENT WILL BECOME SIMPLER...
-            if(ignoreSide != 2){
-                if (frontLeftVal > lineSensorThreshold) {
-                    speedDifference = increaseRate;
-                }
+        void binaryFollowLine( int increaseRate) {
+            static bool leftTurn = true;
+            speedDifference = 0;
+            if (frontLeftVal > lineSensorThreshold) {
+                speedDifference = increaseRate;
+                // leftTurn = true;
             }
-            if(ignoreSide !=1) {
-                if (frontRightVal > lineSensorThreshold) {
-                    speedDifference = -1 * increaseRate;
-                }
+            if (frontRightVal > lineSensorThreshold) {
+                speedDifference = -1 * increaseRate;
+                // leftTurn = false;
             }
-            speedDifference *= lineFollowDampingFactor;
+            
+
+            //THE CONTROLLER SECTION
             motorSpeedLeft = motorSpeed - speedDifference;
             motorSpeedRight = motorSpeed + speedDifference;
+
             runMotors(motorSpeedLeft,motorSpeedRight);
             return;
         }
+
+        // void binaryFollowLine( int increaseRate) {
+            
+        //     motorSpeedLeft = motorSpeed;
+        //     motorSpeedRight = motorSpeed;
+            
+        //     if (frontLeftVal > lineSensorThreshold) {
+        //         speedDifference = increaseRate;
+        //         motorSpeedLeft = 20 - speedDifference;
+        //         motorSpeedRight = 20 + speedDifference;
+        //     }
+        //     if (frontRightVal > lineSensorThreshold) {
+        //         speedDifference = -1 * increaseRate;
+        //         motorSpeedLeft = 20 - speedDifference;
+        //         motorSpeedRight = 20 + speedDifference;
+        //     }
+        //     //THE CONTROLLER SECTION
+            
+
+        //     runMotors(motorSpeedLeft,motorSpeedRight);
+        //     return;
+        // }
 
         void turnAround() {
             return;
@@ -523,8 +559,8 @@ void loop() {
     if(run == true){
         Bot.flashLED();
         Bot.checkAllSensorValues(false);
-        //Bot.checkForNextLocation(); 
-        //Bot.subRoutine();
+        Bot.checkForNextLocation(); 
+        Bot.subRoutine();
     } else {
         Bot.runMotors(0,0);
     }

@@ -66,6 +66,7 @@ class Robot {
 
         /*DEALING WITH BOXES*/
         bool boxBeingColourChecked = false;
+        bool hasBoxAtm = false;
 
         enum class ActionType { LINE, TURN_LEFT, TURN_RIGHT, TURN_180, ADVANCE_TO_HOME, CHECK_BOX};
         enum class PositionList { START_BOX,START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL };
@@ -504,7 +505,7 @@ class Robot {
                 Serial.println("reached main t junction, coming home");
                 position = PositionList::TUNNEL;
             } 
-            else if(position == PositionList::PILL && !boxBeingColourChecked){
+            if(position == PositionList::PILL && !boxBeingColourChecked && !hasBoxAtm){
                 if(distanceFrontVal > 500){
                     Serial.println("checking box colour");
                     currentRoutine = ActionType::CHECK_BOX;
@@ -523,7 +524,7 @@ class Robot {
             if(position == PositionList::FIRST_JUNCTION && direction == Directions::AWAY_FROM_PILL){
                 Serial.println("at first junction for the lsast time");
                 while (farRightVal == 1){
-                    runMotors(motorSpeed -20,motorSpeed +20);
+                    runMotors(motorSpeed,motorSpeed);
                     checkAllSensorValues(false);
                     flashLEDS();
                 }
@@ -568,6 +569,7 @@ class Robot {
             turn180();
             direction = Directions::AWAY_FROM_PILL;
             boxBeingColourChecked = false;
+            hasBoxAtm = true;
         }
 
         void runAction(){

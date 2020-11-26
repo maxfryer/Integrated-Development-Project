@@ -22,6 +22,7 @@ class Robot {
         /*ALL PINS */
         int frontLeft = A0; // input pin for FRONT LEFT light sensor
         int frontRight = A1;
+        int colourPin = 0;
         int offAxisRight = 3;
         int offAxisLeft = 4;
         int backMiddle = 5;
@@ -44,14 +45,15 @@ class Robot {
         int leftVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         int backMiddleVal = 0;
         int middleVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
-        int distanceFrontVal = 0;
-        int distanceVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
+        float distanceFrontVal = 0;
+        float distanceVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         float distanceAvr;
+        int colourPinVal = 0;
 
         int lastSensorTriggered = 0;  // 0 for no idea, 1 for left, 2 for right
 
         /* MOTORS */
-        float motorSpeed = 70; //EDIT THIS 
+        float motorSpeed = 100; //EDIT THIS 
         float lineFollowDampingFactor = 0.9;
         float motorSpeedLeft;
         float motorSpeedRight;
@@ -61,10 +63,147 @@ class Robot {
         int lineSensorThreshold = 300;
         float distanceSensorThreshold = 460;
 
-        enum class ActionType {
-        LINE, TURN_LEFT
-        };
+
+        /*DEALING WITH BOXES*/
+        bool boxBeingColourChecked = false;
+
+        enum class ActionType { LINE, TURN_LEFT, TURN_RIGHT, TURN_180, ADVANCE_TO_HOME, CHECK_BOX};
+        enum class PositionList { START_BOX,START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL };
+        enum class Directions {TOWARDS_PILL,AWAY_FROM_PILL};
+        enum class BoxCol {RED,BLUE,NO_BOX};
+
         ActionType currentRoutine = ActionType::LINE;
+        PositionList position = PositionList::START_BOX;
+        Directions direction = Directions::TOWARDS_PILL;
+        BoxCol currentBoxCol = BoxCol::NO_BOX;
+
+
+        void checkForNextLocation(){
+            
+            static PositionList lastPosition = PositionList::START;
+            static char place[20] = "start";
+            
+
+
+            lastPosition = position;
+            
+            
+            if(currentRoutine == ActionType::LINE){  // can only ake changes to postiion when on a line following path so as not tocaue problems with 180 tunrs etc
+                switch (position) {
+                case PositionList::START:
+                    
+                    if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
+                        position = PositionList::FIRST_JUNCTION;
+                        strcpy(place,"reached junction1");
+                    }
+
+                    break;
+                case PositionList::FIRST_JUNCTION:
+
+                    if((farLeftVal == 0) && (direction == Directions::TOWARDS_PILL)){
+                        position = PositionList::TUNNEL;
+                        strcpy(place,"on tunnel track towards pill");
+                    }
+
+                    break;
+
+                case PositionList::TUNNEL:
+                    
+                    if(( farRightVal == 1) && (direction == Directions::TOWARDS_PILL) ){
+                        position = PositionList::MAIN_T_JUNCTION;
+                        strcpy(place,"reached mainJunc");
+                    }
+                    if(direction == Directions::AWAY_FROM_PILL && farRightVal == 1 && farLeftVal == 0){
+                        position = PositionList::FIRST_JUNCTION;
+                    }
+
+                    //check for the sensor positions that would give rise to the next state from here
+                    break;
+                // case PositionList::MAIN_T_JUNCTION:
+                    
+                //     //check for the sensor positions that would give rise to the next state from here
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::TOWARDS_PILL )){
+                //         position = PositionList::PILL;
+                //     }
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL )){
+                //         position = PositionList::TUNNEL;
+                //     }
+                //     break;
+                // case PositionList::PILL:
+                //     //if line following can take care of position from here!
+                //     break;
+                    
+                // case PositionList::BLUE_T_JUNCTION:
+                //     //check for the sensor positions that would give rise to the next state from here
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL)){
+                //         position = PositionList::BLUE_BOX_BOTTOM;
+                //     }
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::TOWARDS_PILL)){
+                //         position = PositionList::BLUE_TRACK;
+                //     }
+                //     break;
+
+                // case PositionList::BLUE_TRACK:
+                //     if((direction == Directions::AWAY_FROM_PILL )&&(farLeftVal == 1  && farRightVal == 1)){
+                //         position = PositionList::BLUE_T_JUNCTION;
+                //     }
+                //     if((direction == Directions::TOWARDS_PILL) && (farRightVal == 1)){
+                //         position = PositionList::FIRST_JUNCTION;
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_BOTTOM:
+                //     if(farLeftVal == 1 && direction == Directions::AWAY_FROM_PILL && currentTask == TaskList::PLACE_SECOND_BLUE_BOX){
+                //         position = PositionList::BLUE_BOX_BOTTOM_RIGHT;
+                //         strcpy(place,"reached blu btm right");
+                //     }
+                //     if((farLeftVal == 1 || farRightVal == 1) && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_T_JUNCTION;
+                //         strcpy(place,"reached blu T");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_BOTTOM_RIGHT:
+                //     if(farLeftVal == 0 && direction == Directions::AWAY_FROM_PILL){
+                //         position = PositionList::BLUE_BOX_RIGHT;
+                //         strcpy(place,"reached blu right side");
+                //     }
+                //     if(farRightVal == 0 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_BOTTOM;
+                //         strcpy(place,"reached blu btm side");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_RIGHT:
+                //     if(farLeftVal == 1 && direction == Directions::AWAY_FROM_PILL){
+                //         position = PositionList::BLUE_BOX_TOP_RIGHT;
+                //         strcpy(place,"reached blu top right");
+                //     }
+                //     if(farRightVal == 1 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_BOTTOM_RIGHT;
+                //         strcpy(place,"reached blu btm right");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_TOP_RIGHT:
+                //     if(farLeftVal == 0 && direction == Directions::AWAY_FROM_PILL){
+                //         position = PositionList::BLUE_BOX_TOP;
+                //         strcpy(place,"reached blu box top");
+                //     }
+                //     if(farRightVal == 0 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_RIGHT;
+                //         strcpy(place,"reached blu right side");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_TOP:
+                //     if(farRightVal == 1 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_TOP_RIGHT;
+                //         strcpy(place,"reached blu top right");
+                //     }
+                //     break;
+                }
+
+                if(position != lastPosition){
+                Serial.println(place);
+            }
+            }
+        }
 
         void OnOffSwitch() {
             //sets start program to true at the push of the button
@@ -119,7 +258,7 @@ class Robot {
             int leftSum = 0 ;
             int rightSum = 0;
             int middleSum = 0;
-            int distanceSum = 0;
+            float distanceSum = 0;
             
             for(int i = 1; i<NUMBER_OF_SENSOR_POSITIVES -1 ; i++ ){
                 rightVals[i] = rightVals[i+1];
@@ -135,7 +274,7 @@ class Robot {
             rightVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisLeft) ;
             leftVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisRight) ;
             middleVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(backMiddle) ;
-            distanceVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(distanceSensor); 
+            distanceVals[NUMBER_OF_SENSOR_POSITIVES -1] = analogRead(distanceSensor); 
 
             leftSum += rightVals[NUMBER_OF_SENSOR_POSITIVES -1];
             rightSum +=leftVals[NUMBER_OF_SENSOR_POSITIVES -1];
@@ -145,24 +284,24 @@ class Robot {
             farLeftVal = leftSum > 8 ? 1: 0; 
             farRightVal = rightSum > 8 ? 1: 0; 
             backMiddleVal = middleSum > 8 ? 1: 0; 
-            distanceFrontVal = distanceSum > 8 ? 1: 0; 
+            distanceFrontVal = distanceSum / NUMBER_OF_SENSOR_POSITIVES;
 
             if(listVals){
-                Serial.print("front left val:  ");
-                Serial.println(frontLeftVal);
-                Serial.print("front right val: ");
-                Serial.println(frontRightVal);
+                // Serial.print("front left val:  ");
+                // Serial.println(frontLeftVal);
+                // Serial.print("front right val: ");
+                // Serial.println(frontRightVal);
 
-                Serial.print("far right val:");
-                Serial.println(farRightVal);
-                Serial.print("far left val:");
-                Serial.println(farLeftVal);
-                Serial.print("back middle Val: ");
-                Serial.println(backMiddleVal);
-                Serial.print("distanceSensor: ");
+                // Serial.print("far right val:");
+                // Serial.println(farRightVal);
+                // Serial.print("far left val:");
+                // Serial.println(farLeftVal);
+                // Serial.print("back middle Val: ");
+                // Serial.println(backMiddleVal);
+                // Serial.print("distanceSensor: ");
                 Serial.println(distanceFrontVal);
-                Serial.println("                                     ");
-                Serial.println("                                     ");
+                // Serial.println("                                     ");
+                // Serial.println("                                     ");
             }
 
 
@@ -172,6 +311,9 @@ class Robot {
             if(frontLeftVal > lineSensorThreshold && frontRightVal < lineSensorThreshold){
                 lastSensorTriggered = 1;
             }
+
+
+            colourPinVal = digitalRead(colourPin);
         }
 
         void binaryFollowLine(int increaseRate) { 
@@ -190,10 +332,13 @@ class Robot {
             //         checkAllSensorValues(false);
             //     }
             // }
-            if (frontLeftVal > lineSensorThreshold) {
+            if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
+                runMotors(motorSpeed,motorSpeed);
+            }
+            else if (frontLeftVal > lineSensorThreshold) {
                 speedDifference = increaseRate;
             }
-            if (frontRightVal > lineSensorThreshold) {
+            else if (frontRightVal > lineSensorThreshold) {
                 speedDifference = -1 * increaseRate;
             }
 
@@ -207,48 +352,234 @@ class Robot {
         void turnLeft() {
             //WAIT FOR FAR LEFT TO TRIGGER
             
-            while(farLeftVal == 1 ){
+            // while(farLeftVal == 1 ){
+            //     checkAllSensorValues(false);
+            //     runMotors(-1*motorSpeed,1*motorSpeed);
+            // }
+
+            // while (farLeftVal == 0 ) {
+            //     runMotors(-1*motorSpeed,1*motorSpeed); 
+            //     checkAllSensorValues(false);
+            // }
+            if(frontLeftVal > lineSensorThreshold ){
+                while (frontLeftVal > lineSensorThreshold){
+                    checkAllSensorValues(false);
+                    runMotors(-1*motorSpeed,1*motorSpeed);
+                }
+            }
+            while(frontLeftVal < lineSensorThreshold ){
                 checkAllSensorValues(false);
                 runMotors(-1*motorSpeed,1*motorSpeed);
             }
-
-            while (farLeftVal == 0 ) {
-                runMotors(-1*motorSpeed,1*motorSpeed); 
+            while(frontRightVal < lineSensorThreshold ){
                 checkAllSensorValues(false);
+                runMotors(-1*motorSpeed,1*motorSpeed);
             }
             return;
         }
 
-        void flashLED(){
+        void turnRight() {
+            //WAIT FOR FAR LEFT TO TRIGGER
+            
+            // while(farLeftVal == 1 ){
+            //     checkAllSensorValues(false);
+            //     runMotors(-1*motorSpeed,1*motorSpeed);
+            // }
+
+            // while (farLeftVal == 0 ) {
+            //     runMotors(-1*motorSpeed,1*motorSpeed); 
+            //     checkAllSensorValues(false);
+            // }
+            if(frontRightVal > lineSensorThreshold ){
+                while (frontRightVal > lineSensorThreshold){
+                    checkAllSensorValues(false);
+                    runMotors(-1*motorSpeed,1*motorSpeed);
+                }
+            }
+            while(frontRightVal < lineSensorThreshold ){
+                checkAllSensorValues(false);
+                runMotors(1*motorSpeed,-1*motorSpeed);
+            }
+            while(frontLeftVal < lineSensorThreshold ){
+                checkAllSensorValues(false);
+                runMotors(1*motorSpeed,-1*motorSpeed);
+            }
+            return;
+        }
+
+        void turn180() {
+            //WAIT FOR FAR LEFT TO TRIGGER
+            
+            while(backMiddle == 1 ){
+                checkAllSensorValues(false);
+                runMotors(-1*motorSpeed,1*motorSpeed);
+            }
+
+            // while (farLeftVal == 0 ) {
+            //     runMotors(-1*motorSpeed,1*motorSpeed); 
+            //     checkAllSensorValues(false);
+            // }
+            while( farLeftVal == 0 ){
+                checkAllSensorValues(false);
+                runMotors(-1*motorSpeed,1*motorSpeed);
+            }
+            while(frontLeftVal < lineSensorThreshold ){
+                checkAllSensorValues(false);
+                runMotors(-1*motorSpeed,1*motorSpeed);
+            }
+            while(frontRightVal < lineSensorThreshold ){
+                checkAllSensorValues(false);
+                runMotors(-1*motorSpeed,1*motorSpeed);
+            }
+            return;
+
+        }
+
+        void flashLEDS(){
             static int timer = 0;
             int state = LOW;
             timer += 1;
             if(timer > 100) timer = 1;
-            Serial.println(timer);
             if(timer % 100 == 0 ){
-              Serial.println("flashing");
                 state = (state == HIGH) ? LOW : HIGH;
             }
 
-            digitalWrite(ledPinFirst,state);
+            digitalWrite(ledPinSecond,state);
+
+
+
+            switch (currentBoxCol){
+                case BoxCol::BLUE:
+                    digitalWrite(ledPinThird,HIGH);
+                    digitalWrite(ledPinFirst,LOW);
+
+                    break;
+                case BoxCol::RED:
+                    digitalWrite(ledPinThird,LOW);
+                    digitalWrite(ledPinFirst,HIGH);
+                    break;
+                case BoxCol::NO_BOX:
+                    digitalWrite(ledPinThird,LOW);
+                    digitalWrite(ledPinFirst,LOW);
+                    break;
+            }
+        }
+
+
+        void stopInHomeLocation(){
+            int timer = 0;
+            while (timer < 1000){
+                timer += 1;
+                runMotors(motorSpeed,motorSpeed);
+            }
+            Serial.println("stopping NOWWWW");
+            runMotors(0,0);
+            run = false;
         }
 
         void chooseAction(){
             currentRoutine = ActionType::LINE;
-            if(farLeftVal ==1 & farRightVal ==1 ){
+
+            if(position == PositionList::START_BOX && direction == Directions::TOWARDS_PILL){
+                if(farLeftVal == 1 || farRightVal == 1){
+                    while (farLeftVal == 1 || farRightVal == 1){
+                        checkAllSensorValues(false);
+                        binaryFollowLine(100);
+                        flashLEDS();
+                    }
+                    Serial.println("left starting box");
+                    
+                }
+                position = PositionList::START;
+            }
+
+            if(farRightVal == 1 && position == PositionList::PILL && direction == Directions::AWAY_FROM_PILL ){
+                currentRoutine = ActionType::TURN_RIGHT;
+                Serial.println("reached main t junction, coming home");
+                position = PositionList::TUNNEL;
+            } 
+            else if(position == PositionList::PILL && !boxBeingColourChecked){
+                if(distanceFrontVal > 500){
+                    Serial.println("checking box colour");
+                    currentRoutine = ActionType::CHECK_BOX;
+                    boxBeingColourChecked = true;
+                }
+            }
+
+            if(position == PositionList::MAIN_T_JUNCTION && direction == Directions:: TOWARDS_PILL ){
                 currentRoutine = ActionType::TURN_LEFT;
+                Serial.println("at pill");
+                position = PositionList::PILL;
+            }
+
+
+
+            if(position == PositionList::FIRST_JUNCTION && direction == Directions::AWAY_FROM_PILL){
+                Serial.println("at first junction for the lsast time");
+                while (farRightVal == 1){
+                    runMotors(motorSpeed -20,motorSpeed +20);
+                    checkAllSensorValues(false);
+                    flashLEDS();
+                }
+                position = PositionList::START;
+
+            } else if(position == PositionList::START && direction == Directions::AWAY_FROM_PILL){
+                
+                if(farLeftVal == 1 || farRightVal == 1){
+                    Serial.println("on starting track, about to stop");
+                    stopInHomeLocation();
+                }
+                
             }
 
             runAction();
         }
 
+        void checkBoxColour(){
+            static char colour[20];
+            strcpy(colour,"blue");
+            currentBoxCol = BoxCol::BLUE;
+            while(distanceFrontVal > 350 ){
+                runMotors(motorSpeed,motorSpeed);
+                checkAllSensorValues(false);
+                if(colourPinVal == 1){
+                    strcpy(colour,"red");
+                    currentBoxCol = BoxCol::RED;
+                }
+            }
+            flashLEDS();
+            Serial.println(colour);
+
+            static int timer = 0;
+            while (timer < 600){
+                timer +=1 ;
+                runMotors(-1*motorSpeed,-1*motorSpeed);
+            }
+            turn180();
+            direction = Directions::AWAY_FROM_PILL;
+            boxBeingColourChecked = false;
+        }
+
         void runAction(){
             switch(currentRoutine){
                 case ActionType::LINE:
-                    binaryFollowLine(70);
+                    binaryFollowLine(100);
                     break;
                 case ActionType::TURN_LEFT:
                     turnLeft();
+                    break;
+                case ActionType::TURN_RIGHT:
+                    turnRight();
+                    break;
+                case ActionType::TURN_180:
+                    turn180();
+                    break;
+                case ActionType::ADVANCE_TO_HOME:
+                    stopInHomeLocation();
+                    run = false;
+                    break;
+                case ActionType::CHECK_BOX:
+                    checkBoxColour();
                     break;
             }
         }
@@ -273,8 +604,9 @@ void setup() {
 void loop() {
     Bot.OnOffSwitch();
     if(run == true){
-        Bot.flashLED();
+        Bot.flashLEDS();
         Bot.checkAllSensorValues(false);
+        Bot.checkForNextLocation();
         Bot.chooseAction();
     } else {
         Bot.runMotors(0,0);

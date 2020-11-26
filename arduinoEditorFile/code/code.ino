@@ -22,6 +22,7 @@ class Robot {
         /*ALL PINS */
         int frontLeft = A0; // input pin for FRONT LEFT light sensor
         int frontRight = A1;
+        int colourPin = 0;
         int offAxisRight = 3;
         int offAxisLeft = 4;
         int backMiddle = 5;
@@ -44,12 +45,15 @@ class Robot {
         int leftVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         int backMiddleVal = 0;
         int middleVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
-        int distanceFrontVal = 0;
-        int distanceVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
+        float distanceFrontVal = 0;
+        float distanceVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         float distanceAvr;
+        int colourPinVal = 0;
+
+        int lastSensorTriggered = 0;  // 0 for no idea, 1 for left, 2 for right
 
         /* MOTORS */
-        float motorSpeed = 70; //EDIT THIS 
+        float motorSpeed = 100; //EDIT THIS 
         float lineFollowDampingFactor = 0.9;
         float motorSpeedLeft;
         float motorSpeedRight;
@@ -59,46 +63,147 @@ class Robot {
         int lineSensorThreshold = 300;
         float distanceSensorThreshold = 460;
 
-        /* SUBROUTINES */
-        
-        /* POSITIONS */
-        enum class PositionList {
-            START,TUNNEL,PILL,
-            BLUE_TRACK,BLUE_BOX_BOTTOM,BLUE_BOX_RIGHT,
-            BLUE_BOX_TOP,
-        };
-        PositionList position = PositionList::START;
 
-        /* DIRECTIONS */
+        /*DEALING WITH BOXES*/
+        bool boxBeingColourChecked = false;
+
+        enum class ActionType { LINE, TURN_LEFT, TURN_RIGHT, TURN_180, ADVANCE_TO_HOME, CHECK_BOX};
+        enum class PositionList { START_BOX,START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL };
         enum class Directions {TOWARDS_PILL,AWAY_FROM_PILL};
+        enum class BoxCol {RED,BLUE,NO_BOX};
+
+        ActionType currentRoutine = ActionType::LINE;
+        PositionList position = PositionList::START_BOX;
         Directions direction = Directions::TOWARDS_PILL;
+        BoxCol currentBoxCol = BoxCol::NO_BOX;
 
-        /* VARIABLES */
-        
-        // 0 -- Test left turns 
-        // 1 -- Test right turns
-        // 2 -- 180 degree turns
-        // 3 -- line follow and detect
-        // 4 -- line follow and detect and pickup if blue
-        // 5 -- line follow and detect and reverse if red
-        // 6 -- line follow round pill then turn back to start
-        int testNumber = 6;
-        bool testMode = false;
-        int boxesCollected = 0;
-        bool clockwise = true;
-        bool onTargetBox; 
-        int numTargetLocationPassed = 0;
 
-        enum class boxColours {NONE,RED,BLUE};
-        boxColours boxColour = boxColours::NONE;
+        void checkForNextLocation(){
+            
+            static PositionList lastPosition = PositionList::START;
+            static char place[20] = "start";
+            
 
-        enum class ActionType {
-        CONTROL_TEST_ZERO, CONTROL_TEST_ONE, CONTROL_TEST_TWO,
-        CONTROL_TEST_THREE, CONTROL_TEST_FOUR, CONTROL_TEST_FIVE, CONTROL_TEST_SIX, 
-        DECIDE_CONTROL, TURN_HOME, TURN_LEFT, TURN_RIGHT, TURN_ONEEIGHTY,
-        CONTROL_ONE, CONTROL_TWO, 
-        }; //ALL THE STATES OF THE ROBOT, ADD MORE IF NEEDED
-        ActionType currentRoutine = ActionType::DECIDE_CONTROL;
+
+            lastPosition = position;
+            
+            
+            if(currentRoutine == ActionType::LINE){  // can only ake changes to postiion when on a line following path so as not tocaue problems with 180 tunrs etc
+                switch (position) {
+                case PositionList::START:
+                    
+                    if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
+                        position = PositionList::FIRST_JUNCTION;
+                        strcpy(place,"reached junction1");
+                    }
+
+                    break;
+                case PositionList::FIRST_JUNCTION:
+
+                    if((farLeftVal == 0) && (direction == Directions::TOWARDS_PILL)){
+                        position = PositionList::TUNNEL;
+                        strcpy(place,"on tunnel track towards pill");
+                    }
+
+                    break;
+
+                case PositionList::TUNNEL:
+                    
+                    if(( farRightVal == 1) && (direction == Directions::TOWARDS_PILL) ){
+                        position = PositionList::MAIN_T_JUNCTION;
+                        strcpy(place,"reached mainJunc");
+                    }
+                    if(direction == Directions::AWAY_FROM_PILL && farRightVal == 1 && farLeftVal == 0){
+                        position = PositionList::FIRST_JUNCTION;
+                    }
+
+                    //check for the sensor positions that would give rise to the next state from here
+                    break;
+                // case PositionList::MAIN_T_JUNCTION:
+                    
+                //     //check for the sensor positions that would give rise to the next state from here
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::TOWARDS_PILL )){
+                //         position = PositionList::PILL;
+                //     }
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL )){
+                //         position = PositionList::TUNNEL;
+                //     }
+                //     break;
+                // case PositionList::PILL:
+                //     //if line following can take care of position from here!
+                //     break;
+                    
+                // case PositionList::BLUE_T_JUNCTION:
+                //     //check for the sensor positions that would give rise to the next state from here
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL)){
+                //         position = PositionList::BLUE_BOX_BOTTOM;
+                //     }
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::TOWARDS_PILL)){
+                //         position = PositionList::BLUE_TRACK;
+                //     }
+                //     break;
+
+                // case PositionList::BLUE_TRACK:
+                //     if((direction == Directions::AWAY_FROM_PILL )&&(farLeftVal == 1  && farRightVal == 1)){
+                //         position = PositionList::BLUE_T_JUNCTION;
+                //     }
+                //     if((direction == Directions::TOWARDS_PILL) && (farRightVal == 1)){
+                //         position = PositionList::FIRST_JUNCTION;
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_BOTTOM:
+                //     if(farLeftVal == 1 && direction == Directions::AWAY_FROM_PILL && currentTask == TaskList::PLACE_SECOND_BLUE_BOX){
+                //         position = PositionList::BLUE_BOX_BOTTOM_RIGHT;
+                //         strcpy(place,"reached blu btm right");
+                //     }
+                //     if((farLeftVal == 1 || farRightVal == 1) && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_T_JUNCTION;
+                //         strcpy(place,"reached blu T");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_BOTTOM_RIGHT:
+                //     if(farLeftVal == 0 && direction == Directions::AWAY_FROM_PILL){
+                //         position = PositionList::BLUE_BOX_RIGHT;
+                //         strcpy(place,"reached blu right side");
+                //     }
+                //     if(farRightVal == 0 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_BOTTOM;
+                //         strcpy(place,"reached blu btm side");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_RIGHT:
+                //     if(farLeftVal == 1 && direction == Directions::AWAY_FROM_PILL){
+                //         position = PositionList::BLUE_BOX_TOP_RIGHT;
+                //         strcpy(place,"reached blu top right");
+                //     }
+                //     if(farRightVal == 1 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_BOTTOM_RIGHT;
+                //         strcpy(place,"reached blu btm right");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_TOP_RIGHT:
+                //     if(farLeftVal == 0 && direction == Directions::AWAY_FROM_PILL){
+                //         position = PositionList::BLUE_BOX_TOP;
+                //         strcpy(place,"reached blu box top");
+                //     }
+                //     if(farRightVal == 0 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_RIGHT;
+                //         strcpy(place,"reached blu right side");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_TOP:
+                //     if(farRightVal == 1 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_TOP_RIGHT;
+                //         strcpy(place,"reached blu top right");
+                //     }
+                //     break;
+                }
+
+                if(position != lastPosition){
+                Serial.println(place);
+            }
+            }
+        }
 
         void OnOffSwitch() {
             //sets start program to true at the push of the button
@@ -110,11 +215,6 @@ class Robot {
                 lockSwitch = true;
                 if(run == true){
                     Serial.println("Running Program");
-                    // digitalWrite(ledPinFirst, HIGH);
-                    // digitalWrite(ledPinSecond, HIGH);
-                    // digitalWrite(ledPinThird,HIGH);
-
-                    currentRoutine = ActionType::DECIDE_CONTROL;
                     return;
 
                 } else {
@@ -129,345 +229,6 @@ class Robot {
             if (buttonState == 1 && lockSwitch ==true) {
                 lockSwitch = false;
             }
-        }
-
-        float checkAllSensorValues(bool listVals) {
-            //Check ALL the sensor values
-
-            frontLeftVal = analogRead(frontLeft);
-            frontRightVal = analogRead(frontRight);
-            
-            //NEW METHOD OF ENSURING RELIABILITY (TLDR:TAKES AT LEAST 5 OF LAST 10 READINGS TO CHANGE)
-            static int farLeftTotal = 0;
-            static int farRightTotal = 0;
-            static int backMiddleTotal = 0;
-            static int distanceTotal = 0;
-
-            //subtracts 10th value
-            farLeftTotal -= leftVals[0];
-            farRightTotal -= rightVals[0];
-            backMiddleTotal -= middleVals[0];
-            distanceTotal -= distanceVals[0];
-
-            for(int i = 0; i <NUMBER_OF_SENSOR_POSITIVES-2; i++){
-                //shifts last 9 readings
-                leftVals[i] = leftVals[i+1];
-                rightVals[i] = rightVals[i+1];
-                middleVals[i] = middleVals[i+1];
-                distanceVals[i] = distanceVals[i+1];
-            }
-
-            //adds most recent reading to array
-            leftVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisLeft);
-            rightVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(offAxisRight);
-            middleVals[NUMBER_OF_SENSOR_POSITIVES-1] = digitalRead(backMiddle);
-            distanceVals[NUMBER_OF_SENSOR_POSITIVES-1] = analogRead(distanceSensor);
-
-            //adds this to total
-            farLeftTotal += leftVals[NUMBER_OF_SENSOR_POSITIVES-1];
-            farRightTotal += rightVals[NUMBER_OF_SENSOR_POSITIVES-1];
-            backMiddleTotal += middleVals[NUMBER_OF_SENSOR_POSITIVES-1];
-            distanceTotal += distanceVals[NUMBER_OF_SENSOR_POSITIVES-1];
-
-            //decides outcome based on totals
-            //N.B "5" MUST BE CHANGED TO HALF THE NUMBER OF SENSORS
-            //LEFT
-            if(farLeftTotal>5){
-                farLeftVal = 1;
-            }
-            if(farLeftTotal<5){
-                farLeftVal= 0;
-            }
-            //RIGHT
-            if(farRightTotal>5){
-                farRightVal = 1;
-            }
-            if(farRightTotal<5){
-                farRightVal = 0;
-            }
-            //BACK
-            if(backMiddleTotal>5){
-                backMiddleVal = 1;
-            }
-            if(backMiddleTotal<5){
-                backMiddleVal= 0;
-            }
-            //IF 5 DOENSN'T CHANGE... HYSTERESIS I GUESS
-            
-            //DISTANCE
-            distanceAvr = distanceTotal / NUMBER_OF_SENSOR_POSITIVES;
-            
-
-            if(listVals){
-                Serial.print("front left val:  ");
-                Serial.println(frontLeftVal);
-                Serial.print("front right val: ");
-                Serial.println(frontRightVal);
-
-                Serial.print("far right val:");
-                Serial.println(farRightVal);
-                Serial.print("far left val:");
-                Serial.println(farLeftVal);
-                Serial.print("back middle Val: ");
-                Serial.println(backMiddleVal);
-                Serial.print("distanceSensor: ");
-                Serial.println(distanceFrontVal);
-                Serial.println("                                     ");
-                Serial.println("                                     ");
-            }
-
-
- 
-        }
-
-        void checkForNextLocation(){
-            //ENSURES LOCATION IS KEPT UP TO DATE WHEN FOLLOWING A LINE MAYBE COULD BE INTEGRATED WITH LINE FOLLOWING CODE, IN FACT PROBABLY SHOULD BE
-            static PositionList lastPosition = PositionList::START;
-            
-            if(position==PositionList::START && (farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
-                position = PositionList::TUNNEL;
-                Serial.println("Reached Tunnel");
-                return;
-            }
-            if(position == PositionList::BLUE_TRACK && farRightVal == 1 && direction == Directions::TOWARDS_PILL){
-                position = PositionList::TUNNEL;
-                Serial.println("Reached Tunnel");
-                return;
-            }
-            if(position == PositionList::TUNNEL && direction == Directions::AWAY_FROM_PILL && farLeftVal == 1){
-                position = PositionList::BLUE_TRACK;
-                Serial.println("Reached Blue Track");
-                return;
-            }
-        }
-
-        void subRoutine() {
-            switch(currentRoutine) {
-                case ActionType::DECIDE_CONTROL:
-                    //if test mode activated will go straight there without considering no. boxes collected
-                    if(testMode == true){
-                        if(testNumber == 0){
-                            currentRoutine = ActionType::CONTROL_TEST_ZERO;
-                            Serial.println("Continuing to Test Loop 0");
-                            break;
-                        }
-                        if(testNumber == 1){
-                            currentRoutine = ActionType::CONTROL_TEST_ONE;
-                            Serial.println("Continuing to Test Loop 1");
-                            break;
-                        }
-                        if(testNumber == 2){
-                            currentRoutine = ActionType::CONTROL_TEST_TWO;
-                            Serial.println("Continuing to Test Loop 2");
-                            break;
-                        }
-                        if(testNumber == 6){
-                            currentRoutine = ActionType::CONTROL_TEST_SIX;
-                            Serial.println("Continuing to Test Loop 6");
-                            break;
-                        }
-                        else{
-                            Serial.println("Reached end of Decide Control and nothing has been Decided");
-                        }
-                    }else {
-                        if(boxesCollected == 0){
-                            currentRoutine = ActionType::CONTROL_ONE;
-                            break;
-                        }
-                        if(boxesCollected == 1){
-                            currentRoutine = ActionType::CONTROL_TWO;
-                            break;
-                        }
-                    }
-                case ActionType::CONTROL_TEST_ZERO:
-                    //TESTS TURNING LEFT
-                    if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
-                        Serial.println("Control Loop 0 - TURN LEFT ONTO PILL");
-                        currentRoutine = ActionType::TURN_LEFT;
-                        break;
-                    }else {
-                        followLine();
-                        //n.b followLine includes binaryfollowline(70)
-                        break;
-                    }
-                case ActionType:: CONTROL_TEST_ONE:
-                    //TESTS TURNING RIGHT
-                    if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
-                        Serial.println("Control Loop 1 - TURN RIGHT ONTO PILL");
-                        currentRoutine = ActionType::TURN_RIGHT;
-                        break;
-                    }else {
-                        followLine();
-                        //n.b followLine includes binaryfollowline(70)
-                        break;
-                    }
-                case ActionType::CONTROL_TEST_TWO:
-                    //TESTS TURNING FULL 180 DEGREES
-                    if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && distanceFrontVal> distanceSensorThreshold){
-                        Serial.println("Control Loop 2 - TURN 180");
-                        currentRoutine = ActionType::TURN_ONEEIGHTY;
-                        break;
-                    }else {
-                        followLine();
-                        //n.b followLine includes binaryfollowline(70)
-                        break;
-                    }
-                case ActionType::CONTROL_TEST_SIX:
-                
-                    if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL && farLeftVal == 1 && farRightVal == 1){
-                        Serial.println("Turn onto pill");
-                        currentRoutine = ActionType::TURN_LEFT;
-                        break;
-                    }
-                    if(position == PositionList::PILL && numTargetLocationPassed == 2 && farLeftVal == 1){
-                        Serial.println("looping");
-                        currentRoutine = ActionType::TURN_LEFT;
-                        break;
-                    }
-                    if(position == PositionList::TUNNEL && direction == Directions::AWAY_FROM_PILL && (frontRightVal > lineSensorThreshold && frontLeftVal > lineSensorThreshold)){
-                        currentRoutine = ActionType::TURN_HOME;
-                        break;
-                    }
-                    if(position == PositionList::START && direction == Directions::AWAY_FROM_PILL && frontRightVal < lineSensorThreshold && frontLeftVal < lineSensorThreshold){
-                        Serial.println("Finished Program");
-                        run = false;
-                        break;
-                    }else {
-                        followLine();
-                        //n.b followLine includes binaryfollowline(70)
-                        break;
-                    }
-                case ActionType::TURN_LEFT:
-                    turnLeft();
-                    break;
-                case ActionType::TURN_RIGHT:
-                    turnRight();
-                    break;
-                case ActionType::TURN_ONEEIGHTY:
-                    turnAround();
-                    break;
-                case ActionType::TURN_HOME:
-                    turnHome(70);
-                    break;
-                    
-            
-
-            }
-        }
-
-        void followLine() {
-            //what to do if robot goes over target box note sensors must be in line for this code to work
-            //incorperate in decision code
-            if(position == PositionList::PILL) {
-                if(onTargetBox == true){
-                    if((frontLeftVal > lineSensorThreshold || frontRightVal > lineSensorThreshold) && farRightVal == 0 && farLeftVal == 0) {
-                        onTargetBox = false;
-                        return;
-                    }
-                    else {
-                        return;
-                    }
-                }
-                else if(farLeftVal == 1 && farRightVal == 1){
-                    //Might not trigger if very angled, see proportional control though was originally 'or' not 'and'
-                    Serial.println("On Target Location");
-                    onTargetBox = true;
-                    numTargetLocationPassed +=1;
-                    Serial.println("reached a target spot");
-                    runMotors(motorSpeed,motorSpeed);
-                    return;
-                }
-                else{
-                    binaryFollowLine(70);
-                    return;
-                }
-            }
-            else {
-                binaryFollowLine(70);
-                return;
-            }
-        }
-
-        void binaryFollowLine(int increaseRate,int ignoreSide = 0) { 
-            //COULD WE USE PROPORTIONAL CONTROL FOR THIS IE SPEED DIFFERENCE IS PROPORTIONAL TO LINESENSOR READING (POTENTIALLY ONLY IF ITS ABOVE THRESHOLD)
-            //THIS WILL ALLOW US TO BE REALLY STRAIGHT ON THE STRAGHT BITS AND SO BLOCK PLACEMENT WILL BECOME SIMPLER...
-            if(ignoreSide != 2){
-                if (frontLeftVal > lineSensorThreshold) {
-                    speedDifference = increaseRate;
-                }
-            }
-            if(ignoreSide !=1) {
-                if (frontRightVal > lineSensorThreshold) {
-                    speedDifference = -1 * increaseRate;
-                }
-            }
-            speedDifference *= lineFollowDampingFactor;
-            motorSpeedLeft = motorSpeed - speedDifference;
-            motorSpeedRight = motorSpeed + speedDifference;
-            runMotors(motorSpeedLeft,motorSpeedRight);
-            return;
-        }
-
-        void turnAround() {
-            return;
-        }
-
-        void turnRight() {
-            return;
-        }
-
-        void turnLeft() {
-            //WAIT FOR FAR LEFT TO TRIGGER
-
-            static bool leftLine =false;
-            if(farLeftVal == 1 && leftLine == false){
-                runMotors(-1*motorSpeed,1*motorSpeed);
-            }
-            if(farLeftVal == 0 && leftLine == false){
-                leftLine = true;
-            }
-            if (farLeftVal == 1 && leftLine == true) {
-                currentRoutine = ActionType::DECIDE_CONTROL;
-                //runMotors(0,0);
-                leftLine = false;
-                
-                if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL){
-                    position = PositionList::PILL;
-                    Serial.println("Joined Pill");
-                    return;
-                }
-                else if(position == PositionList::PILL){
-                    position = PositionList::TUNNEL;
-                    direction = Directions::AWAY_FROM_PILL;
-                    Serial.println("Turned onto Tunnel");
-                    return;
-                }
-            }          
-            return;
-        }
-
-        void turnHome(int increaseRate) {
-            //ONLY DIFFERENCE IS ORDER IN WHICH VALUES ARE CHECKED SO THAT LEFT TURNING IS FAVOURED
-            if (frontRightVal > lineSensorThreshold) {
-                speedDifference = -1 * increaseRate;
-            }
-            if (frontLeftVal > lineSensorThreshold) {
-                speedDifference = increaseRate;
-            }
-            motorSpeedLeft = motorSpeed - speedDifference;
-            motorSpeedRight = motorSpeed + speedDifference;
-            runMotors(motorSpeedLeft,motorSpeedRight);
-
-            if(!(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold)) {
-                currentRoutine = ActionType::DECIDE_CONTROL;
-                return;
-            }
-
-            return;
-        }
-
-        void pickupBox(){
-            //picks up the box AND AND AND checks it colour
         }
 
         void runMotors(int motorLeftVal,int motorRightVal){
@@ -486,22 +247,343 @@ class Robot {
             //Serial.println("motors running");
         }
 
-        void flashLED(){
+        float checkAllSensorValues(bool listVals) {
+            //Check ALL the sensor values
+
+            frontLeftVal = analogRead(frontLeft);
+            frontRightVal = analogRead(frontRight);
+            
+            //NEW METHOD OF ENSURING RELIABILITY (TLDR:TAKES AT LEAST 5 OF LAST 10 READINGS TO CHANGE)
+
+            int leftSum = 0 ;
+            int rightSum = 0;
+            int middleSum = 0;
+            float distanceSum = 0;
+            
+            for(int i = 1; i<NUMBER_OF_SENSOR_POSITIVES -1 ; i++ ){
+                rightVals[i] = rightVals[i+1];
+                leftVals[i] = leftVals[i+1];
+                middleVals[i] = middleVals[i+1];
+                distanceVals[i] = distanceVals[i+1];
+
+                leftSum += rightVals[i];
+                rightSum +=leftVals[i];
+                middleSum +=middleVals[i];
+                distanceSum += distanceVals[i];
+            }
+            rightVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisLeft) ;
+            leftVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisRight) ;
+            middleVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(backMiddle) ;
+            distanceVals[NUMBER_OF_SENSOR_POSITIVES -1] = analogRead(distanceSensor); 
+
+            leftSum += rightVals[NUMBER_OF_SENSOR_POSITIVES -1];
+            rightSum +=leftVals[NUMBER_OF_SENSOR_POSITIVES -1];
+            middleSum +=middleVals[NUMBER_OF_SENSOR_POSITIVES -1];
+            distanceSum += distanceVals[NUMBER_OF_SENSOR_POSITIVES -1];
+
+            farLeftVal = leftSum > 8 ? 1: 0; 
+            farRightVal = rightSum > 8 ? 1: 0; 
+            backMiddleVal = middleSum > 8 ? 1: 0; 
+            distanceFrontVal = distanceSum / NUMBER_OF_SENSOR_POSITIVES;
+
+            if(listVals){
+                // Serial.print("front left val:  ");
+                // Serial.println(frontLeftVal);
+                // Serial.print("front right val: ");
+                // Serial.println(frontRightVal);
+
+                // Serial.print("far right val:");
+                // Serial.println(farRightVal);
+                // Serial.print("far left val:");
+                // Serial.println(farLeftVal);
+                // Serial.print("back middle Val: ");
+                // Serial.println(backMiddleVal);
+                // Serial.print("distanceSensor: ");
+                Serial.println(distanceFrontVal);
+                // Serial.println("                                     ");
+                // Serial.println("                                     ");
+            }
+
+
+            if(frontRightVal > lineSensorThreshold && frontLeftVal < lineSensorThreshold){
+                lastSensorTriggered = 2;
+            }
+            if(frontLeftVal > lineSensorThreshold && frontRightVal < lineSensorThreshold){
+                lastSensorTriggered = 1;
+            }
+
+
+            colourPinVal = digitalRead(colourPin);
+        }
+
+        void binaryFollowLine(int increaseRate) { 
+            //COULD WE USE PROPORTIONAL CONTROL FOR THIS IE SPEED DIFFERENCE IS PROPORTIONAL TO LINESENSOR READING (POTENTIALLY ONLY IF ITS ABOVE THRESHOLD)
+            //THIS WILL ALLOW US TO BE REALLY STRAIGHT ON THE STRAGHT BITS AND SO BLOCK PLACEMENT WILL BECOME SIMPLER...
+            // if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
+            //     while (frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
+            //         /*
+            //         if(lastSensorTriggered == 2){ 
+            //             runMotors(-1*motorSpeed,1*motorSpeed);
+            //         } else if (lastSensorTriggered == 1) {
+            //             runMotors(1*motorSpeed,-1*motorSpeed);
+            //         }
+            //         */
+            //         runMotors(50,50);
+            //         checkAllSensorValues(false);
+            //     }
+            // }
+            if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
+                runMotors(motorSpeed,motorSpeed);
+            }
+            else if (frontLeftVal > lineSensorThreshold) {
+                speedDifference = increaseRate;
+            }
+            else if (frontRightVal > lineSensorThreshold) {
+                speedDifference = -1 * increaseRate;
+            }
+
+            speedDifference *= lineFollowDampingFactor;
+            motorSpeedLeft = motorSpeed - speedDifference;
+            motorSpeedRight = motorSpeed + speedDifference;
+            runMotors(motorSpeedLeft,motorSpeedRight);
+            return;
+        }
+
+        void turnLeft() {
+            //WAIT FOR FAR LEFT TO TRIGGER
+            
+            // while(farLeftVal == 1 ){
+            //     checkAllSensorValues(false);
+            //     runMotors(-1*motorSpeed,1*motorSpeed);
+            // }
+
+            // while (farLeftVal == 0 ) {
+            //     runMotors(-1*motorSpeed,1*motorSpeed); 
+            //     checkAllSensorValues(false);
+            // }
+            if(frontLeftVal > lineSensorThreshold ){
+                while (frontLeftVal > lineSensorThreshold){
+                    checkAllSensorValues(false);
+                    runMotors(-1*motorSpeed,1*motorSpeed);
+                }
+            }
+            while(frontLeftVal < lineSensorThreshold ){
+                checkAllSensorValues(false);
+                runMotors(-1*motorSpeed,1*motorSpeed);
+            }
+            while(frontRightVal < lineSensorThreshold ){
+                checkAllSensorValues(false);
+                runMotors(-1*motorSpeed,1*motorSpeed);
+            }
+            return;
+        }
+
+        void turnRight() {
+            //WAIT FOR FAR LEFT TO TRIGGER
+            
+            // while(farLeftVal == 1 ){
+            //     checkAllSensorValues(false);
+            //     runMotors(-1*motorSpeed,1*motorSpeed);
+            // }
+
+            // while (farLeftVal == 0 ) {
+            //     runMotors(-1*motorSpeed,1*motorSpeed); 
+            //     checkAllSensorValues(false);
+            // }
+            if(frontRightVal > lineSensorThreshold ){
+                while (frontRightVal > lineSensorThreshold){
+                    checkAllSensorValues(false);
+                    runMotors(-1*motorSpeed,1*motorSpeed);
+                }
+            }
+            while(frontRightVal < lineSensorThreshold ){
+                checkAllSensorValues(false);
+                runMotors(1*motorSpeed,-1*motorSpeed);
+            }
+            while(frontLeftVal < lineSensorThreshold ){
+                checkAllSensorValues(false);
+                runMotors(1*motorSpeed,-1*motorSpeed);
+            }
+            return;
+        }
+
+        void turn180() {
+            //WAIT FOR FAR LEFT TO TRIGGER
+            
+            while(backMiddle == 1 ){
+                checkAllSensorValues(false);
+                runMotors(-1*motorSpeed,1*motorSpeed);
+            }
+
+            // while (farLeftVal == 0 ) {
+            //     runMotors(-1*motorSpeed,1*motorSpeed); 
+            //     checkAllSensorValues(false);
+            // }
+            while( farLeftVal == 0 ){
+                checkAllSensorValues(false);
+                runMotors(1*motorSpeed,-1*motorSpeed);
+            }
+            while(frontLeftVal < lineSensorThreshold ){
+                checkAllSensorValues(false);
+                runMotors(1*motorSpeed,-1*motorSpeed);
+            }
+            while(frontRightVal < lineSensorThreshold ){
+                checkAllSensorValues(false);
+                runMotors(1*motorSpeed,-1*motorSpeed);
+            }
+            return;
+
+        }
+
+        void flashLEDS(){
             static int timer = 0;
             int state = LOW;
             timer += 1;
             if(timer > 100) timer = 1;
-            Serial.println(timer);
             if(timer % 100 == 0 ){
-              Serial.println("flashing");
                 state = (state == HIGH) ? LOW : HIGH;
             }
 
-            digitalWrite(ledPinFirst,state);
+            digitalWrite(ledPinSecond,state);
+
+
+
+            switch (currentBoxCol){
+                case BoxCol::BLUE:
+                    digitalWrite(ledPinThird,HIGH);
+                    digitalWrite(ledPinFirst,LOW);
+
+                    break;
+                case BoxCol::RED:
+                    digitalWrite(ledPinThird,LOW);
+                    digitalWrite(ledPinFirst,HIGH);
+                    break;
+                case BoxCol::NO_BOX:
+                    digitalWrite(ledPinThird,LOW);
+                    digitalWrite(ledPinFirst,LOW);
+                    break;
+            }
+        }
+
+
+        void stopInHomeLocation(){
+            int timer = 0;
+            while (timer < 1000){
+                timer += 1;
+                runMotors(motorSpeed,motorSpeed);
+            }
+            Serial.println("stopping NOWWWW");
+            runMotors(0,0);
+            run = false;
+        }
+
+        void chooseAction(){
+            currentRoutine = ActionType::LINE;
+
+            if(position == PositionList::START_BOX && direction == Directions::TOWARDS_PILL){
+                if(farLeftVal == 1 || farRightVal == 1){
+                    while (farLeftVal == 1 || farRightVal == 1){
+                        checkAllSensorValues(false);
+                        binaryFollowLine(100);
+                        flashLEDS();
+                    }
+                    Serial.println("left starting box");
+                    
+                }
+                position = PositionList::START;
+            }
+
+            if(farRightVal == 1 && position == PositionList::PILL && direction == Directions::AWAY_FROM_PILL ){
+                currentRoutine = ActionType::TURN_RIGHT;
+                Serial.println("reached main t junction, coming home");
+                position = PositionList::TUNNEL;
+            } 
+            else if(position == PositionList::PILL && !boxBeingColourChecked){
+                if(distanceFrontVal > 500){
+                    Serial.println("checking box colour");
+                    currentRoutine = ActionType::CHECK_BOX;
+                    boxBeingColourChecked = true;
+                }
+            }
+
+            if(position == PositionList::MAIN_T_JUNCTION && direction == Directions:: TOWARDS_PILL ){
+                currentRoutine = ActionType::TURN_LEFT;
+                Serial.println("at pill");
+                position = PositionList::PILL;
+            }
+
+
+
+            if(position == PositionList::FIRST_JUNCTION && direction == Directions::AWAY_FROM_PILL){
+                Serial.println("at first junction for the lsast time");
+                while (farRightVal == 1){
+                    runMotors(motorSpeed -20,motorSpeed +20);
+                    checkAllSensorValues(false);
+                    flashLEDS();
+                }
+                position = PositionList::START;
+
+            } else if(position == PositionList::START && direction == Directions::AWAY_FROM_PILL){
+                
+                if(farLeftVal == 1 || farRightVal == 1){
+                    Serial.println("on starting track, about to stop");
+                    stopInHomeLocation();
+                }
+                
+            }
+
+            runAction();
+        }
+
+        void checkBoxColour(){
+            static char colour[20];
+            strcpy(colour,"blue");
+            currentBoxCol = BoxCol::BLUE;
+            while(distanceFrontVal > 350 ){
+                runMotors(motorSpeed,motorSpeed);
+                checkAllSensorValues(false);
+                if(colourPinVal == 1){
+                    strcpy(colour,"red");
+                    currentBoxCol = BoxCol::RED;
+                }
+            }
+            flashLEDS();
+            Serial.println(colour);
+
+            static int timer = 0;
+            while (timer < 600){
+                timer +=1 ;
+                runMotors(-1*motorSpeed,-1*motorSpeed);
+            }
+            turn180();
+            direction = Directions::AWAY_FROM_PILL;
+            boxBeingColourChecked = false;
+        }
+
+        void runAction(){
+            switch(currentRoutine){
+                case ActionType::LINE:
+                    binaryFollowLine(100);
+                    break;
+                case ActionType::TURN_LEFT:
+                    turnLeft();
+                    break;
+                case ActionType::TURN_RIGHT:
+                    turnRight();
+                    break;
+                case ActionType::TURN_180:
+                    turn180();
+                    break;
+                case ActionType::ADVANCE_TO_HOME:
+                    stopInHomeLocation();
+                    run = false;
+                    break;
+                case ActionType::CHECK_BOX:
+                    checkBoxColour();
+                    break;
+            }
         }
 };
-
-
 
 Robot Bot;
 
@@ -519,14 +601,13 @@ void setup() {
     pinMode(Bot.ledPinThird,OUTPUT);
 }
 
-
 void loop() {
     Bot.OnOffSwitch();
     if(run == true){
-        Bot.flashLED();
+        Bot.flashLEDS();
         Bot.checkAllSensorValues(false);
-        //Bot.checkForNextLocation(); 
-        //Bot.subRoutine();
+        Bot.checkForNextLocation();
+        Bot.chooseAction();
     } else {
         Bot.runMotors(0,0);
     }

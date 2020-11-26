@@ -1,29 +1,27 @@
-/*
-  DigitalReadSerial
+// Include the Servo library 
+#include <Servo.h> 
+// Declare the Servo pin, 9 for servo2 and 10 for servo1
+int servoPin = 10; 
 
-  Reads a digital input on pin 2, prints the result to the Serial Monitor
+int pos =0;  // variable to store the servo position
 
-  This example code is in the public domain.
+// Create a servo object 
+Servo Servo1;
 
-  http://www.arduino.cc/en/Tutorial/DigitalReadSerial
-*/
-
-// digital pin 2 has a pushbutton attached to it. Give it a name:
-int pushButton = 0;
-
-// the setup routine runs once when you press reset:
 void setup() {
-  // initialize serial communication at 9600 bits per second:
-  Serial.begin(9600);
-  // make the pushbutton's pin an input:
-  pinMode(pushButton, INPUT);
+  // put your setup code here, to run once:
+  Servo1.attach(servoPin);
 }
 
-// the loop routine runs over and over again forever:
 void loop() {
-  // read the input pin:
-  int buttonState = digitalRead(pushButton);
-  // print out the state of the button:
-  Serial.println(buttonState);
-  delay(1);        // delay in between reads for stability
+  // put your main code here, to run repeatedly:
+  for (pos = 80; pos <= 120; pos += 1) { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    Servo1.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+  for (pos = 120; pos >= 80; pos -= 1) { // goes from 180 degrees to 0 degrees
+    Servo1.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
 }

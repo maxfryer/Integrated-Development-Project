@@ -74,8 +74,8 @@ class Robot {
         enum class BoxCol {RED,BLUE,NO_BOX};
 
         ActionType currentRoutine = ActionType::LINE;
-        PositionList position = PositionList::TUNNEL;//START_BOX;
-        Directions direction = Directions::AWAY_FROM_PILL;//TOWARDS_PILL;
+        PositionList position = PositionList::START_BOX;//START_BOX;
+        Directions direction = Directions::TOWARDS_PILL;//TOWARDS_PILL;
         BoxCol currentBoxCol = BoxCol::NO_BOX;
 
 
@@ -488,7 +488,7 @@ class Robot {
             currentRoutine = ActionType::LINE;
 
             if(position == PositionList::START_BOX && direction == Directions::TOWARDS_PILL){
-                if( farRightVal == 1){
+                if( farRightVal == 1 || (frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold)){
                     while ((farLeftVal == 1) || (farRightVal == 1)){
                         checkAllSensorValues(false);
                         binaryFollowLine(100);

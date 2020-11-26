@@ -10,11 +10,23 @@
 
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
+// Include the Servo library 
+#include <Servo.h> 
+
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor * myMotorLeft = AFMS.getMotor(1);
 Adafruit_DCMotor * myMotorRight = AFMS.getMotor(2);
+// Create a servo object 
+Servo Servo1;
 
 bool run = false;
+
+// Declare the Servo pin, 9 for servo2 and 10 for servo1
+
+
+
+
+
 
 
 class Robot {
@@ -49,6 +61,7 @@ class Robot {
         float distanceVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         float distanceAvr;
         int colourPinVal = 0;
+        
 
         int lastSensorTriggered = 0;  // 0 for no idea, 1 for left, 2 for right
 
@@ -58,6 +71,8 @@ class Robot {
         float motorSpeedLeft;
         float motorSpeedRight;
         float speedDifference = 0;
+        int pos = 85;  // variable to store the servo position
+
 
         /* THRESHOLDS */
         int lineSensorThreshold = 300;
@@ -67,16 +82,18 @@ class Robot {
         /*DEALING WITH BOXES*/
         bool boxBeingColourChecked = false;
         bool hasBoxAtm = false;
+        int pillPosition = 0;
+        bool onTargetBox = false;
 
         enum class ActionType { LINE, TURN_LEFT, TURN_RIGHT, TURN_180, ADVANCE_TO_HOME, CHECK_BOX};
-        enum class PositionList { START_BOX,START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL };
+        enum class PositionList { START_BOX,START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL,BLUE_TRACK,BLUE_SQUARE };
         enum class Directions {TOWARDS_PILL,AWAY_FROM_PILL};
         enum class BoxCol {RED,BLUE,NO_BOX};
 
         ActionType currentRoutine = ActionType::LINE;
-        PositionList position = PositionList::START_BOX;//START_BOX;
-        Directions direction = Directions::TOWARDS_PILL;//TOWARDS_PILL;
-        BoxCol currentBoxCol = BoxCol::NO_BOX;
+        PositionList position = PositionList::TUNNEL;//START_BOX;
+        Directions direction = Directions::AWAY_FROM_PILL;//TOWARDS_PILL;
+        BoxCol currentBoxCol = BoxCol::BLUE;
 
 
         void checkForNextLocation(){
@@ -433,24 +450,24 @@ class Robot {
             
             while(backMiddle == 1 ){
                 checkAllSensorValues(false);
-                runMotors(-1*motorSpeed,1*motorSpeed);
+                runMotors(1*motorSpeed,-1*motorSpeed);
             }
 
             // while (farLeftVal == 0 ) {
             //     runMotors(-1*motorSpeed,1*motorSpeed); 
             //     checkAllSensorValues(false);
             // }
-            while( farLeftVal == 0 ){
+            while( farRightVal == 0 ){
                 checkAllSensorValues(false);
-                runMotors(-1*motorSpeed,1*motorSpeed);
-            }
-            while(frontLeftVal < lineSensorThreshold ){
-                checkAllSensorValues(false);
-                runMotors(-1*motorSpeed,1*motorSpeed);
+                runMotors(1*motorSpeed,-1*motorSpeed);
             }
             while(frontRightVal < lineSensorThreshold ){
                 checkAllSensorValues(false);
-                runMotors(-1*motorSpeed,1*motorSpeed);
+                runMotors(1*motorSpeed,-1*motorSpeed);
+            }
+            while(frontLeftVal < lineSensorThreshold ){
+                checkAllSensorValues(false);
+                runMotors(1*motorSpeed,-1*motorSpeed);
             }
             return;
 
@@ -504,6 +521,7 @@ class Robot {
 
             if(farRightVal == 1 && position == PositionList::PILL && direction == Directions::AWAY_FROM_PILL ){
                 currentRoutine = ActionType::TURN_RIGHT;
+                pillPosition = 0;
                 Serial.println("reached main t junction, coming home");
                 position = PositionList::TUNNEL;
             } 
@@ -513,6 +531,19 @@ class Robot {
                     currentRoutine = ActionType::CHECK_BOX;
                     boxBeingColourChecked = true;
                 }
+
+                if(farLeftVal == 1 && farRightVal == 1 && onTargetBox == false){
+                    Serial.println("ran over target box");
+
+                    pillPosition ++;
+                    onTargetBox = true;
+
+                }
+                if(farLeftVal == 0 && farRightVal == 0 && onTargetBox == true){
+                    onTargetBox = false;
+                }
+
+
             }
 
             if(position == PositionList::MAIN_T_JUNCTION && direction == Directions:: TOWARDS_PILL ){
@@ -524,16 +555,26 @@ class Robot {
 
 
             if(position == PositionList::FIRST_JUNCTION && direction == Directions::AWAY_FROM_PILL){
-                Serial.println("at first junction for the lsast time");
 
-                while (frontRightVal<lineSensorThreshold){
+                if(currentBoxCol == BoxCol::NO_BOX){
+                    Serial.println("at first junction for the lsast time");
 
-                    checkAllSensorValues(false);
-                    runMotors(motorSpeed-60,motorSpeed+60);
-                    flashLEDS();
+                    while (frontRightVal<lineSensorThreshold){
+
+                        checkAllSensorValues(false);
+                        runMotors(motorSpeed-60,motorSpeed+60);
+                        flashLEDS();
+                    }
+                    position = PositionList::START;
+                }
+                if(currentBoxCol == BoxCol::BLUE){
+                    turnRight();
+                    position = PositionList::BLUE_TRACK;
+                    Serial.println("on blue track");
+
+                    
                 }
 
-                position = PositionList::START;
                 currentRoutine = ActionType::LINE;
 
             } 
@@ -544,6 +585,12 @@ class Robot {
                     stopInHomeLocation();
                 }
                 
+            }
+
+            if(position == PositionList::BLUE_TRACK && direction == Directions::AWAY_FROM_PILL && (farLeftVal == 1 || farRightVal ==1) ){
+                currentRoutine = ActionType::TURN_LEFT;
+                Serial.println("at blue square");
+                position = PositionList::BLUE_SQUARE;
             }
 
             runAction();
@@ -563,6 +610,18 @@ class Robot {
             }
             flashLEDS();
             Serial.println(colour);
+            //servo code
+
+            // for (pos = 80; pos <= 150; pos += 1) { // goes from 0 degrees to 180 degrees
+            //     // in steps of 1 degree
+            //     Servo1.write(pos);              // tell servo to go to position in variable 'pos'
+            //     delay(40);                       // waits 15ms for the servo to reach the position
+            // }
+
+
+
+
+            //servo code end
 
             static int timer = 0;
             while (timer < 600){
@@ -606,6 +665,7 @@ void setup() {
 
     AFMS.begin();
     Serial.begin(9600);
+    Servo1.attach(10);
 
     pinMode(Bot.startButtonPin, INPUT);
     pinMode(Bot.offAxisLeft,INPUT);
@@ -614,10 +674,15 @@ void setup() {
     pinMode(Bot.ledPinFirst,OUTPUT);
     pinMode(Bot.ledPinSecond,OUTPUT);
     pinMode(Bot.ledPinThird,OUTPUT);
+
+    // Servo1.write(90);
+    // delay(10);
 }
 
 void loop() {
     Bot.OnOffSwitch();
+    
+    
     if(run == true){
         Bot.flashLEDS();
         Bot.checkAllSensorValues(true);

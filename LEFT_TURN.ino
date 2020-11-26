@@ -74,8 +74,8 @@ class Robot {
         enum class BoxCol {RED,BLUE,NO_BOX};
 
         ActionType currentRoutine = ActionType::LINE;
-        PositionList position = PositionList::START_BOX;
-        Directions direction = Directions::TOWARDS_PILL;
+        PositionList position = PositionList::TUNNEL;//START_BOX;
+        Directions direction = Directions::AWAY_FROM_PILL;//TOWARDS_PILL;
         BoxCol currentBoxCol = BoxCol::NO_BOX;
 
 
@@ -488,7 +488,7 @@ class Robot {
             currentRoutine = ActionType::LINE;
 
             if(position == PositionList::START_BOX && direction == Directions::TOWARDS_PILL){
-                if((farLeftVal == 1) || ( farRightVal == 1)){
+                if( farRightVal == 1){
                     while ((farLeftVal == 1) || (farRightVal == 1)){
                         checkAllSensorValues(false);
                         binaryFollowLine(100);
@@ -523,15 +523,20 @@ class Robot {
 
             if(position == PositionList::FIRST_JUNCTION && direction == Directions::AWAY_FROM_PILL){
                 Serial.println("at first junction for the lsast time");
-                while (farRightVal == 1){
+
+                while (frontRightVal<lineSensorThreshold){
+
                     checkAllSensorValues(false);
-                    runMotors(motorSpeed-40,motorSpeed+40);
+                    runMotors(motorSpeed-60,motorSpeed+60);
                     flashLEDS();
                 }
-                position = PositionList::START;
 
-            } else if(position == PositionList::START && direction == Directions::AWAY_FROM_PILL){
-                
+                position = PositionList::START;
+                currentRoutine = ActionType::LINE;
+
+            } 
+            if(position == PositionList::START && direction == Directions::AWAY_FROM_PILL){
+                currentRoutine = ActionType::LINE;
                 if(farLeftVal == 1 || farRightVal == 1){
                     Serial.println("on starting track, about to stop");
                     stopInHomeLocation();

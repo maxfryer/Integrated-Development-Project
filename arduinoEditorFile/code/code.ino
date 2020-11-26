@@ -60,7 +60,7 @@ class Robot {
         float speedDifference = 0;
 
         /* THRESHOLDS */
-        int lineSensorThreshold = 290;
+        int lineSensorThreshold = 300;
         float distanceSensorThreshold = 460;
 
 
@@ -80,7 +80,7 @@ class Robot {
 
         void checkForNextLocation(){
             
-            static PositionList lastPosition = PositionList::START;
+            static PositionList lastPosition = PositionList::START_BOX;
             static char place[20] = "start";
             
 
@@ -113,7 +113,7 @@ class Robot {
                         position = PositionList::MAIN_T_JUNCTION;
                         strcpy(place,"reached mainJunc");
                     }
-                    if(direction == Directions::AWAY_FROM_PILL && farRightVal == 1 && farLeftVal == 0){
+                    if(direction == Directions::AWAY_FROM_PILL && farRightVal == 1){
                         position = PositionList::FIRST_JUNCTION;
                     }
 
@@ -266,18 +266,18 @@ class Robot {
                 middleVals[i] = middleVals[i+1];
                 distanceVals[i] = distanceVals[i+1];
 
-                leftSum += rightVals[i];
-                rightSum +=leftVals[i];
+                rightSum += rightVals[i];
+                leftSum +=leftVals[i];
                 middleSum +=middleVals[i];
                 distanceSum += distanceVals[i];
             }
-            rightVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisLeft) ;
-            leftVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisRight) ;
+            leftVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisLeft) ;
+            rightVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisRight) ;
             middleVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(backMiddle) ;
             distanceVals[NUMBER_OF_SENSOR_POSITIVES -1] = analogRead(distanceSensor); 
 
-            leftSum += rightVals[NUMBER_OF_SENSOR_POSITIVES -1];
-            rightSum +=leftVals[NUMBER_OF_SENSOR_POSITIVES -1];
+            leftSum += leftVals[NUMBER_OF_SENSOR_POSITIVES -1];
+            rightSum +=rightVals[NUMBER_OF_SENSOR_POSITIVES -1];
             middleSum +=middleVals[NUMBER_OF_SENSOR_POSITIVES -1];
             distanceSum += distanceVals[NUMBER_OF_SENSOR_POSITIVES -1];
 
@@ -302,14 +302,6 @@ class Robot {
                 Serial.println(distanceFrontVal);
                 // Serial.println("                                     ");
                 // Serial.println("                                     ");
-            }
-
-
-            if(frontRightVal > lineSensorThreshold && frontLeftVal < lineSensorThreshold){
-                lastSensorTriggered = 2;
-            }
-            if(frontLeftVal > lineSensorThreshold && frontRightVal < lineSensorThreshold){
-                lastSensorTriggered = 1;
             }
 
 
@@ -375,6 +367,13 @@ class Robot {
                 checkAllSensorValues(false);
                 runMotors(-1*motorSpeed,1*motorSpeed);
             }
+            int timer = 0;
+            while (timer < 100){
+                timer +=1;
+                binaryFollowLine(100);
+                checkAllSensorValues(false);
+                flashLEDS();
+            }
             return;
         }
 
@@ -393,7 +392,7 @@ class Robot {
             if(frontRightVal > lineSensorThreshold ){
                 while (frontRightVal > lineSensorThreshold){
                     checkAllSensorValues(false);
-                    runMotors(-1*motorSpeed,1*motorSpeed);
+                    runMotors(1*motorSpeed,-1*motorSpeed);
                 }
             }
             while(frontRightVal < lineSensorThreshold ){
@@ -403,6 +402,13 @@ class Robot {
             while(frontLeftVal < lineSensorThreshold ){
                 checkAllSensorValues(false);
                 runMotors(1*motorSpeed,-1*motorSpeed);
+            }
+            int timer = 0;
+            while (timer < 100){
+                timer +=1;
+                binaryFollowLine(100);
+                checkAllSensorValues(false);
+                flashLEDS();
             }
             return;
         }
@@ -520,6 +526,10 @@ class Robot {
                     runMotors(motorSpeed -20,motorSpeed +20);
                     checkAllSensorValues(false);
                     flashLEDS();
+                }
+                if(farLeftVal == 1){
+                    Serial.println("on starting track, about to stop");
+                    stopInHomeLocation();
                 }
                 position = PositionList::START;
 

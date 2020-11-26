@@ -60,7 +60,7 @@ class Robot {
         float speedDifference = 0;
 
         /* THRESHOLDS */
-        int lineSensorThreshold = 290;
+        int lineSensorThreshold = 300;
         float distanceSensorThreshold = 460;
 
 
@@ -113,7 +113,7 @@ class Robot {
                         position = PositionList::MAIN_T_JUNCTION;
                         strcpy(place,"reached mainJunc");
                     }
-                    if(direction == Directions::AWAY_FROM_PILL && farRightVal == 1 && farLeftVal == 0){
+                    if(direction == Directions::AWAY_FROM_PILL && farRightVal == 1){
                         position = PositionList::FIRST_JUNCTION;
                     }
 
@@ -266,18 +266,18 @@ class Robot {
                 middleVals[i] = middleVals[i+1];
                 distanceVals[i] = distanceVals[i+1];
 
-                leftSum += rightVals[i];
-                rightSum +=leftVals[i];
+                rightSum += rightVals[i];
+                leftSum +=leftVals[i];
                 middleSum +=middleVals[i];
                 distanceSum += distanceVals[i];
             }
-            rightVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisLeft) ;
-            leftVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisRight) ;
+            leftVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisLeft) ;
+            rightVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(offAxisRight) ;
             middleVals[NUMBER_OF_SENSOR_POSITIVES -1] = digitalRead(backMiddle) ;
             distanceVals[NUMBER_OF_SENSOR_POSITIVES -1] = analogRead(distanceSensor); 
 
-            leftSum += rightVals[NUMBER_OF_SENSOR_POSITIVES -1];
-            rightSum +=leftVals[NUMBER_OF_SENSOR_POSITIVES -1];
+            leftSum += leftVals[NUMBER_OF_SENSOR_POSITIVES -1];
+            rightSum +=rightVals[NUMBER_OF_SENSOR_POSITIVES -1];
             middleSum +=middleVals[NUMBER_OF_SENSOR_POSITIVES -1];
             distanceSum += distanceVals[NUMBER_OF_SENSOR_POSITIVES -1];
 
@@ -302,14 +302,6 @@ class Robot {
                 Serial.println(distanceFrontVal);
                 // Serial.println("                                     ");
                 // Serial.println("                                     ");
-            }
-
-
-            if(frontRightVal > lineSensorThreshold && frontLeftVal < lineSensorThreshold){
-                lastSensorTriggered = 2;
-            }
-            if(frontLeftVal > lineSensorThreshold && frontRightVal < lineSensorThreshold){
-                lastSensorTriggered = 1;
             }
 
 
@@ -534,6 +526,10 @@ class Robot {
                     runMotors(motorSpeed -20,motorSpeed +20);
                     checkAllSensorValues(false);
                     flashLEDS();
+                }
+                if(farLeftVal == 1){
+                    Serial.println("on starting track, about to stop");
+                    stopInHomeLocation();
                 }
                 position = PositionList::START;
 

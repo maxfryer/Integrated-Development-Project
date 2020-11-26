@@ -60,7 +60,7 @@ class Robot {
         float speedDifference = 0;
 
         /* THRESHOLDS */
-        int lineSensorThreshold = 300;
+        int lineSensorThreshold = 290;
         float distanceSensorThreshold = 460;
 
 
@@ -80,7 +80,7 @@ class Robot {
 
         void checkForNextLocation(){
             
-            static PositionList lastPosition = PositionList::START;
+            static PositionList lastPosition = PositionList::START_BOX;
             static char place[20] = "start";
             
 
@@ -375,6 +375,13 @@ class Robot {
                 checkAllSensorValues(false);
                 runMotors(-1*motorSpeed,1*motorSpeed);
             }
+            int timer = 0;
+            while (timer < 100){
+                timer +=1;
+                binaryFollowLine(100);
+                checkAllSensorValues(false);
+                flashLEDS();
+            }
             return;
         }
 
@@ -393,7 +400,7 @@ class Robot {
             if(frontRightVal > lineSensorThreshold ){
                 while (frontRightVal > lineSensorThreshold){
                     checkAllSensorValues(false);
-                    runMotors(-1*motorSpeed,1*motorSpeed);
+                    runMotors(1*motorSpeed,-1*motorSpeed);
                 }
             }
             while(frontRightVal < lineSensorThreshold ){
@@ -403,6 +410,13 @@ class Robot {
             while(frontLeftVal < lineSensorThreshold ){
                 checkAllSensorValues(false);
                 runMotors(1*motorSpeed,-1*motorSpeed);
+            }
+            int timer = 0;
+            while (timer < 100){
+                timer +=1;
+                binaryFollowLine(100);
+                checkAllSensorValues(false);
+                flashLEDS();
             }
             return;
         }
@@ -488,9 +502,9 @@ class Robot {
                         flashLEDS();
                     }
                     Serial.println("left starting box");
-                    
+                    position = PositionList::START;
                 }
-                position = PositionList::START;
+                
             }
 
             if(farRightVal == 1 && position == PositionList::PILL && direction == Directions::AWAY_FROM_PILL ){

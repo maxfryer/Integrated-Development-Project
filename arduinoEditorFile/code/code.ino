@@ -60,7 +60,7 @@ class Robot {
         float speedDifference = 0;
 
         /* THRESHOLDS */
-        int lineSensorThreshold = 300;
+        int lineSensorThreshold = 290;
         float distanceSensorThreshold = 460;
 
 
@@ -421,15 +421,15 @@ class Robot {
             // }
             while( farLeftVal == 0 ){
                 checkAllSensorValues(false);
-                runMotors(1*motorSpeed,-1*motorSpeed);
+                runMotors(-1*motorSpeed,1*motorSpeed);
             }
             while(frontLeftVal < lineSensorThreshold ){
                 checkAllSensorValues(false);
-                runMotors(1*motorSpeed,-1*motorSpeed);
+                runMotors(-1*motorSpeed,1*motorSpeed);
             }
             while(frontRightVal < lineSensorThreshold ){
                 checkAllSensorValues(false);
-                runMotors(1*motorSpeed,-1*motorSpeed);
+                runMotors(-1*motorSpeed,1*motorSpeed);
             }
             return;
 
@@ -488,9 +488,9 @@ class Robot {
                         flashLEDS();
                     }
                     Serial.println("left starting box");
-                    
+                    position = PositionList::START;
                 }
-                position = PositionList::START;
+                
             }
 
             if(farRightVal == 1 && position == PositionList::PILL && direction == Directions::AWAY_FROM_PILL ){

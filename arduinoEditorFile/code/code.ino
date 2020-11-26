@@ -83,7 +83,6 @@ class Robot {
             
             static PositionList lastPosition;
             static char place[20] = "start";
-            
 
 
             lastPosition = position;
@@ -91,6 +90,21 @@ class Robot {
             
             if(currentRoutine == ActionType::LINE){  // can only ake changes to postiion when on a line following path so as not tocaue problems with 180 tunrs etc
                 switch (position) {
+
+
+                case PositionList::START_BOX:
+                    if(direction == Directions::TOWARDS_PILL){
+                        if( farRightVal == 1 || farLeftVal == 1){
+                            while ((farLeftVal == 1) || (farRightVal == 1)){
+                                checkAllSensorValues(false);
+                                binaryFollowLine(100);
+                                flashLEDS();
+                            }
+                            Serial.println("left starting box");
+                            position = PositionList::START;
+                        }
+                    }
+                    break;
                 case PositionList::START:
                     
                     if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
@@ -300,7 +314,7 @@ class Robot {
                 // Serial.print("back middle Val: ");
                 // Serial.println(backMiddleVal);
                 // Serial.print("distanceSensor: ");
-                Serial.println(distanceFrontVal);
+                // Serial.println(distanceFrontVal);
                 // Serial.println("                                     ");
                 // Serial.println("                                     ");
             }
@@ -486,19 +500,7 @@ class Robot {
 
         void chooseAction(){
             currentRoutine = ActionType::LINE;
-
-            if(position == PositionList::START_BOX && direction == Directions::TOWARDS_PILL){
-                if( farRightVal == 1 || (frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold)){
-                    while ((farLeftVal == 1) || (farRightVal == 1)){
-                        checkAllSensorValues(false);
-                        binaryFollowLine(100);
-                        flashLEDS();
-                    }
-                    Serial.println("left starting box");
-                    position = PositionList::START;
-                }
-                
-            }
+            
 
             if(farRightVal == 1 && position == PositionList::PILL && direction == Directions::AWAY_FROM_PILL ){
                 currentRoutine = ActionType::TURN_RIGHT;
@@ -618,7 +620,7 @@ void loop() {
     Bot.OnOffSwitch();
     if(run == true){
         Bot.flashLEDS();
-        Bot.checkAllSensorValues(false);
+        Bot.checkAllSensorValues(true);
         Bot.checkForNextLocation();
         Bot.chooseAction();
     } else {

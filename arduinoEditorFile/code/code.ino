@@ -81,7 +81,7 @@ class Robot {
 
         void checkForNextLocation(){
             
-            static PositionList lastPosition = PositionList::START_BOX;
+            static PositionList lastPosition;
             static char place[20] = "start";
             
 
@@ -488,8 +488,8 @@ class Robot {
             currentRoutine = ActionType::LINE;
 
             if(position == PositionList::START_BOX && direction == Directions::TOWARDS_PILL){
-                if(farLeftVal == 1 || farRightVal == 1){
-                    while (farLeftVal == 1 || farRightVal == 1){
+                if((farLeftVal == 1) || ( farRightVal == 1)){
+                    while ((farLeftVal == 1) || (farRightVal == 1)){
                         checkAllSensorValues(false);
                         binaryFollowLine(100);
                         flashLEDS();
@@ -524,13 +524,8 @@ class Robot {
             if(position == PositionList::FIRST_JUNCTION && direction == Directions::AWAY_FROM_PILL){
                 Serial.println("at first junction for the lsast time");
                 while (farRightVal == 1){
-                    runMotors(motorSpeed +20,motorSpeed -20);
                     checkAllSensorValues(false);
-                    flashLEDS();
-                }
-                if(farLeftVal == 1){
-                    Serial.println("on starting track, about to stop");
-                    stopInHomeLocation();
+                    runMotors(motorSpeed-40,motorSpeed+40);
                 }
                 position = PositionList::START;
 

@@ -63,8 +63,6 @@ class Robot {
         int colourPinVal = 0;
         
 
-        int lastSensorTriggered = 0;  // 0 for no idea, 1 for left, 2 for right
-
         /* MOTORS */
         float motorSpeed = 100; //EDIT THIS 
         float lineFollowDampingFactor = 0.9;

@@ -1,6 +1,6 @@
 {
     "board": "arduino:avr:uno",
-    "sketch": "lineFollower.ino",
+    "sketch": "finalMain\\finalMain.ino",
     "port": "COM4",
     "programmer": "AVR ISP"
 }

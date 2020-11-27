@@ -1,6 +1,20 @@
+#include <Wire.h>
+#include <Adafruit_MotorShield.h>
+#include "utility/Adafruit_MS_PWMServoDriver.h"
+#include <Servo.h> 
+
+
+
 class Sensors{
     public:
-    /*ALL PINS */
+        Adafruit_MotorShield AFMS = Adafruit_MotorShield();
+        Adafruit_DCMotor * myMotorLeft = AFMS.getMotor(1);
+        Adafruit_DCMotor * myMotorRight = AFMS.getMotor(2);
+        // Create a servo object 
+        Servo Servo1;
+
+
+        /*ALL PINS */
         int frontLeft = A0; // input pin for FRONT LEFT light sensor
         int frontRight = A1;
         int colourPin = 0;
@@ -21,14 +35,15 @@ class Sensors{
         int frontLeftVal = 0;
         int frontRightVal = 0;
         int farRightVal = 0;
-        int rightVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         int farLeftVal = 0;
-        int leftVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         int backMiddleVal = 0;
-        int middleVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         float distanceFrontVal = 0;
+
+        int rightVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
+        int leftVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
+        int middleVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
         float distanceVals[NUMBER_OF_SENSOR_POSITIVES] = {0};
-        float distanceAvr;
+
         int colourPinVal = 0;
 
         /* THRESHOLDS */
@@ -95,4 +110,4 @@ class Sensors{
 
             colourPinVal = digitalRead(colourPin);
         }
-}
+};

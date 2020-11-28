@@ -514,6 +514,51 @@ class Robot {
         }
 
         void chooseAction(){
+
+            //the whole contorl structre
+            /*line follow to t junction, the turn left
+            if red 
+                check other side
+                if red 
+                    put it on the left hand side
+                    then go back right, pickup and place blue,
+                    come back, head right and pickup and place blue
+
+                    come back and place the left red in the right hand spot, 
+                    then go back and plave the last left red in hte clockwise spot
+                    then go home
+                else if blue 
+                    place the blue and check the right hand side again
+                    if red:
+                        move to left hand side 
+                        then come back, go right pick up and place the last blue
+                        and then place the left red on the right
+                        then place the last red clockwise
+                    else 
+                        place the blue,
+                        come back and place the left red on the right
+                        go across and place the left red clockwise on the pill
+            else pickup and place blue
+                come back and check the left hand side again 
+                if red:
+                    check other side
+                    if red: 
+                        place this red on left
+                        go back and deal with final blue on right
+                        go back and place the first lefthandside red on the right hand side
+                        then deal with second red on the left hand side
+                else blue:
+                    place blue and 
+                    place the right red on the right
+                    place the clockwise red on the back of the pill.
+
+            */s
+
+
+
+
+
+
             currentRoutine = ActionType::LINE;         
 
             if(farRightVal == 1 && position == PositionList::PILL && direction == Directions::AWAY_FROM_PILL ){

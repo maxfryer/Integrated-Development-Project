@@ -1,9 +1,7 @@
 #ifndef ROBOT
+#define ROBOT
 #include  "RobotFunctions.cpp"
 #endif
-
-#define ROBOT
-
 
 class TaskManager: public Robot{
     public:

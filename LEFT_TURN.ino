@@ -518,9 +518,9 @@ class Robot {
             //the whole contorl structre
             /*line follow to t junction, the turn left
             if red 
-                check other side
+                check other side ()  -> go back round until you hit the t-junction, then carry on until you hit something on the other side
                 if red 
-                    put it on the left hand side
+                    put it on the left hand side ()  -> pickup a red, 180, cross t- junction, carry on for a short while then place on the left hand side 
                     then go back right, pickup and place blue,
                     come back, head right and pickup and place blue
 
@@ -670,10 +670,7 @@ class Robot {
                 timer +=1 ;
                 runMotors(-1*motorSpeed,-1*motorSpeed);
             }
-            turn180();
-            direction = Directions::AWAY_FROM_PILL;
             boxBeingColourChecked = false;
-            hasBoxAtm = true;
         }
 
         void runAction(){
@@ -696,6 +693,9 @@ class Robot {
                     break;
                 case ActionType::CHECK_BOX:
                     checkBoxColour();
+                    turn180();
+                    direction = Directions::AWAY_FROM_PILL;
+                    hasBoxAtm = true;
                     break;
             }
         }

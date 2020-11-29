@@ -82,9 +82,10 @@ class Robot {
         bool hasBoxAtm = false;
         int pillPosition = 0;
         bool onTargetBox = false;
+        bool clockwise = true;
 
         enum class ActionType { LINE, TURN_LEFT, TURN_RIGHT, TURN_180, ADVANCE_TO_HOME, CHECK_BOX};
-        enum class PositionList { START_BOX,START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL,BLUE_TRACK,BLUE_SQUARE };
+        enum class PositionList { START_BOX,START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL,BLUE_TRACK,BLUE_T,BLUE_CORNER, BLUE_SIDE };
         enum class Directions {TOWARDS_PILL,AWAY_FROM_PILL};
         enum class BoxCol {RED,BLUE,NO_BOX};
 
@@ -263,82 +264,8 @@ class Robot {
                 checkAllSensorValues(false);
                 flashLEDS();
             }
+            return;
         }
-
-        void loop() {
-            while(!(position == PositionList::START_BOX && farLeftVal == 1 & farRightVal == 1)){
-                utilityFunction();
-                binaryFollowLine(100);
-            }
-            position = PositionList::START;
-            while(!())
-        }
-
-
-
-        void checkForNextLocation(){
-            
-            static PositionList lastPosition;
-            static char place[20] = "start";
-
-
-            lastPosition = position;
-            
-            
-            if(currentRoutine == ActionType::LINE){  // can only ake changes to postiion when on a line following path so as not tocaue problems with 180 tunrs etc
-                switch (position) {
-                case PositionList::START_BOX:
-                    if(direction == Directions::TOWARDS_PILL){
-                        if(farRightVal == 1 || farLeftVal == 1){
-                            while ((farLeftVal == 1) || (farRightVal == 1)){
-                                checkAllSensorValues(false);
-                                binaryFollowLine(100);
-                                flashLEDS();
-                            }
-                            Serial.println("left starting box");
-                            position = PositionList::START;
-                        }
-                    }
-                    break;
-                case PositionList::START:
-                    
-                    if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
-                        position = PositionList::FIRST_JUNCTION;
-                        strcpy(place,"reached junction1");
-                    }
-
-                    break;
-                case PositionList::FIRST_JUNCTION:
-
-                    if((farLeftVal == 0) && (direction == Directions::TOWARDS_PILL)){
-                        position = PositionList::TUNNEL;
-                        strcpy(place,"on tunnel track towards pill");
-                    }
-
-                    break;
-
-                case PositionList::TUNNEL:
-                    
-                    if(( farRightVal == 1) && (direction == Directions::TOWARDS_PILL) ){
-                        position = PositionList::MAIN_T_JUNCTION;
-                        strcpy(place,"reached mainJunc");
-                    }
-                    if(direction == Directions::AWAY_FROM_PILL && farRightVal == 1){
-                        position = PositionList::FIRST_JUNCTION;
-                    }
-
-                    //check for the sensor positions that would give rise to the next state from here
-                    break;
-            
-                }
-
-                if(position != lastPosition){
-                Serial.println(place);
-            }
-            }
-        }
-
-        
 
         void runMotors(int motorLeftVal,int motorRightVal){
             int motorDirectionLeft = motorLeftVal > 0 ? BACKWARD : FORWARD;
@@ -356,27 +283,34 @@ class Robot {
             //Serial.println("motors running");
         }
 
-        
-
-        void binaryFollowLine(int increaseRate) { 
-            //COULD WE USE PROPORTIONAL CONTROL FOR THIS IE SPEED DIFFERENCE IS PROPORTIONAL TO LINESENSOR READING (POTENTIALLY ONLY IF ITS ABOVE THRESHOLD)
-            //THIS WILL ALLOW US TO BE REALLY STRAIGHT ON THE STRAGHT BITS AND SO BLOCK PLACEMENT WILL BECOME SIMPLER...
-            // if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
-            //     while (frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
-            //         /*
-            //         if(lastSensorTriggered == 2){ 
-            //             runMotors(-1*motorSpeed,1*motorSpeed);
-            //         } else if (lastSensorTriggered == 1) {
-            //             runMotors(1*motorSpeed,-1*motorSpeed);
-            //         }
-            //         */
-            //         runMotors(50,50);
-            //         checkAllSensorValues(false);
-            //     }
-            // }
-            if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
-                runMotors(motorSpeed,motorSpeed);
+        void binaryFollowLine(int increaseRate) {
+            if(position == PositionList::PILL){
+               if(farLeftVal == 1 && farRightVal == 1 && onTargetBox == false){
+                    if(clockwise==true){
+                        pillPosition ++;
+                        Serial.println("ran over clockwise target box");
+                    } else{
+                        pillPosition --;
+                        Serial.println("ran over anticlockwise target box");
+                    }
+                    onTargetBox = true;
+                }
+                if(farLeftVal == 0 && farRightVal == 0 && onTargetBox == true){
+                    onTargetBox = false;
+                }
+                if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
+                    runMotors(motorSpeed,motorSpeed);
+                } 
             }
+            if(position == PositionList::BLUE_SIDE){
+                if(farLeftVal == 1 && farRightVal == 1 && onTargetBox == false){
+                    onTargetBox = true;
+                }
+                if(farLeftVal == 0 && farRightVal == 0 && onTargetBox == true){
+                    onTargetBox = false;
+                }
+            }
+            
             else if (frontLeftVal > lineSensorThreshold) {
                 speedDifference = increaseRate;
             }
@@ -417,13 +351,7 @@ class Robot {
                 checkAllSensorValues(false);
                 runMotors(-1*motorSpeed,1*motorSpeed);
             }
-            int timer = 0;
-            while (timer < 100){
-                timer +=1;
-                binaryFollowLine(100);
-                checkAllSensorValues(false);
-                flashLEDS();
-            }
+            follow(100);
             return;
         }
 
@@ -492,6 +420,364 @@ class Robot {
         }
 
 
+        void loop() {
+            while(!(position == PositionList::START)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farLeftVal == 1 && farRightVal == 1){
+                    position = PositionList::START;
+                }
+            }
+            while(!(position == PositionList::FIRST_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if( farLeftVal == 1){
+                    position = PositionList::FIRST_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::TUNNEL)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if( farLeftVal == 0){
+                    position = PositionList::TUNNEL;
+                }
+            }
+            while(!(position == PositionList::MAIN_T_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farLeftVal == 1 && farRightVal == 1){
+                    position = PositionList::MAIN_T_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::PILL)){
+                utilityFunction();
+                turnLeft();
+                position = PositionList::PILL;
+            }
+            while(!(distanceFrontVal > 500)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(currentBoxCol == BoxCol::NO_BOX)){
+                utilityFunction();
+                checkBoxColour();
+            }
+            if(currentBoxCol == BoxCol::BLUE){
+                //first blue box on clockwise side
+                while(!(hasBoxAtm==true)){
+                    utilityFunction();
+                    pickupBox();
+                }
+                while(!(clockwise==false)){
+                    utilityFunction();
+                    turn180();
+                    clockwise = false;
+                }
+                while(!(pillPosition== 0)){
+                    utilityFunction();
+                    binaryFollowLine(100);
+                }
+                while(!(position == PositionList::MAIN_T_JUNCTION)){
+                    utilityFunction();
+                    binaryFollowLine(100);
+                    if (farRightVal==1){
+                        position == PositionList::MAIN_T_JUNCTION;
+                    }
+                }
+                while(!(position == PositionList::TUNNEL)){
+                    utilityFunction();
+                    turnRight();
+                    direction = Directions::AWAY_FROM_PILL;
+                    position = PositionList::TUNNEL;
+                }
+                placeFirstBlueBox();
+                
+                while(!(position == PositionList::PILL)){
+                    utilityFunction();
+                    turnLeft();
+                    position = PositionList::PILL;
+                    clockwise = true;
+                }
+                while(!(distanceFrontVal > 500)){
+                    utilityFunction();
+                    binaryFollowLine(100);
+                }
+                while(!(currentBoxCol == BoxCol::NO_BOX)){
+                    utilityFunction();
+                    checkBoxColour();
+                }
+                if(currentBoxCol == BoxCol::BLUE){
+                    //second blue box on clockwise side
+                    while(!(hasBoxAtm==true)){
+                        utilityFunction();
+                        pickupBox();
+                    }
+                    while(!(clockwise==false)){
+                        utilityFunction();
+                        turn180();
+                        clockwise = false;
+                    }
+                    while(!(pillPosition== 0)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(position == PositionList::MAIN_T_JUNCTION)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                        if (farRightVal==1){
+                            position == PositionList::MAIN_T_JUNCTION;
+                        }
+                    }
+                    while(!(position == PositionList::TUNNEL)){
+                        utilityFunction();
+                        turnRight();
+                        direction = Directions::AWAY_FROM_PILL;
+                        position = PositionList::TUNNEL;
+                    }
+                    placeSecondBlueBox();
+                }
+
+
+            }
+        }
+
+        void placeFirstBlueBox(){
+            //goes from tunel back to main junction
+            while(!(position == PositionList::FIRST_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal == 1 ){
+                    position == PositionList::FIRST_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::BLUE_TRACK)){
+                utilityFunction();
+                turnRight();
+                position == PositionList::BLUE_TRACK;
+            }
+            while(!(position == PositionList::BLUE_T)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal == 1 && farLeftVal == 1){
+                    position = PositionList::BLUE_T;
+                }
+            }
+            while(!(position == PositionList::BLUE_SIDE)){
+                utilityFunction();
+                turnLeft();
+                position = PositionList::BLUE_SIDE;
+            }
+            while(!(onTargetBox==true)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(direction == Directions::TOWARDS_PILL)){
+                utilityFunction();
+                placeBox();
+                direction = Directions::TOWARDS_PILL;
+            }
+            while(!(position == PositionList::BLUE_T)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal==1){
+                    position = PositionList::BLUE_T;
+                }
+            }
+            while(!(position == PositionList::BLUE_TRACK)){
+                utilityFunction();
+                turnRight();
+                position =  PositionList::BLUE_TRACK;
+            }
+            while(!(position == PositionList::FIRST_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal == 1){
+                    position = PositionList::FIRST_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::MAIN_T_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal ==1 && farLeftVal ==1){
+                    position = PositionList::MAIN_T_JUNCTION;
+                }
+            }
+        }
+
+        void placeSecondBlueBox(){
+            while(!(position == PositionList::FIRST_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal == 1 ){
+                    position == PositionList::FIRST_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::BLUE_TRACK)){
+                utilityFunction();
+                turnRight();
+                position == PositionList::BLUE_TRACK;
+            }
+            while(!(position == PositionList::BLUE_T)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal == 1 && farLeftVal == 1){
+                    position = PositionList::BLUE_T;
+                }
+            }
+            //jumps across to other side of the square
+            int timer = 0;
+            runMotors(motorSpeed,motorSpeed);
+            while (timer < 200){
+                timer +=1;
+                utilityFunction();
+            }
+            while(!(position == PositionList::BLUE_SIDE)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal==1 && farLeftVal ==1){
+                    turnLeft();
+                    position = PositionList::BLUE_SIDE;
+                }
+            }
+            while(!(onTargetBox==true)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(direction == Directions::TOWARDS_PILL)){
+                utilityFunction();
+                placeBox();
+                direction = Directions::TOWARDS_PILL;
+            }
+            while(!(position == PositionList::BLUE_CORNER)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal ==1){
+                    position = PositionList::BLUE_CORNER;
+                }
+            }
+            while(!(position == PositionList::BLUE_SIDE)){
+                utilityFunction();
+                turnRight();
+                position = PositionList::BLUE_SIDE
+            }
+            while(!(position == PositionList::BLUE_CORNER)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal ==1){
+                    position = PositionList::BLUE_CORNER;
+                }
+            }
+            while(!(position == PositionList::BLUE_SIDE)){
+                utilityFunction();
+                turnRight();
+                position = PositionList::BLUE_SIDE
+            }
+            while(!(position == PositionList::BLUE_T)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farLeftVal ==1){
+                    position = PositionList::BLUE_T
+                }
+            }
+            while(!(position == PositionList::BLUE_TRACK)){
+                utilityFunction();
+                turnLeft();
+                position = PositionList::BLUE_TRACK;
+            }
+            while(!(position == PositionList::FIRST_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal == 1){
+                    position = PositionList::FIRST_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::MAIN_T_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal ==1 && farLeftVal ==1){
+                    position = PositionList::MAIN_T_JUNCTION;
+                }
+            }
+        }
+
+
+        void pickupBox(){
+            //closes claws and sets hasBoxatm to true
+        }
+
+        void placeBox(){
+            /*if onTargetLocation == true{
+                reverse a bit
+                diposit box
+                reverse some more
+                set on Targetlocation to zero 
+                set currentBox col to no Box
+                do a 180
+            }*/
+        }
+
+        void checkForNextLocation(){
+            
+            static PositionList lastPosition;
+            static char place[20] = "start";
+
+
+            lastPosition = position;
+            
+            
+            if(currentRoutine == ActionType::LINE){  // can only ake changes to postiion when on a line following path so as not tocaue problems with 180 tunrs etc
+                switch (position) {
+                case PositionList::START_BOX:
+                    if(direction == Directions::TOWARDS_PILL){
+                        if(farRightVal == 1 || farLeftVal == 1){
+                            while ((farLeftVal == 1) || (farRightVal == 1)){
+                                checkAllSensorValues(false);
+                                binaryFollowLine(100);
+                                flashLEDS();
+                            }
+                            Serial.println("left starting box");
+                            position = PositionList::START;
+                        }
+                    }
+                    break;
+                case PositionList::START:
+                    
+                    if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
+                        position = PositionList::FIRST_JUNCTION;
+                        strcpy(place,"reached junction1");
+                    }
+
+                    break;
+                case PositionList::FIRST_JUNCTION:
+
+                    if((farLeftVal == 0) && (direction == Directions::TOWARDS_PILL)){
+                        position = PositionList::TUNNEL;
+                        strcpy(place,"on tunnel track towards pill");
+                    }
+
+                    break;
+
+                case PositionList::TUNNEL:
+                    
+                    if(( farRightVal == 1) && (direction == Directions::TOWARDS_PILL) ){
+                        position = PositionList::MAIN_T_JUNCTION;
+                        strcpy(place,"reached mainJunc");
+                    }
+                    if(direction == Directions::AWAY_FROM_PILL && farRightVal == 1){
+                        position = PositionList::FIRST_JUNCTION;
+                    }
+
+                    //check for the sensor positions that would give rise to the next state from here
+                    break;
+            
+                }
+
+                if(position != lastPosition){
+                Serial.println(place);
+            }
+            }
+        }
+
         void stopInHomeLocation(){
             int timer = 0;
             while (timer < 1000){
@@ -501,94 +787,6 @@ class Robot {
             Serial.println("stopping NOWWWW");
             runMotors(0,0);
             run = false;
-        }
-
-        void chooseAction(){
-
-            
-
-
-
-
-
-
-            currentRoutine = ActionType::LINE;         
-
-            if(farRightVal == 1 && position == PositionList::PILL && direction == Directions::AWAY_FROM_PILL ){
-                currentRoutine = ActionType::TURN_RIGHT;
-                pillPosition = 0;
-                Serial.println("reached main t junction, coming home");
-                position = PositionList::TUNNEL;
-            } 
-            if(position == PositionList::PILL && !boxBeingColourChecked && !hasBoxAtm){
-                if(distanceFrontVal > 500){
-                    Serial.println("checking box colour");
-                    currentRoutine = ActionType::CHECK_BOX;
-                    boxBeingColourChecked = true;
-                }
-
-                if(farLeftVal == 1 && farRightVal == 1 && onTargetBox == false){
-                    Serial.println("ran over target box");
-
-                    pillPosition ++;
-                    onTargetBox = true;
-
-                }
-                if(farLeftVal == 0 && farRightVal == 0 && onTargetBox == true){
-                    onTargetBox = false;
-                }
-
-
-            }
-
-            if(position == PositionList::MAIN_T_JUNCTION && direction == Directions:: TOWARDS_PILL ){
-                currentRoutine = ActionType::TURN_LEFT;
-                Serial.println("at pill");
-                position = PositionList::PILL;
-            }
-
-
-
-            if(position == PositionList::FIRST_JUNCTION && direction == Directions::AWAY_FROM_PILL){
-
-                if(currentBoxCol == BoxCol::NO_BOX){
-                    Serial.println("at first junction for the lsast time");
-
-                    while (frontRightVal<lineSensorThreshold){
-
-                        checkAllSensorValues(false);
-                        runMotors(motorSpeed-60,motorSpeed+60);
-                        flashLEDS();
-                    }
-                    position = PositionList::START;
-                }
-                if(currentBoxCol == BoxCol::BLUE){
-                    turnRight();
-                    position = PositionList::BLUE_TRACK;
-                    Serial.println("on blue track");
-
-                    
-                }
-
-                currentRoutine = ActionType::LINE;
-
-            } 
-            if(position == PositionList::START && direction == Directions::AWAY_FROM_PILL){
-                currentRoutine = ActionType::LINE;
-                if(farLeftVal == 1 || farRightVal == 1){
-                    Serial.println("on starting track, about to stop");
-                    stopInHomeLocation();
-                }
-                
-            }
-
-            if(position == PositionList::BLUE_TRACK && direction == Directions::AWAY_FROM_PILL && (farLeftVal == 1 || farRightVal ==1) ){
-                currentRoutine = ActionType::TURN_LEFT;
-                Serial.println("at blue square");
-                position = PositionList::BLUE_SQUARE;
-            }
-
-            runAction();
         }
 
         void checkBoxColour(){
@@ -612,9 +810,6 @@ class Robot {
             //     Servo1.write(pos);              // tell servo to go to position in variable 'pos'
             //     delay(40);                       // waits 15ms for the servo to reach the position
             // }
-
-
-
 
             //servo code end
 

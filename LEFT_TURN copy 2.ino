@@ -93,43 +93,187 @@ class Robot {
         Directions direction = Directions::AWAY_FROM_PILL;//TOWARDS_PILL;
         BoxCol currentBoxCol = BoxCol::BLUE;
 
-        //the whole contorl structre
-            /*line follow to t junction, the turn left
-            if red 
-                check other side ()  -> go back round until you hit the t-junction, then carry on until you hit something on the other side
-                if red 
-                    put it on the left hand side ()  -> pickup a red, 180, cross t- junction, carry on for a short while then place on the left hand side 
-                    then go back right, pickup and place blue,
-                    come back, head right and pickup and place blue
 
-                    come back and place the left red in the right hand spot, 
-                    then go back and plave the last left red in hte clockwise spot
-                    then go home
-                else if blue 
-                    place the blue and check the right hand side again
-                    if red:
-                        move to left hand side 
-                        then come back, go right pick up and place the last blue
-                        and then place the left red on the right
-                        then place the last red clockwise
-                    else 
-                        place the blue,
-                        come back and place the left red on the right
-                        go across and place the left red clockwise on the pill
-            else pickup and place blue
-                come back and check the left hand side again 
-                if red:
-                    check other side
-                    if red: 
-                        place this red on left
-                        go back and deal with final blue on right
-                        go back and place the first lefthandside red on the right hand side
-                        then deal with second red on the left hand side
-                else blue:
-                    place blue and 
-                    place the right red on the right
-                    place the clockwise red on the back of the pill.
-            */
+        void checkForNextLocation(){
+            
+            static PositionList lastPosition;
+            static char place[20] = "start";
+
+
+            lastPosition = position;
+            
+            
+            if(currentRoutine == ActionType::LINE){  // can only ake changes to postiion when on a line following path so as not tocaue problems with 180 tunrs etc
+                switch (position) {
+                case PositionList::START_BOX:
+                    if(direction == Directions::TOWARDS_PILL){
+                        if(farRightVal == 1 || farLeftVal == 1){
+                            while ((farLeftVal == 1) || (farRightVal == 1)){
+                                checkAllSensorValues(false);
+                                binaryFollowLine(100);
+                                flashLEDS();
+                            }
+                            Serial.println("left starting box");
+                            position = PositionList::START;
+                        }
+                    }
+                    break;
+                case PositionList::START:
+                    
+                    if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
+                        position = PositionList::FIRST_JUNCTION;
+                        strcpy(place,"reached junction1");
+                    }
+
+                    break;
+                case PositionList::FIRST_JUNCTION:
+
+                    if((farLeftVal == 0) && (direction == Directions::TOWARDS_PILL)){
+                        position = PositionList::TUNNEL;
+                        strcpy(place,"on tunnel track towards pill");
+                    }
+
+                    break;
+
+                case PositionList::TUNNEL:
+                    
+                    if(( farRightVal == 1) && (direction == Directions::TOWARDS_PILL) ){
+                        position = PositionList::MAIN_T_JUNCTION;
+                        strcpy(place,"reached mainJunc");
+                    }
+                    if(direction == Directions::AWAY_FROM_PILL && farRightVal == 1){
+                        position = PositionList::FIRST_JUNCTION;
+                    }
+
+                    //check for the sensor positions that would give rise to the next state from here
+                    break;
+                // case PositionList::MAIN_T_JUNCTION:
+                    
+                //     //check for the sensor positions that would give rise to the next state from here
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::TOWARDS_PILL )){
+                //         position = PositionList::PILL;
+                //     }
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL )){
+                //         position = PositionList::TUNNEL;
+                //     }
+                //     break;
+                // case PositionList::PILL:
+                //     //if line following can take care of position from here!
+                //     break;
+                    
+                // case PositionList::BLUE_T_JUNCTION:
+                //     //check for the sensor positions that would give rise to the next state from here
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::AWAY_FROM_PILL)){
+                //         position = PositionList::BLUE_BOX_BOTTOM;
+                //     }
+                //     if((farLeftVal == 0 || farRightVal == 0) && (direction == Directions::TOWARDS_PILL)){
+                //         position = PositionList::BLUE_TRACK;
+                //     }
+                //     break;
+
+                // case PositionList::BLUE_TRACK:
+                //     if((direction == Directions::AWAY_FROM_PILL )&&(farLeftVal == 1  && farRightVal == 1)){
+                //         position = PositionList::BLUE_T_JUNCTION;
+                //     }
+                //     if((direction == Directions::TOWARDS_PILL) && (farRightVal == 1)){
+                //         position = PositionList::FIRST_JUNCTION;
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_BOTTOM:
+                //     if(farLeftVal == 1 && direction == Directions::AWAY_FROM_PILL && currentTask == TaskList::PLACE_SECOND_BLUE_BOX){
+                //         position = PositionList::BLUE_BOX_BOTTOM_RIGHT;
+                //         strcpy(place,"reached blu btm right");
+                //     }
+                //     if((farLeftVal == 1 || farRightVal == 1) && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_T_JUNCTION;
+                //         strcpy(place,"reached blu T");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_BOTTOM_RIGHT:
+                //     if(farLeftVal == 0 && direction == Directions::AWAY_FROM_PILL){
+                //         position = PositionList::BLUE_BOX_RIGHT;
+                //         strcpy(place,"reached blu right side");
+                //     }
+                //     if(farRightVal == 0 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_BOTTOM;
+                //         strcpy(place,"reached blu btm side");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_RIGHT:
+                //     if(farLeftVal == 1 && direction == Directions::AWAY_FROM_PILL){
+                //         position = PositionList::BLUE_BOX_TOP_RIGHT;
+                //         strcpy(place,"reached blu top right");
+                //     }
+                //     if(farRightVal == 1 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_BOTTOM_RIGHT;
+                //         strcpy(place,"reached blu btm right");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_TOP_RIGHT:
+                //     if(farLeftVal == 0 && direction == Directions::AWAY_FROM_PILL){
+                //         position = PositionList::BLUE_BOX_TOP;
+                //         strcpy(place,"reached blu box top");
+                //     }
+                //     if(farRightVal == 0 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_RIGHT;
+                //         strcpy(place,"reached blu right side");
+                //     }
+                //     break;
+                // case PositionList::BLUE_BOX_TOP:
+                //     if(farRightVal == 1 && direction == Directions::TOWARDS_PILL){
+                //         position = PositionList::BLUE_BOX_TOP_RIGHT;
+                //         strcpy(place,"reached blu top right");
+                //     }
+                //     break;
+                }
+
+                if(position != lastPosition){
+                Serial.println(place);
+            }
+            }
+        }
+
+        void OnOffSwitch() {
+            //sets start program to true at the push of the button
+            int buttonState = digitalRead(startButtonPin);
+            static bool lockSwitch = false;
+
+            if (buttonState ==0 && lockSwitch==false) {
+                run = run == true ? false : true;
+                lockSwitch = true;
+                if(run == true){
+                    Serial.println("Running Program");
+                    return;
+
+                } else {
+                    Serial.println("Pausing Program");
+                    runMotors(0,0);
+                    digitalWrite(ledPinFirst, LOW);
+                    digitalWrite(ledPinSecond, LOW);
+                    digitalWrite(ledPinThird,LOW);
+                    return;
+                }
+            }
+            if (buttonState == 1 && lockSwitch ==true) {
+                lockSwitch = false;
+            }
+        }
+
+        void runMotors(int motorLeftVal,int motorRightVal){
+            int motorDirectionLeft = motorLeftVal > 0 ? BACKWARD : FORWARD;
+            int motorDirectionRight = motorRightVal > 0 ? BACKWARD : FORWARD;
+            if(motorLeftVal == 0 && motorRightVal == 0){
+                motorDirectionLeft = 0;
+                motorDirectionRight = 0;
+            }
+            //Serial.println("running");
+            myMotorLeft->setSpeed(abs(motorLeftVal));
+            myMotorLeft->run(motorDirectionLeft);
+            myMotorRight->setSpeed(abs(motorRightVal));
+            myMotorRight->run(motorDirectionRight);
+
+            //Serial.println("motors running");
+        }
 
         float checkAllSensorValues(bool listVals) {
             //Check ALL the sensor values
@@ -187,176 +331,10 @@ class Robot {
                 // Serial.println("                                     ");
                 // Serial.println("                                     ");
             }
+
+
             colourPinVal = digitalRead(colourPin);
         }
-
-        void flashLEDS(){
-            static int timer = 0;
-            int state = LOW;
-            timer += 1;
-            if(timer > 100) timer = 1;
-            if(timer % 100 == 0 ){
-                state = (state == HIGH) ? LOW : HIGH;
-            }
-
-            digitalWrite(ledPinSecond,state);
-
-            switch (currentBoxCol){
-                case BoxCol::BLUE:
-                    digitalWrite(ledPinThird,HIGH);
-                    digitalWrite(ledPinFirst,LOW);
-
-                    break;
-                case BoxCol::RED:
-                    digitalWrite(ledPinThird,LOW);
-                    digitalWrite(ledPinFirst,HIGH);
-                    break;
-                case BoxCol::NO_BOX:
-                    digitalWrite(ledPinThird,LOW);
-                    digitalWrite(ledPinFirst,LOW);
-                    break;
-            }
-        }
-
-        void OnOffSwitch() {
-            //sets start program to true at the push of the button
-            int buttonState = digitalRead(startButtonPin);
-            static bool lockSwitch = false;
-
-            if (buttonState == 0 && lockSwitch==false) {
-                run = false;
-                lockSwitch = true;
-                runMotors(0,0);
-                digitalWrite(ledPinFirst, LOW);
-                digitalWrite(ledPinSecond, LOW);
-                digitalWrite(ledPinThird,LOW);
-                Serial.println("Pausing Program");
-                while(run == false){
-                    int buttonState = digitalRead(startButtonPin);
-                    if (buttonState == 1 && lockSwitch ==true) {
-                        lockSwitch = false;
-                    }
-                    if(buttonState == 0 && lockSwitch == false){
-                        run = true;
-                        lockSwitch = true;
-                        return;
-                    }
-                }
-            }
-            if (buttonState == 1 && lockSwitch == true) {
-                lockSwitch = false;
-            }
-        }
-        
-        void utilityFunction(){
-            checkAllSensorValues(false);
-            flashLEDS();
-            OnOffSwitch();
-            return;
-        }
-
-        void follow(int loops){
-            int timer = 0;
-            while (timer < loops){
-                timer +=1;
-                binaryFollowLine(100);
-                checkAllSensorValues(false);
-                flashLEDS();
-            }
-        }
-
-        void loop() {
-            while(!(position == PositionList::START_BOX && farLeftVal == 1 & farRightVal == 1)){
-                utilityFunction();
-                binaryFollowLine(100);
-            }
-            position = PositionList::START;
-            while(!())
-        }
-
-
-
-        void checkForNextLocation(){
-            
-            static PositionList lastPosition;
-            static char place[20] = "start";
-
-
-            lastPosition = position;
-            
-            
-            if(currentRoutine == ActionType::LINE){  // can only ake changes to postiion when on a line following path so as not tocaue problems with 180 tunrs etc
-                switch (position) {
-                case PositionList::START_BOX:
-                    if(direction == Directions::TOWARDS_PILL){
-                        if(farRightVal == 1 || farLeftVal == 1){
-                            while ((farLeftVal == 1) || (farRightVal == 1)){
-                                checkAllSensorValues(false);
-                                binaryFollowLine(100);
-                                flashLEDS();
-                            }
-                            Serial.println("left starting box");
-                            position = PositionList::START;
-                        }
-                    }
-                    break;
-                case PositionList::START:
-                    
-                    if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
-                        position = PositionList::FIRST_JUNCTION;
-                        strcpy(place,"reached junction1");
-                    }
-
-                    break;
-                case PositionList::FIRST_JUNCTION:
-
-                    if((farLeftVal == 0) && (direction == Directions::TOWARDS_PILL)){
-                        position = PositionList::TUNNEL;
-                        strcpy(place,"on tunnel track towards pill");
-                    }
-
-                    break;
-
-                case PositionList::TUNNEL:
-                    
-                    if(( farRightVal == 1) && (direction == Directions::TOWARDS_PILL) ){
-                        position = PositionList::MAIN_T_JUNCTION;
-                        strcpy(place,"reached mainJunc");
-                    }
-                    if(direction == Directions::AWAY_FROM_PILL && farRightVal == 1){
-                        position = PositionList::FIRST_JUNCTION;
-                    }
-
-                    //check for the sensor positions that would give rise to the next state from here
-                    break;
-            
-                }
-
-                if(position != lastPosition){
-                Serial.println(place);
-            }
-            }
-        }
-
-        
-
-        void runMotors(int motorLeftVal,int motorRightVal){
-            int motorDirectionLeft = motorLeftVal > 0 ? BACKWARD : FORWARD;
-            int motorDirectionRight = motorRightVal > 0 ? BACKWARD : FORWARD;
-            if(motorLeftVal == 0 && motorRightVal == 0){
-                motorDirectionLeft = 0;
-                motorDirectionRight = 0;
-            }
-            //Serial.println("running");
-            myMotorLeft->setSpeed(abs(motorLeftVal));
-            myMotorLeft->run(motorDirectionLeft);
-            myMotorRight->setSpeed(abs(motorRightVal));
-            myMotorRight->run(motorDirectionRight);
-
-            //Serial.println("motors running");
-        }
-
-        
 
         void binaryFollowLine(int increaseRate) { 
             //COULD WE USE PROPORTIONAL CONTROL FOR THIS IE SPEED DIFFERENCE IS PROPORTIONAL TO LINESENSOR READING (POTENTIALLY ONLY IF ITS ABOVE THRESHOLD)
@@ -491,6 +469,36 @@ class Robot {
 
         }
 
+        void flashLEDS(){
+            static int timer = 0;
+            int state = LOW;
+            timer += 1;
+            if(timer > 100) timer = 1;
+            if(timer % 100 == 0 ){
+                state = (state == HIGH) ? LOW : HIGH;
+            }
+
+            digitalWrite(ledPinSecond,state);
+
+
+
+            switch (currentBoxCol){
+                case BoxCol::BLUE:
+                    digitalWrite(ledPinThird,HIGH);
+                    digitalWrite(ledPinFirst,LOW);
+
+                    break;
+                case BoxCol::RED:
+                    digitalWrite(ledPinThird,LOW);
+                    digitalWrite(ledPinFirst,HIGH);
+                    break;
+                case BoxCol::NO_BOX:
+                    digitalWrite(ledPinThird,LOW);
+                    digitalWrite(ledPinFirst,LOW);
+                    break;
+            }
+        }
+
 
         void stopInHomeLocation(){
             int timer = 0;
@@ -505,7 +513,44 @@ class Robot {
 
         void chooseAction(){
 
-            
+            //the whole contorl structre
+            /*line follow to t junction, the turn left
+            if red 
+                check other side ()  -> go back round until you hit the t-junction, then carry on until you hit something on the other side
+                if red 
+                    put it on the left hand side ()  -> pickup a red, 180, cross t- junction, carry on for a short while then place on the left hand side 
+                    then go back right, pickup and place blue,
+                    come back, head right and pickup and place blue
+
+                    come back and place the left red in the right hand spot, 
+                    then go back and plave the last left red in hte clockwise spot
+                    then go home
+                else if blue 
+                    place the blue and check the right hand side again
+                    if red:
+                        move to left hand side 
+                        then come back, go right pick up and place the last blue
+                        and then place the left red on the right
+                        then place the last red clockwise
+                    else 
+                        place the blue,
+                        come back and place the left red on the right
+                        go across and place the left red clockwise on the pill
+            else pickup and place blue
+                come back and check the left hand side again 
+                if red:
+                    check other side
+                    if red: 
+                        place this red on left
+                        go back and deal with final blue on right
+                        go back and place the first lefthandside red on the right hand side
+                        then deal with second red on the left hand side
+                else blue:
+                    place blue and 
+                    place the right red on the right
+                    place the clockwise red on the back of the pill.
+
+            */s
 
 
 
@@ -674,4 +719,16 @@ void setup() {
     // delay(10);
 }
 
-
+void loop() {
+    Bot.OnOffSwitch();
+    
+    
+    if(run == true){
+        Bot.flashLEDS();
+        Bot.checkAllSensorValues(true);
+        Bot.checkForNextLocation();
+        Bot.chooseAction();
+    } else {
+        Bot.runMotors(0,0);
+    }
+}

@@ -512,6 +512,51 @@ class Robot {
         }
 
         void chooseAction(){
+
+            //the whole contorl structre
+            /*line follow to t junction, the turn left
+            if red 
+                check other side ()  -> go back round until you hit the t-junction, then carry on until you hit something on the other side
+                if red 
+                    put it on the left hand side ()  -> pickup a red, 180, cross t- junction, carry on for a short while then place on the left hand side 
+                    then go back right, pickup and place blue,
+                    come back, head right and pickup and place blue
+
+                    come back and place the left red in the right hand spot, 
+                    then go back and plave the last left red in hte clockwise spot
+                    then go home
+                else if blue 
+                    place the blue and check the right hand side again
+                    if red:
+                        move to left hand side 
+                        then come back, go right pick up and place the last blue
+                        and then place the left red on the right
+                        then place the last red clockwise
+                    else 
+                        place the blue,
+                        come back and place the left red on the right
+                        go across and place the left red clockwise on the pill
+            else pickup and place blue
+                come back and check the left hand side again 
+                if red:
+                    check other side
+                    if red: 
+                        place this red on left
+                        go back and deal with final blue on right
+                        go back and place the first lefthandside red on the right hand side
+                        then deal with second red on the left hand side
+                else blue:
+                    place blue and 
+                    place the right red on the right
+                    place the clockwise red on the back of the pill.
+
+            */s
+
+
+
+
+
+
             currentRoutine = ActionType::LINE;         
 
             if(farRightVal == 1 && position == PositionList::PILL && direction == Directions::AWAY_FROM_PILL ){
@@ -623,10 +668,7 @@ class Robot {
                 timer +=1 ;
                 runMotors(-1*motorSpeed,-1*motorSpeed);
             }
-            turn180();
-            direction = Directions::AWAY_FROM_PILL;
             boxBeingColourChecked = false;
-            hasBoxAtm = true;
         }
 
         void runAction(){
@@ -649,6 +691,9 @@ class Robot {
                     break;
                 case ActionType::CHECK_BOX:
                     checkBoxColour();
+                    turn180();
+                    direction = Directions::AWAY_FROM_PILL;
+                    hasBoxAtm = true;
                     break;
             }
         }

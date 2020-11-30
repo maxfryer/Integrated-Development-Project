@@ -78,21 +78,18 @@ class Robot {
 
 
         /*DEALING WITH BOXES*/
-        bool boxBeingColourChecked = false;
-        bool hasBoxAtm = false;
         int pillPosition = 0;
         bool onTargetBox = false;
         bool clockwise = true;
+        bool hasBoxAtm = false;
 
-        enum class ActionType { LINE, TURN_LEFT, TURN_RIGHT, TURN_180, ADVANCE_TO_HOME, CHECK_BOX};
         enum class PositionList { START_BOX,START,FIRST_JUNCTION,TUNNEL,MAIN_T_JUNCTION,PILL,BLUE_TRACK,BLUE_T,BLUE_CORNER, BLUE_SIDE };
         enum class Directions {TOWARDS_PILL,AWAY_FROM_PILL};
         enum class BoxCol {RED,BLUE,NO_BOX};
 
-        ActionType currentRoutine = ActionType::LINE;
-        PositionList position = PositionList::TUNNEL;//START_BOX;
-        Directions direction = Directions::AWAY_FROM_PILL;//TOWARDS_PILL;
-        BoxCol currentBoxCol = BoxCol::BLUE;
+        PositionList position = PositionList::START_BOX;//START_BOX;
+        Directions direction = Directions::TOWARDS_PILL;//TOWARDS_PILL;
+        BoxCol currentBoxCol = BoxCol::NO_BOX;
 
         //the whole contorl structre
             /*line follow to t junction, the turn left
@@ -419,8 +416,72 @@ class Robot {
 
         }
 
+        //used either having just deposited or decided against picking up, tune so that it just misses block on 180
+        void reverseAndTwist(){
+            int timer = 0;
+            runMotors(-motorSpeed,-motorSpeed);
+            while (timer < 400){
+                timer +=1;
+                checkAllSensorValues(false);
+                flashLEDS();
+            }
+            turn180();
+        }
+
+        void pickupBox(){
+            //closes claws and sets hasBoxatm to true
+        }
+
+        void placeBox(){
+            /*
+                reverse a bit
+                diposit box
+                reverse some more
+                set onTargetlocation to zero 
+                set currentBox col to no Box
+                SET HASBOXATM TO FALSE
+                do a 180
+            }*/
+            int timer = 0;
+            runMotors(-motorSpeed,-motorSpeed);
+            while (timer < 400){
+                timer +=1;
+                checkAllSensorValues(false);
+                flashLEDS();
+            }
+        }
+
+        //currently not using stop in home location
+        void stopInHomeLocation(){
+            int timer = 0;
+            while (timer < 1000){
+                timer += 1;
+                runMotors(motorSpeed,motorSpeed);
+            }
+            Serial.println("stopping NOWWWW");
+            runMotors(0,0);
+            run = false;
+        }
+
+        void checkBoxColour(){
+            static char colour[20];
+            strcpy(colour,"blue");
+            currentBoxCol = BoxCol::BLUE;
+            while(distanceFrontVal > 350 ){
+                runMotors(motorSpeed,motorSpeed);
+                checkAllSensorValues(false);
+                if(colourPinVal == 1){
+                    strcpy(colour,"red");
+                    currentBoxCol = BoxCol::RED;
+                }
+            }
+            flashLEDS();
+            Serial.println(colour);
+        }
+
 
         void loop() {
+            //FIRST CHECKS FIRST ANTICLOCK BLOCK
             while(!(position == PositionList::START)){
                 utilityFunction();
                 binaryFollowLine(100);
@@ -453,43 +514,20 @@ class Robot {
                 utilityFunction();
                 turnLeft();
                 position = PositionList::PILL;
+                clockwise = true;
             }
             while(!(distanceFrontVal > 500)){
                 utilityFunction();
                 binaryFollowLine(100);
             }
-            while(!(currentBoxCol == BoxCol::NO_BOX)){
+            while(!(currentBoxCol != BoxCol::NO_BOX)){
                 utilityFunction();
                 checkBoxColour();
             }
             if(currentBoxCol == BoxCol::BLUE){
-                //first blue box on clockwise side
-                while(!(hasBoxAtm==true)){
-                    utilityFunction();
-                    pickupBox();
-                }
-                while(!(clockwise==false)){
-                    utilityFunction();
-                    turn180();
-                    clockwise = false;
-                }
-                while(!(pillPosition== 0)){
-                    utilityFunction();
-                    binaryFollowLine(100);
-                }
-                while(!(position == PositionList::MAIN_T_JUNCTION)){
-                    utilityFunction();
-                    binaryFollowLine(100);
-                    if (farRightVal==1){
-                        position == PositionList::MAIN_T_JUNCTION;
-                    }
-                }
-                while(!(position == PositionList::TUNNEL)){
-                    utilityFunction();
-                    turnRight();
-                    direction = Directions::AWAY_FROM_PILL;
-                    position = PositionList::TUNNEL;
-                }
+                //CLOCKWISE 1 IS BLUE
+                //PLACES BLUE AND LOOKS CLOCKWISE AGAIN
+                ClockwisepickUpAndReturnT();
                 placeFirstBlueBox();
                 
                 while(!(position == PositionList::PILL)){
@@ -502,45 +540,322 @@ class Robot {
                     utilityFunction();
                     binaryFollowLine(100);
                 }
-                while(!(currentBoxCol == BoxCol::NO_BOX)){
+                while(!(currentBoxCol != BoxCol::NO_BOX)){
                     utilityFunction();
                     checkBoxColour();
                 }
                 if(currentBoxCol == BoxCol::BLUE){
-                    //second blue box on clockwise side
+                    //CLOCKWISE 1 WAS BLUE
+                    //CLOCKWISE 2 IS BLUE
+                    //ANTICLOCK 1 & 2 RED
+                    //PLACES SECOND BLUE THEN DEALS WITH REMAINING REDS
+                    ClockwisepickUpAndReturnT();
+                    placeSecondBlueBox();
+                    while(!(position == PositionList::PILL)){
+                        utilityFunction();
+                        turnLeft();
+                        position = PositionList::PILL;
+                    }
+                    while(!(distanceFrontVal > 500)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                        utilityFunction();
+                        checkBoxColour();
+                    }
                     while(!(hasBoxAtm==true)){
                         utilityFunction();
                         pickupBox();
                     }
+                    while(!(pillPosition==1)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(onTargetBox==true)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
                     while(!(clockwise==false)){
                         utilityFunction();
-                        turn180();
+                        placeBox();
                         clockwise = false;
                     }
-                    while(!(pillPosition== 0)){
+                    checkOtherSideFromClockwise();
+                    while(!(hasBoxAtm==true)){
+                        utilityFunction();
+                        pickupBox();
+                    }
+                    while(!(clockwise == true)){
+                        utilityFunction();
+                        turn180();
+                        clockwise = true;
+                    }
+                    while(!(pillPosition == 0)){
                         utilityFunction();
                         binaryFollowLine(100);
                     }
-                    while(!(position == PositionList::MAIN_T_JUNCTION)){
+                    crossTFromAnticlock();
+                    while(!(onTargetBox==true)){
                         utilityFunction();
                         binaryFollowLine(100);
-                        if (farRightVal==1){
-                            position == PositionList::MAIN_T_JUNCTION;
+                    }
+                    while(!(clockwise==false)){
+                        utilityFunction();
+                        placeBox();
+                        clockwise = false;
+                    }
+                    while(!(pillPosition == 0)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(position == PositionList::FIRST_JUNCTION)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                        if(farRightVal ==1 ){
+                            position = PositionList::FIRST_JUNCTION;
                         }
                     }
-                    while(!(position == PositionList::TUNNEL)){
+                    while(!(position == PositionList::START)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                        if(farRightVal ==1 && farLeftVal ==1){
+                            position = PositionList::START;
+                            follow(1000);
+                            runMotors(0,0);
+                        }
+                    }
+                    while(true){
+                        continue;
+                    }
+                } else{
+                    //CLOCKWISE 1 WAS BLUE
+                    //CLOCKWISE 2 IS RED
+                    //NOW CHECKING OTHER SIDE
+                    while(!(clockwise == false)){
+                        utilityFunction();
+                        reverseAndTwist();
+                        clockwise == false;
+                        currentBoxCol = BoxCol::NO_BOX;
+                    }
+                    checkOtherSideFromClockwise();
+                    if(currentBoxCol == BoxCol::BLUE){
+                        //CLOCKWISE 1 WAS BLUE
+                        //CLOCKWISE 2 IS RED
+                        //ANTICLOCK 1 IS BLUE
+                        //ANTICLOCK 2 IS RED
+                        AntiClockpickUpAndReturnT();
+                        placeSecondBlueBox();
+                        while(!(position == PositionList::PILL)){
+                            utilityFunction();
+                            turnRight();
+                            position = PositionList::PILL;
+                            clockwise = false;
+                        }
+                        while(!(distanceFrontVal > 500)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(currentBoxCol != BoxCol::NO_BOX)){
+                            utilityFunction();
+                            checkBoxColour();
+                        }
+                        while(!(hasBoxAtm==true)){
+                            utilityFunction();
+                            pickupBox();
+                        }
+                        while(!(pillPosition==-1)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(onTargetBox==true)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(clockwise==true)){
+                            utilityFunction();
+                            placeBox();
+                            clockwise = true;
+                        }
+                        while(!(pillPosition==0)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        crossTFromAnticlock();
+                        while(!(distanceFrontVal > 500)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(currentBoxCol != BoxCol::NO_BOX)){
+                            utilityFunction();
+                            checkBoxColour();
+                        }
+                        while(!(hasBoxAtm==true)){
+                            utilityFunction();
+                            pickupBox();
+                        }
+                        while(!(clockwise ==false)){
+                            utilityFunction();
+                            turn180();
+                            clockwise = false;
+                        }
+                        while(!(pillPosition==0)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        crossTFromClockwise();
+                        while(!(onTargetBox==true)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(clockwise==true)){
+                            utilityFunction();
+                            placeBox();
+                            clockwise = true;
+                        }
+                        while(!(pillPosition == 0 )){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(farLeftVal == true)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(position== PositionList::TUNNEL)){
+                            utilityFunction();
+                            turnLeft();
+                            position = PositionList::TUNNEL;
+                        }
+                        while(!(position == PositionList::FIRST_JUNCTION)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                            if(farRightVal ==1 ){
+                                position = PositionList::FIRST_JUNCTION;
+                            }
+                        }
+                        while(!(position == PositionList::START)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                            if(farRightVal ==1 && farLeftVal ==1){
+                                position = PositionList::START;
+                                follow(1000);
+                                runMotors(0,0);
+                            }
+                        }
+                        while(true){
+                            continue;
+                        }
+                    } else{
+                        //CLOCKWISE 1 WAS BLUE
+                        //CLOCKWISE 2 IS RED
+                        //ANTICLOCK 1 IS RED
+                        //ANTICLOCK 2 IS BLUE
+                        placeRedTemporary();
+                        while(!(distanceFrontVal > 500)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(currentBoxCol != BoxCol::NO_BOX)){
+                            utilityFunction();
+                            checkBoxColour();
+                        }
+                        AntiClockpickUpAndReturnT();
+                        placeSecondBlueBox();
+                        dealWithTwoClockwiseReds();
+                    }
+                }
+            } else {
+                //CLOCKWISE 1 IS RED
+                //CHECKING OTHER SIDE
+                while(!(clockwise == false)){
+                    utilityFunction();
+                    reverseAndTwist();
+                    clockwise == false;
+                    currentBoxCol = BoxCol::NO_BOX;
+                }
+                checkOtherSideFromClockwise();
+                if(currentBoxCol == BoxCol::BLUE){
+                    //CLOCKWISE 1 IS RED
+                    //ANTICLOCK 1 IS BLUE
+                    AntiClockpickUpAndReturnT();
+                    placeFirstBlueBox();
+                    while(!(position == PositionList::PILL)){
                         utilityFunction();
                         turnRight();
-                        direction = Directions::AWAY_FROM_PILL;
-                        position = PositionList::TUNNEL;
+                        position = PositionList::PILL;
                     }
+                    while(!(distanceFrontVal > 500)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                        utilityFunction();
+                        checkBoxColour();
+                    }
+                    if(currentBoxCol == BoxCol::BLUE){
+                        //CLOCKWISE 1 IS RED
+                        //ANTICLOCK 1 WAS BLUE
+                        //ANTICLOCK 2 IS BLUE
+                        //CLOCKWISE 2 IS RED
+                        ClockwisepickUpAndReturnT();
+                        placeSecondBlueBox();
+                        dealWithTwoClockwiseReds();
+                    } else{
+                        //CLOCKWISE 1 IS RED
+                        //ANTICLOCK 1 WAS BLUE
+                        //ANTICLOCK 2 IS RED
+                        //SO CLOCKWISE 2 MUST BE BLUE
+                        //TAKING RED ACROSS TO T
+                        placeRedTemporary();
+                        while(!(distanceFrontVal > 500)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(currentBoxCol != BoxCol::NO_BOX)){
+                            utilityFunction();
+                            checkBoxColour();
+                        }
+                        AntiClockpickUpAndReturnT();
+                        placeSecondBlueBox();
+                        dealWithTwoClockwiseReds();
+                    }
+                }else{
+                    //CLOCKWISE 1 IS RED
+                    //ANTICLOCK 1 IS RED
+                    //CLOCKWISE 2 IS BLUE
+                    //ANTICLOCK 2 IS BLUE
+                    placeRedTemporary();
+                    while(!(distanceFrontVal > 500)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                        utilityFunction();
+                        checkBoxColour();
+                    }
+                    AntiClockpickUpAndReturnT();
+                    placeFirstBlueBox();
+                    while(!(position == PositionList::PILL)){
+                        utilityFunction();
+                        turnRight();
+                        position = PositionList::PILL;
+                    }
+                    while(!(distanceFrontVal > 500)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                        utilityFunction();
+                        checkBoxColour();
+                    }
+                    ClockwisepickUpAndReturnT();
                     placeSecondBlueBox();
+                    dealWithTwoClockwiseReds();
                 }
-
-
             }
         }
 
+        //places first blue box, starts from tunnel and ends on T-junction
         void placeFirstBlueBox(){
             //goes from tunel back to main junction
             while(!(position == PositionList::FIRST_JUNCTION)){
@@ -658,7 +973,7 @@ class Robot {
             while(!(position == PositionList::BLUE_SIDE)){
                 utilityFunction();
                 turnRight();
-                position = PositionList::BLUE_SIDE
+                position = PositionList::BLUE_SIDE;
             }
             while(!(position == PositionList::BLUE_CORNER)){
                 utilityFunction();
@@ -670,13 +985,13 @@ class Robot {
             while(!(position == PositionList::BLUE_SIDE)){
                 utilityFunction();
                 turnRight();
-                position = PositionList::BLUE_SIDE
+                position = PositionList::BLUE_SIDE;
             }
             while(!(position == PositionList::BLUE_T)){
                 utilityFunction();
                 binaryFollowLine(100);
                 if(farLeftVal ==1){
-                    position = PositionList::BLUE_T
+                    position = PositionList::BLUE_T;
                 }
             }
             while(!(position == PositionList::BLUE_TRACK)){
@@ -700,151 +1015,256 @@ class Robot {
             }
         }
 
-
-        void pickupBox(){
-            //closes claws and sets hasBoxatm to true
+        void checkOtherSideFromClockwise() {
+            while(!(pillPosition == 0)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            crossTFromClockwise();
+            while(!(distanceFrontVal > 500)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(currentBoxCol != BoxCol::NO_BOX)){
+                utilityFunction();
+                checkBoxColour();
+            }
         }
 
-        void placeBox(){
-            /*if onTargetLocation == true{
-                reverse a bit
-                diposit box
-                reverse some more
-                set on Targetlocation to zero 
-                set currentBox col to no Box
-                do a 180
-            }*/
-        }
-
-        void checkForNextLocation(){
-            
-            static PositionList lastPosition;
-            static char place[20] = "start";
-
-
-            lastPosition = position;
-            
-            
-            if(currentRoutine == ActionType::LINE){  // can only ake changes to postiion when on a line following path so as not tocaue problems with 180 tunrs etc
-                switch (position) {
-                case PositionList::START_BOX:
-                    if(direction == Directions::TOWARDS_PILL){
-                        if(farRightVal == 1 || farLeftVal == 1){
-                            while ((farLeftVal == 1) || (farRightVal == 1)){
-                                checkAllSensorValues(false);
-                                binaryFollowLine(100);
-                                flashLEDS();
-                            }
-                            Serial.println("left starting box");
-                            position = PositionList::START;
-                        }
-                    }
-                    break;
-                case PositionList::START:
-                    
-                    if((farLeftVal == 1) && (direction == Directions::TOWARDS_PILL)){
-                        position = PositionList::FIRST_JUNCTION;
-                        strcpy(place,"reached junction1");
-                    }
-
-                    break;
-                case PositionList::FIRST_JUNCTION:
-
-                    if((farLeftVal == 0) && (direction == Directions::TOWARDS_PILL)){
-                        position = PositionList::TUNNEL;
-                        strcpy(place,"on tunnel track towards pill");
-                    }
-
-                    break;
-
-                case PositionList::TUNNEL:
-                    
-                    if(( farRightVal == 1) && (direction == Directions::TOWARDS_PILL) ){
-                        position = PositionList::MAIN_T_JUNCTION;
-                        strcpy(place,"reached mainJunc");
-                    }
-                    if(direction == Directions::AWAY_FROM_PILL && farRightVal == 1){
-                        position = PositionList::FIRST_JUNCTION;
-                    }
-
-                    //check for the sensor positions that would give rise to the next state from here
-                    break;
-            
+        void dealWithTwoClockwiseReds(){
+            while(!(position == PositionList::PILL)){
+                utilityFunction();
+                turnLeft();
+                position = PositionList::PILL;
+            }
+            while(!(distanceFrontVal > 500)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(currentBoxCol != BoxCol::NO_BOX)){
+                utilityFunction();
+                checkBoxColour();
+            }
+            while(!(hasBoxAtm==true)){
+                utilityFunction();
+                pickupBox();
+            }
+            while(!(clockwise==false)){
+                utilityFunction();
+                turn180();
+                clockwise = false;
+            }
+            while(!(pillPosition == 0)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            crossTFromClockwise();
+            while(!(pillPosition == 0)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(onTargetBox==true)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(clockwise==true)){
+                utilityFunction();
+                placeBox();
+                clockwise = true;
+            }
+            while(!(pillPosition == 0)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            crossTFromAnticlock();
+            while(!(distanceFrontVal > 500)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(currentBoxCol != BoxCol::NO_BOX)){
+                utilityFunction();
+                checkBoxColour();
+            }
+            while(!(hasBoxAtm==true)){
+                utilityFunction();
+                pickupBox();
+            }
+            while(!(pillPosition == 0)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(onTargetBox==true)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(clockwise==false)){
+                utilityFunction();
+                placeBox();
+                clockwise = false;
+            }
+            while(!(pillPosition == 0)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(farRightVal == true)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(position== PositionList::TUNNEL)){
+                utilityFunction();
+                turnRight();
+                position = PositionList::TUNNEL;
+            }
+            while(!(position == PositionList::FIRST_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal ==1 ){
+                    position = PositionList::FIRST_JUNCTION;
                 }
-
-                if(position != lastPosition){
-                Serial.println(place);
             }
-            }
-        }
-
-        void stopInHomeLocation(){
-            int timer = 0;
-            while (timer < 1000){
-                timer += 1;
-                runMotors(motorSpeed,motorSpeed);
-            }
-            Serial.println("stopping NOWWWW");
-            runMotors(0,0);
-            run = false;
-        }
-
-        void checkBoxColour(){
-            static char colour[20];
-            strcpy(colour,"blue");
-            currentBoxCol = BoxCol::BLUE;
-            while(distanceFrontVal > 350 ){
-                runMotors(motorSpeed,motorSpeed);
-                checkAllSensorValues(false);
-                if(colourPinVal == 1){
-                    strcpy(colour,"red");
-                    currentBoxCol = BoxCol::RED;
+            while(!(position == PositionList::START)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal ==1 && farLeftVal ==1){
+                    position = PositionList::START;
+                    follow(1000);
+                    runMotors(0,0);
                 }
             }
-            flashLEDS();
-            Serial.println(colour);
-            //servo code
-
-            // for (pos = 80; pos <= 150; pos += 1) { // goes from 0 degrees to 180 degrees
-            //     // in steps of 1 degree
-            //     Servo1.write(pos);              // tell servo to go to position in variable 'pos'
-            //     delay(40);                       // waits 15ms for the servo to reach the position
-            // }
-
-            //servo code end
-
-            static int timer = 0;
-            while (timer < 600){
-                timer +=1 ;
-                runMotors(-1*motorSpeed,-1*motorSpeed);
+            while(true){
+                continue;
             }
-            boxBeingColourChecked = false;
+        }
+        
+        //picks up blue block turns and turns right at T junction (used for placeblue)
+        void ClockwisepickUpAndReturnT(){
+            while(!(hasBoxAtm==true)){
+                utilityFunction();
+                pickupBox();
+            }
+            while(!(clockwise==false)){
+                utilityFunction();
+                turn180();
+                clockwise = false;
+            }
+            while(!(pillPosition== 0)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(position == PositionList::MAIN_T_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if (farRightVal==1){
+                    position == PositionList::MAIN_T_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::TUNNEL)){
+                utilityFunction();
+                turnRight();
+                direction = Directions::AWAY_FROM_PILL;
+                position = PositionList::TUNNEL;
+            }
         }
 
-        void runAction(){
-            switch(currentRoutine){
-                case ActionType::LINE:
-                    binaryFollowLine(100);
-                    break;
-                case ActionType::TURN_LEFT:
-                    turnLeft();
-                    break;
-                case ActionType::TURN_RIGHT:
-                    turnRight();
-                    break;
-                case ActionType::TURN_180:
-                    turn180();
-                    break;
-                case ActionType::ADVANCE_TO_HOME:
-                    stopInHomeLocation();
-                    run = false;
-                    break;
-                case ActionType::CHECK_BOX:
-                    checkBoxColour();
-                    turn180();
-                    direction = Directions::AWAY_FROM_PILL;
-                    hasBoxAtm = true;
-                    break;
+        //picks up blue block turns and turns left at T junction (used for placeblue)
+        void AntiClockpickUpAndReturnT(){
+            while(!(hasBoxAtm==true)){
+                utilityFunction();
+                pickupBox();
+            }
+            while(!(clockwise==true)){
+                utilityFunction();
+                turn180();
+                clockwise = true;
+            }
+            while(!(pillPosition== 0)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(position == PositionList::MAIN_T_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if (farLeftVal==1){
+                    position = PositionList::MAIN_T_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::TUNNEL)){
+                utilityFunction();
+                turnLeft();
+                direction = Directions::AWAY_FROM_PILL;
+                position = PositionList::TUNNEL;
+            }
+        }
+        
+        void placeRedTemporary(){
+            
+            while(!(hasBoxAtm==true)){
+                utilityFunction();
+                pickupBox();
+            }
+            while(!(clockwise==true)){
+                utilityFunction();
+                turn180();
+                clockwise = true;
+            }
+            while(!(pillPosition== 0)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            crossTFromAnticlock();
+            follow(1000);
+            //open claw
+            reverseAndTwist();
+            clockwise = false;
+            
+            crossTFromClockwise();
+
+            /*from t junction
+            goes forward a bit
+            places block
+            reverses some and twists
+            set clockwise to false
+            goes to t juction and past it
+            */
+        }
+
+        //crosses t junction from clockwise dealing with pill position reset
+        void crossTFromClockwise(){
+            while(!(position == PositionList::MAIN_T_JUNCTION )){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal == 1){
+                    position = PositionList::MAIN_T_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::PILL)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if( farRightVal == 0){
+                    position = PositionList::PILL;
+                    pillPosition = 0;
+                    clockwise = true;
+                }
+            }
+        }
+
+        //crosses t junction from anticlockwise dealing with pill position reset
+        void crossTFromAnticlock(){
+            while(!(position == PositionList::MAIN_T_JUNCTION )){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farLeftVal == 1){
+                    position = PositionList::MAIN_T_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::PILL)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if( farLeftVal == 0){
+                    position = PositionList::PILL;
+                    pillPosition = 0;
+                    clockwise = false;
+                }
             }
         }
 };

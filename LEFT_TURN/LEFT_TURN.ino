@@ -273,8 +273,7 @@ class Robot {
             while (timer < loops){
                 timer +=1;
                 binaryFollowLine(100);
-                checkAllSensorValues(false);
-                flashLEDS();
+                utilityFunction();
             }
             return;
         }
@@ -520,6 +519,7 @@ class Robot {
                     currentBoxCol = BoxCol::RED;
                 }
             }
+            runMotors(0,0);
             utilityFunction();
             Serial.println(colour);
         }
@@ -537,6 +537,7 @@ class Robot {
                 }
             }
             while(!(position == PositionList::BLUE_TRACK)){
+                Serial.println("Reached First Junction");
                 utilityFunction();
                 turnRight();
                 position = PositionList::BLUE_TRACK;
@@ -839,6 +840,7 @@ class Robot {
                 direction = Directions::AWAY_FROM_PILL;
                 position = PositionList::TUNNEL;
             }
+            follow(2000);
         }
 
         //picks up blue block turns and turns left at T junction (used for placeblue)
@@ -870,6 +872,7 @@ class Robot {
                 direction = Directions::AWAY_FROM_PILL;
                 position = PositionList::TUNNEL;
             }
+            follow(2000);
         }
         
         //picks up red and places it on clockwise side of T junction before turning round and passing T junction
@@ -1006,11 +1009,7 @@ class Robot {
 
 
         void runProgram(){
-<<<<<<< HEAD
             // testProgram();
-=======
-            //testProgram();
->>>>>>> 4670a4b7192e863f17c0a91f13a8f056c64dc7c0
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
             while(!(position == PositionList::START)){
                 utilityFunction();

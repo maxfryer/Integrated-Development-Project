@@ -919,7 +919,7 @@ class Robot {
                 utilityFunction();
                 binaryFollowLine(100);
             }
-            while(!(currentBoxCol != BoxCol::NO_BOX)){
+            while(currentBoxCol == BoxCol::NO_BOX){
                 utilityFunction();
                 checkBoxColour();
             }

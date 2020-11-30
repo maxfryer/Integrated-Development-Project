@@ -221,10 +221,14 @@ class Robot {
             int buttonState = digitalRead(startButtonPin);
             static bool lockSwitch = false;
 
-            if(buttonState == 0 && lockSwitch == false && run == false){
-                Serial.println("Begin Program");
-                run = true;
-                lockSwitch = true;
+            while(buttonState == 1 && run == false){
+                int buttonState = digitalRead(startButtonPin);
+                if(buttonState == 0){
+                    Serial.println("Begin Program");
+                    run = true;
+                    lockSwitch = true;
+                    return;
+                }
             }
             if(buttonState == 0 && lockSwitch == false && run == true){
                 Serial.println("Pause Program");
@@ -1348,6 +1352,7 @@ void setup() {
     // delay(10);
 }
 
+<<<<<<< Updated upstream:LEFT_TURN/LEFT_TURN.ino
 
 
 
@@ -1357,3 +1362,5 @@ void loop() {
 
 
 
+=======
+>>>>>>> Stashed changes:LEFT_TURN.ino

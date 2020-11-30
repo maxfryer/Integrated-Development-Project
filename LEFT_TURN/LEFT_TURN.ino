@@ -399,6 +399,7 @@ class Robot {
         }
 
         void turn180() {
+            Serial.println("Turning 180");
             //WAIT FOR FAR LEFT TO TRIGGER
             
             while(backMiddle == 1 ){
@@ -495,6 +496,7 @@ class Robot {
 
         //places first blue box, starts from tunnel and ends on T-junction
         void placeFirstBlueBox(){
+            Serial.println("Placing First Blue Block");
             //goes from tunel back to main junction
             while(!(position == PositionList::FIRST_JUNCTION)){
                 utilityFunction();
@@ -558,6 +560,7 @@ class Robot {
         }
 
         void placeSecondBlueBox(){
+            Serial.println("Placing Second Blue Block");
             while(!(position == PositionList::FIRST_JUNCTION)){
                 utilityFunction();
                 binaryFollowLine(100);
@@ -654,6 +657,7 @@ class Robot {
         }
 
         void checkOtherSideFromClockwise() {
+            Serial.println("Checking other Side From Clockwise");
             while(!(pillPosition == 0)){
                 utilityFunction();
                 binaryFollowLine(100);
@@ -670,6 +674,7 @@ class Robot {
         }
 
         void dealWithTwoClockwiseReds(){
+            Serial.println("Dealing with Two Reds");
             while(!(position == PositionList::PILL)){
                 utilityFunction();
                 turnLeft();
@@ -776,6 +781,7 @@ class Robot {
         
         //picks up blue block turns and turns right at T junction (used for placeblue)
         void ClockwisepickUpAndReturnT(){
+            Serial.println("Returning to T");
             while(!(hasBoxAtm==true)){
                 utilityFunction();
                 pickupBox();
@@ -806,6 +812,7 @@ class Robot {
 
         //picks up blue block turns and turns left at T junction (used for placeblue)
         void AntiClockpickUpAndReturnT(){
+            Serial.println("Returning to T");
             while(!(hasBoxAtm==true)){
                 utilityFunction();
                 pickupBox();
@@ -836,7 +843,7 @@ class Robot {
         
         //picks up red and places it on clockwise side of T junction before turning round and passing T junction
         void placeRedTemporary(){
-            
+            Serial.println("Temporarily placing Red Block");
             while(!(hasBoxAtm==true)){
                 utilityFunction();
                 pickupBox();
@@ -869,6 +876,7 @@ class Robot {
 
         //crosses t junction from clockwise dealing with pill position reset
         void crossTFromClockwise(){
+            Serial.println("Crossing T Junction");
             while(!(position == PositionList::MAIN_T_JUNCTION )){
                 utilityFunction();
                 binaryFollowLine(100);
@@ -889,6 +897,7 @@ class Robot {
 
         //crosses t junction from anticlockwise dealing with pill position reset
         void crossTFromAnticlock(){
+            Serial.println("Crossing T Junction");
             while(!(position == PositionList::MAIN_T_JUNCTION )){
                 utilityFunction();
                 binaryFollowLine(100);
@@ -912,6 +921,7 @@ class Robot {
         //ANTICLOKC 2 IS BLUE
         //STARTS FROM TUNNEL
         void testProgram(){
+            Serial.println("Running Test Program");
             while(!(position== PositionList::MAIN_T_JUNCTION)){
                 utilityFunction();
                 binaryFollowLine(100);
@@ -949,6 +959,7 @@ class Robot {
                 while(!(currentBoxCol != BoxCol::NO_BOX)){
                     utilityFunction();
                     checkBoxColour();
+                    currentBoxCol = BoxCol::BLUE;
                 }
                 //JUST CHECKING NOT red BOX
                 while(currentBoxCol == BoxCol::RED){
@@ -963,7 +974,7 @@ class Robot {
 
 
         void runProgram(){
-            testProgram();
+            // testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
             while(!(position == PositionList::START)){
                 utilityFunction();

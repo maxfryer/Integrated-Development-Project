@@ -74,7 +74,7 @@ class Robot {
         enum class BoxCol {RED,BLUE,NO_BOX};
 
         ActionType currentRoutine = ActionType::LINE;
-        PositionList position = PositionList::START_BOX;//START_BOX;
+        PositionList position = PositionList::START_BOX         ;//START_BOX;
         Directions direction = Directions::TOWARDS_PILL;//TOWARDS_PILL;
         BoxCol currentBoxCol = BoxCol::NO_BOX;
 

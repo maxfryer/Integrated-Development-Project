@@ -20,6 +20,7 @@ Adafruit_DCMotor * myMotorRight = AFMS.getMotor(2);
 Servo Servo1;
 
 bool run = false;
+int servoStart = 60;
 
 // Declare the Servo pin, 9 for servo2 and 10 for servo1
 
@@ -441,7 +442,7 @@ class Robot {
         void pickupBox(){
             //closes claws and sets hasBoxatm to true
             hasBoxAtm = true;
-            for (pos = 40; pos <= 80; pos += 1) { // goes from 0 degrees to 180 degrees
+            for (pos = servoStart; pos <= 80; pos += 1) { // goes from 0 degrees to 180 degrees
                 // in steps of 1 degree
                 Servo1.write(pos);              // tell servo to go to position in variable 'pos'
                 delay(50);                       // waits 15ms for the servo to reach the position
@@ -487,8 +488,9 @@ class Robot {
             strcpy(colour,"blue");
             currentBoxCol = BoxCol::BLUE;
             while(distanceFrontVal > 350 ){
-                utilityFunction();
-                runMotors(motorSpeed,motorSpeed);
+                Serial.println(distanceFrontVal);
+                checkAllSensorValues(false);
+                binaryFollowLine(100);
                 if(colourPinVal == 1){
                     strcpy(colour,"red");
                     currentBoxCol = BoxCol::RED;
@@ -1360,7 +1362,7 @@ void setup() {
     pinMode(Bot.ledPinSecond,OUTPUT);
     pinMode(Bot.ledPinThird,OUTPUT);
 
-    Servo1.write(40);
+    Servo1.write(servoStart);
     delay(10);
 }
 

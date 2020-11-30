@@ -216,32 +216,38 @@ class Robot {
             }
         }
 
-        void OnOffSwitch() {
+        void onOffSwitch() {
             //sets start program to true at the push of the button
             int buttonState = digitalRead(startButtonPin);
             static bool lockSwitch = false;
 
-            if (buttonState == 0 && lockSwitch==false) {
-                run = false;
+            if(buttonState == 0 && lockSwitch == false && run == false){
+                Serial.println("Begin Program");
+                run = true;
                 lockSwitch = true;
+            }
+            if(buttonState == 0 && lockSwitch == false && run == true){
+                Serial.println("Pause Program");
+                run = false;
                 runMotors(0,0);
                 digitalWrite(ledPinFirst, LOW);
                 digitalWrite(ledPinSecond, LOW);
                 digitalWrite(ledPinThird,LOW);
-                Serial.println("Pausing Program");
+                lockSwitch = true;
                 while(run == false){
                     int buttonState = digitalRead(startButtonPin);
                     if (buttonState == 1 && lockSwitch ==true) {
                         lockSwitch = false;
                     }
                     if(buttonState == 0 && lockSwitch == false){
+                        Serial.println("Continue Program")
                         run = true;
                         lockSwitch = true;
                         return;
                     }
                 }
             }
-            if (buttonState == 1 && lockSwitch == true) {
+            if(buttonState == 1 && lockSwitch == true){
                 lockSwitch = false;
             }
         }
@@ -281,6 +287,13 @@ class Robot {
         }
 
         void binaryFollowLine(int increaseRate) {
+            if (frontLeftVal > lineSensorThreshold) {
+                speedDifference = increaseRate;
+            }
+            else if (frontRightVal > lineSensorThreshold) {
+                speedDifference = -1 * increaseRate;
+            }
+            
             if(position == PositionList::PILL){
                if(farLeftVal == 1 && farRightVal == 1 && onTargetBox == false){
                     if(clockwise==true){
@@ -299,6 +312,7 @@ class Robot {
                     runMotors(motorSpeed,motorSpeed);
                 } 
             }
+
             if(position == PositionList::BLUE_SIDE){
                 if(farLeftVal == 1 && farRightVal == 1 && onTargetBox == false){
                     onTargetBox = true;
@@ -306,13 +320,6 @@ class Robot {
                 if(farLeftVal == 0 && farRightVal == 0 && onTargetBox == true){
                     onTargetBox = false;
                 }
-            }
-            
-            else if (frontLeftVal > lineSensorThreshold) {
-                speedDifference = increaseRate;
-            }
-            else if (frontRightVal > lineSensorThreshold) {
-                speedDifference = -1 * increaseRate;
             }
 
             speedDifference *= lineFollowDampingFactor;
@@ -378,13 +385,7 @@ class Robot {
                 checkAllSensorValues(false);
                 runMotors(1*motorSpeed,-1*motorSpeed);
             }
-            int timer = 0;
-            while (timer < 100){
-                timer +=1;
-                binaryFollowLine(100);
-                checkAllSensorValues(false);
-                flashLEDS();
-            }
+            follow(100);
             return;
         }
 
@@ -419,7 +420,7 @@ class Robot {
         //used either having just deposited or decided against picking up, tune so that it just misses block on 180
         void reverseAndTwist(){
             int timer = 0;
-            runMotors(-motorSpeed,-motorSpeed);
+            runMotors(-0.5*motorSpeed,-0.5*motorSpeed);
             while (timer < 400){
                 timer +=1;
                 checkAllSensorValues(false);
@@ -443,12 +444,15 @@ class Robot {
                 do a 180
             }*/
             int timer = 0;
-            runMotors(-motorSpeed,-motorSpeed);
+            runMotors(-0.5*motorSpeed,-0.5*motorSpeed);
             while (timer < 400){
                 timer +=1;
                 checkAllSensorValues(false);
                 flashLEDS();
             }
+            GET CLAW TO OPEN;
+            IF BOX HAS SLIPPED TO END, WILL NOT BE ABLE TO REVERSE AND TWIST
+
         }
 
         //currently not using stop in home location
@@ -481,6 +485,7 @@ class Robot {
 
 
         void loop() {
+            testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
             while(!(position == PositionList::START)){
                 utilityFunction();
@@ -1266,6 +1271,59 @@ class Robot {
                     pillPosition = 0;
                     clockwise = false;
                 }
+            }
+        }
+
+        //CLOCK 1 IS RED
+        //ANTICLOCK 1 IS RED 
+        //ANTICLOKC 2 IS BLUE
+        //STARTS FROM TUNNEL
+        void testProgram(){
+            while(!(position== PositionList::MAIN_T_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farRightVal ==1 && farLeftVal ==1){
+                    position = PositionList::MAIN_T_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::PILL)){
+                utilityFunction();
+                turnRight();
+                position = PositionList::PILL;
+                clockwise = false;
+            }
+            while(!(distanceFrontVal > 500)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(currentBoxCol != BoxCol::NO_BOX)){
+                utilityFunction();
+                checkBoxColour();
+            }
+            //JUST CHECKING NOT BLUE BOX
+            while(currentBoxCol == BoxCol::BLUE){
+                Serial.println("seeing blue in Anti1, must be errror");
+            }
+            if(currentBoxCol == BoxCol::RED){
+                //ANTICLOCK 1 RED
+                //TEMPORARY PLACE THEN CHECK ANTI AGAIN
+                placeRedTemporary();
+                while(!(distanceFrontVal > 500)){
+                    utilityFunction();
+                    binaryFollowLine(100);
+                }
+                while(!(currentBoxCol != BoxCol::NO_BOX)){
+                    utilityFunction();
+                    checkBoxColour();
+                }
+                //JUST CHECKING NOT red BOX
+                while(currentBoxCol == BoxCol::RED){
+                    Serial.println("seeing blue in Anti1, must be errror");
+                }
+                
+                AntiClockpickUpAndReturnT();
+                placeFirstBlueBox();
+                dealWithTwoClockwiseReds();
             }
         }
 };

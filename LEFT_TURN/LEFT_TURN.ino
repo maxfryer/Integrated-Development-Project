@@ -435,6 +435,12 @@ class Robot {
 
         void pickupBox(){
             //closes claws and sets hasBoxatm to true
+            hasBoxAtm = true;
+            for (pos = 85; pos <= 120; pos += 1) { // goes from 0 degrees to 180 degrees
+                // in steps of 1 degree
+                Servo1.write(pos);              // tell servo to go to position in variable 'pos'
+                delay(50);                       // waits 15ms for the servo to reach the position
+            }            
         }
 
         void placeBox(){
@@ -1348,8 +1354,8 @@ void setup() {
     pinMode(Bot.ledPinSecond,OUTPUT);
     pinMode(Bot.ledPinThird,OUTPUT);
 
-    // Servo1.write(90);
-    // delay(10);
+    Servo1.write(85);
+    delay(10);
 }
 
 

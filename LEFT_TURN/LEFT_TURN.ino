@@ -1352,7 +1352,6 @@ void setup() {
     // delay(10);
 }
 
-<<<<<<< Updated upstream:LEFT_TURN/LEFT_TURN.ino
 
 
 
@@ -1362,5 +1361,3 @@ void loop() {
 
 
 
-=======
->>>>>>> Stashed changes:LEFT_TURN.ino

@@ -932,6 +932,7 @@ class Robot {
             while(currentBoxCol == BoxCol::NO_BOX){
                 utilityFunction();
                 checkBoxColour();
+                currentBoxCol = BoxCol::RED;
             }
             //JUST CHECKING NOT BLUE BOX
             while(currentBoxCol == BoxCol::BLUE){

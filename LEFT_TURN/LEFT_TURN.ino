@@ -483,382 +483,6 @@ class Robot {
         }
 
 
-        void loop() {
-            testProgram();
-            //FIRST CHECKS FIRST ANTICLOCK BLOCK
-            while(!(position == PositionList::START)){
-                utilityFunction();
-                binaryFollowLine(100);
-                if(farLeftVal == 1 && farRightVal == 1){
-                    position = PositionList::START;
-                }
-            }
-            while(!(position == PositionList::FIRST_JUNCTION)){
-                utilityFunction();
-                binaryFollowLine(100);
-                if( farLeftVal == 1){
-                    position = PositionList::FIRST_JUNCTION;
-                }
-            }
-            while(!(position == PositionList::TUNNEL)){
-                utilityFunction();
-                binaryFollowLine(100);
-                if( farLeftVal == 0){
-                    position = PositionList::TUNNEL;
-                }
-            }
-            while(!(position == PositionList::MAIN_T_JUNCTION)){
-                utilityFunction();
-                binaryFollowLine(100);
-                if(farLeftVal == 1 && farRightVal == 1){
-                    position = PositionList::MAIN_T_JUNCTION;
-                }
-            }
-            while(!(position == PositionList::PILL)){
-                utilityFunction();
-                turnLeft();
-                position = PositionList::PILL;
-                clockwise = true;
-            }
-            while(!(distanceFrontVal > 500)){
-                utilityFunction();
-                binaryFollowLine(100);
-            }
-            while(!(currentBoxCol != BoxCol::NO_BOX)){
-                utilityFunction();
-                checkBoxColour();
-            }
-            if(currentBoxCol == BoxCol::BLUE){
-                //CLOCKWISE 1 IS BLUE
-                //PLACES BLUE AND LOOKS CLOCKWISE AGAIN
-                ClockwisepickUpAndReturnT();
-                placeFirstBlueBox();
-                
-                while(!(position == PositionList::PILL)){
-                    utilityFunction();
-                    turnLeft();
-                    position = PositionList::PILL;
-                    clockwise = true;
-                }
-                while(!(distanceFrontVal > 500)){
-                    utilityFunction();
-                    binaryFollowLine(100);
-                }
-                while(!(currentBoxCol != BoxCol::NO_BOX)){
-                    utilityFunction();
-                    checkBoxColour();
-                }
-                if(currentBoxCol == BoxCol::BLUE){
-                    //CLOCKWISE 1 WAS BLUE
-                    //CLOCKWISE 2 IS BLUE
-                    //ANTICLOCK 1 & 2 RED
-                    //PLACES SECOND BLUE THEN DEALS WITH REMAINING REDS
-                    ClockwisepickUpAndReturnT();
-                    placeSecondBlueBox();
-                    while(!(position == PositionList::PILL)){
-                        utilityFunction();
-                        turnLeft();
-                        position = PositionList::PILL;
-                    }
-                    while(!(distanceFrontVal > 500)){
-                        utilityFunction();
-                        binaryFollowLine(100);
-                    }
-                    while(!(currentBoxCol != BoxCol::NO_BOX)){
-                        utilityFunction();
-                        checkBoxColour();
-                    }
-                    while(!(hasBoxAtm==true)){
-                        utilityFunction();
-                        pickupBox();
-                    }
-                    while(!(pillPosition==1)){
-                        utilityFunction();
-                        binaryFollowLine(100);
-                    }
-                    while(!(onTargetBox==true)){
-                        utilityFunction();
-                        binaryFollowLine(100);
-                    }
-                    while(!(clockwise==false)){
-                        utilityFunction();
-                        placeBox();
-                        clockwise = false;
-                    }
-                    checkOtherSideFromClockwise();
-                    while(!(hasBoxAtm==true)){
-                        utilityFunction();
-                        pickupBox();
-                    }
-                    while(!(clockwise == true)){
-                        utilityFunction();
-                        turn180();
-                        clockwise = true;
-                    }
-                    while(!(pillPosition == 0)){
-                        utilityFunction();
-                        binaryFollowLine(100);
-                    }
-                    crossTFromAnticlock();
-                    while(!(onTargetBox==true)){
-                        utilityFunction();
-                        binaryFollowLine(100);
-                    }
-                    while(!(clockwise==false)){
-                        utilityFunction();
-                        placeBox();
-                        clockwise = false;
-                    }
-                    while(!(pillPosition == 0)){
-                        utilityFunction();
-                        binaryFollowLine(100);
-                    }
-                    while(!(position == PositionList::FIRST_JUNCTION)){
-                        utilityFunction();
-                        binaryFollowLine(100);
-                        if(farRightVal ==1 ){
-                            position = PositionList::FIRST_JUNCTION;
-                        }
-                    }
-                    while(!(position == PositionList::START)){
-                        utilityFunction();
-                        binaryFollowLine(100);
-                        if(farRightVal ==1 && farLeftVal ==1){
-                            position = PositionList::START;
-                            follow(1000);
-                            runMotors(0,0);
-                        }
-                    }
-                    while(true){
-                        continue;
-                    }
-                } else{
-                    //CLOCKWISE 1 WAS BLUE
-                    //CLOCKWISE 2 IS RED
-                    //NOW CHECKING OTHER SIDE
-                    while(!(clockwise == false)){
-                        utilityFunction();
-                        reverseAndTwist();
-                        clockwise == false;
-                        currentBoxCol = BoxCol::NO_BOX;
-                    }
-                    checkOtherSideFromClockwise();
-                    if(currentBoxCol == BoxCol::BLUE){
-                        //CLOCKWISE 1 WAS BLUE
-                        //CLOCKWISE 2 IS RED
-                        //ANTICLOCK 1 IS BLUE
-                        //ANTICLOCK 2 IS RED
-                        AntiClockpickUpAndReturnT();
-                        placeSecondBlueBox();
-                        while(!(position == PositionList::PILL)){
-                            utilityFunction();
-                            turnRight();
-                            position = PositionList::PILL;
-                            clockwise = false;
-                        }
-                        while(!(distanceFrontVal > 500)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                        }
-                        while(!(currentBoxCol != BoxCol::NO_BOX)){
-                            utilityFunction();
-                            checkBoxColour();
-                        }
-                        while(!(hasBoxAtm==true)){
-                            utilityFunction();
-                            pickupBox();
-                        }
-                        while(!(pillPosition==-1)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                        }
-                        while(!(onTargetBox==true)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                        }
-                        while(!(clockwise==true)){
-                            utilityFunction();
-                            placeBox();
-                            clockwise = true;
-                        }
-                        while(!(pillPosition==0)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                        }
-                        crossTFromAnticlock();
-                        while(!(distanceFrontVal > 500)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                        }
-                        while(!(currentBoxCol != BoxCol::NO_BOX)){
-                            utilityFunction();
-                            checkBoxColour();
-                        }
-                        while(!(hasBoxAtm==true)){
-                            utilityFunction();
-                            pickupBox();
-                        }
-                        while(!(clockwise ==false)){
-                            utilityFunction();
-                            turn180();
-                            clockwise = false;
-                        }
-                        while(!(pillPosition==0)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                        }
-                        crossTFromClockwise();
-                        while(!(onTargetBox==true)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                        }
-                        while(!(clockwise==true)){
-                            utilityFunction();
-                            placeBox();
-                            clockwise = true;
-                        }
-                        while(!(pillPosition == 0 )){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                        }
-                        while(!(farLeftVal == true)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                        }
-                        while(!(position== PositionList::TUNNEL)){
-                            utilityFunction();
-                            turnLeft();
-                            position = PositionList::TUNNEL;
-                        }
-                        while(!(position == PositionList::FIRST_JUNCTION)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                            if(farRightVal ==1 ){
-                                position = PositionList::FIRST_JUNCTION;
-                            }
-                        }
-                        while(!(position == PositionList::START)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                            if(farRightVal ==1 && farLeftVal ==1){
-                                position = PositionList::START;
-                                follow(1000);
-                                runMotors(0,0);
-                            }
-                        }
-                        while(true){
-                            continue;
-                        }
-                    } else{
-                        //CLOCKWISE 1 WAS BLUE
-                        //CLOCKWISE 2 IS RED
-                        //ANTICLOCK 1 IS RED
-                        //ANTICLOCK 2 IS BLUE
-                        placeRedTemporary();
-                        while(!(distanceFrontVal > 500)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                        }
-                        while(!(currentBoxCol != BoxCol::NO_BOX)){
-                            utilityFunction();
-                            checkBoxColour();
-                        }
-                        AntiClockpickUpAndReturnT();
-                        placeSecondBlueBox();
-                        dealWithTwoClockwiseReds();
-                    }
-                }
-            } else {
-                //CLOCKWISE 1 IS RED
-                //CHECKING OTHER SIDE
-                while(!(clockwise == false)){
-                    utilityFunction();
-                    reverseAndTwist();
-                    clockwise == false;
-                    currentBoxCol = BoxCol::NO_BOX;
-                }
-                checkOtherSideFromClockwise();
-                if(currentBoxCol == BoxCol::BLUE){
-                    //CLOCKWISE 1 IS RED
-                    //ANTICLOCK 1 IS BLUE
-                    AntiClockpickUpAndReturnT();
-                    placeFirstBlueBox();
-                    while(!(position == PositionList::PILL)){
-                        utilityFunction();
-                        turnRight();
-                        position = PositionList::PILL;
-                    }
-                    while(!(distanceFrontVal > 500)){
-                        utilityFunction();
-                        binaryFollowLine(100);
-                    }
-                    while(!(currentBoxCol != BoxCol::NO_BOX)){
-                        utilityFunction();
-                        checkBoxColour();
-                    }
-                    if(currentBoxCol == BoxCol::BLUE){
-                        //CLOCKWISE 1 IS RED
-                        //ANTICLOCK 1 WAS BLUE
-                        //ANTICLOCK 2 IS BLUE
-                        //CLOCKWISE 2 IS RED
-                        ClockwisepickUpAndReturnT();
-                        placeSecondBlueBox();
-                        dealWithTwoClockwiseReds();
-                    } else{
-                        //CLOCKWISE 1 IS RED
-                        //ANTICLOCK 1 WAS BLUE
-                        //ANTICLOCK 2 IS RED
-                        //SO CLOCKWISE 2 MUST BE BLUE
-                        //TAKING RED ACROSS TO T
-                        placeRedTemporary();
-                        while(!(distanceFrontVal > 500)){
-                            utilityFunction();
-                            binaryFollowLine(100);
-                        }
-                        while(!(currentBoxCol != BoxCol::NO_BOX)){
-                            utilityFunction();
-                            checkBoxColour();
-                        }
-                        AntiClockpickUpAndReturnT();
-                        placeSecondBlueBox();
-                        dealWithTwoClockwiseReds();
-                    }
-                }else{
-                    //CLOCKWISE 1 IS RED
-                    //ANTICLOCK 1 IS RED
-                    //CLOCKWISE 2 IS BLUE
-                    //ANTICLOCK 2 IS BLUE
-                    placeRedTemporary();
-                    while(!(distanceFrontVal > 500)){
-                        utilityFunction();
-                        binaryFollowLine(100);
-                    }
-                    while(!(currentBoxCol != BoxCol::NO_BOX)){
-                        utilityFunction();
-                        checkBoxColour();
-                    }
-                    AntiClockpickUpAndReturnT();
-                    placeFirstBlueBox();
-                    while(!(position == PositionList::PILL)){
-                        utilityFunction();
-                        turnRight();
-                        position = PositionList::PILL;
-                    }
-                    while(!(distanceFrontVal > 500)){
-                        utilityFunction();
-                        binaryFollowLine(100);
-                    }
-                    while(!(currentBoxCol != BoxCol::NO_BOX)){
-                        utilityFunction();
-                        checkBoxColour();
-                    }
-                    ClockwisepickUpAndReturnT();
-                    placeSecondBlueBox();
-                    dealWithTwoClockwiseReds();
-                }
-            }
-        }
-
         //places first blue box, starts from tunnel and ends on T-junction
         void placeFirstBlueBox(){
             //goes from tunel back to main junction
@@ -1325,6 +949,383 @@ class Robot {
                 dealWithTwoClockwiseReds();
             }
         }
+
+
+        void runProgram(){
+            testProgram();
+            //FIRST CHECKS FIRST ANTICLOCK BLOCK
+            while(!(position == PositionList::START)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farLeftVal == 1 && farRightVal == 1){
+                    position = PositionList::START;
+                }
+            }
+            while(!(position == PositionList::FIRST_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if( farLeftVal == 1){
+                    position = PositionList::FIRST_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::TUNNEL)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if( farLeftVal == 0){
+                    position = PositionList::TUNNEL;
+                }
+            }
+            while(!(position == PositionList::MAIN_T_JUNCTION)){
+                utilityFunction();
+                binaryFollowLine(100);
+                if(farLeftVal == 1 && farRightVal == 1){
+                    position = PositionList::MAIN_T_JUNCTION;
+                }
+            }
+            while(!(position == PositionList::PILL)){
+                utilityFunction();
+                turnLeft();
+                position = PositionList::PILL;
+                clockwise = true;
+            }
+            while(!(distanceFrontVal > 500)){
+                utilityFunction();
+                binaryFollowLine(100);
+            }
+            while(!(currentBoxCol != BoxCol::NO_BOX)){
+                utilityFunction();
+                checkBoxColour();
+            }
+            if(currentBoxCol == BoxCol::BLUE){
+                //CLOCKWISE 1 IS BLUE
+                //PLACES BLUE AND LOOKS CLOCKWISE AGAIN
+                ClockwisepickUpAndReturnT();
+                placeFirstBlueBox();
+                
+                while(!(position == PositionList::PILL)){
+                    utilityFunction();
+                    turnLeft();
+                    position = PositionList::PILL;
+                    clockwise = true;
+                }
+                while(!(distanceFrontVal > 500)){
+                    utilityFunction();
+                    binaryFollowLine(100);
+                }
+                while(!(currentBoxCol != BoxCol::NO_BOX)){
+                    utilityFunction();
+                    checkBoxColour();
+                }
+                if(currentBoxCol == BoxCol::BLUE){
+                    //CLOCKWISE 1 WAS BLUE
+                    //CLOCKWISE 2 IS BLUE
+                    //ANTICLOCK 1 & 2 RED
+                    //PLACES SECOND BLUE THEN DEALS WITH REMAINING REDS
+                    ClockwisepickUpAndReturnT();
+                    placeSecondBlueBox();
+                    while(!(position == PositionList::PILL)){
+                        utilityFunction();
+                        turnLeft();
+                        position = PositionList::PILL;
+                    }
+                    while(!(distanceFrontVal > 500)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                        utilityFunction();
+                        checkBoxColour();
+                    }
+                    while(!(hasBoxAtm==true)){
+                        utilityFunction();
+                        pickupBox();
+                    }
+                    while(!(pillPosition==1)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(onTargetBox==true)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(clockwise==false)){
+                        utilityFunction();
+                        placeBox();
+                        clockwise = false;
+                    }
+                    checkOtherSideFromClockwise();
+                    while(!(hasBoxAtm==true)){
+                        utilityFunction();
+                        pickupBox();
+                    }
+                    while(!(clockwise == true)){
+                        utilityFunction();
+                        turn180();
+                        clockwise = true;
+                    }
+                    while(!(pillPosition == 0)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    crossTFromAnticlock();
+                    while(!(onTargetBox==true)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(clockwise==false)){
+                        utilityFunction();
+                        placeBox();
+                        clockwise = false;
+                    }
+                    while(!(pillPosition == 0)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(position == PositionList::FIRST_JUNCTION)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                        if(farRightVal ==1 ){
+                            position = PositionList::FIRST_JUNCTION;
+                        }
+                    }
+                    while(!(position == PositionList::START)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                        if(farRightVal ==1 && farLeftVal ==1){
+                            position = PositionList::START;
+                            follow(1000);
+                            runMotors(0,0);
+                        }
+                    }
+                    while(true){
+                        continue;
+                    }
+                } else{
+                    //CLOCKWISE 1 WAS BLUE
+                    //CLOCKWISE 2 IS RED
+                    //NOW CHECKING OTHER SIDE
+                    while(!(clockwise == false)){
+                        utilityFunction();
+                        reverseAndTwist();
+                        clockwise == false;
+                        currentBoxCol = BoxCol::NO_BOX;
+                    }
+                    checkOtherSideFromClockwise();
+                    if(currentBoxCol == BoxCol::BLUE){
+                        //CLOCKWISE 1 WAS BLUE
+                        //CLOCKWISE 2 IS RED
+                        //ANTICLOCK 1 IS BLUE
+                        //ANTICLOCK 2 IS RED
+                        AntiClockpickUpAndReturnT();
+                        placeSecondBlueBox();
+                        while(!(position == PositionList::PILL)){
+                            utilityFunction();
+                            turnRight();
+                            position = PositionList::PILL;
+                            clockwise = false;
+                        }
+                        while(!(distanceFrontVal > 500)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(currentBoxCol != BoxCol::NO_BOX)){
+                            utilityFunction();
+                            checkBoxColour();
+                        }
+                        while(!(hasBoxAtm==true)){
+                            utilityFunction();
+                            pickupBox();
+                        }
+                        while(!(pillPosition==-1)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(onTargetBox==true)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(clockwise==true)){
+                            utilityFunction();
+                            placeBox();
+                            clockwise = true;
+                        }
+                        while(!(pillPosition==0)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        crossTFromAnticlock();
+                        while(!(distanceFrontVal > 500)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(currentBoxCol != BoxCol::NO_BOX)){
+                            utilityFunction();
+                            checkBoxColour();
+                        }
+                        while(!(hasBoxAtm==true)){
+                            utilityFunction();
+                            pickupBox();
+                        }
+                        while(!(clockwise ==false)){
+                            utilityFunction();
+                            turn180();
+                            clockwise = false;
+                        }
+                        while(!(pillPosition==0)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        crossTFromClockwise();
+                        while(!(onTargetBox==true)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(clockwise==true)){
+                            utilityFunction();
+                            placeBox();
+                            clockwise = true;
+                        }
+                        while(!(pillPosition == 0 )){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(farLeftVal == true)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(position== PositionList::TUNNEL)){
+                            utilityFunction();
+                            turnLeft();
+                            position = PositionList::TUNNEL;
+                        }
+                        while(!(position == PositionList::FIRST_JUNCTION)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                            if(farRightVal ==1 ){
+                                position = PositionList::FIRST_JUNCTION;
+                            }
+                        }
+                        while(!(position == PositionList::START)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                            if(farRightVal ==1 && farLeftVal ==1){
+                                position = PositionList::START;
+                                follow(1000);
+                                runMotors(0,0);
+                            }
+                        }
+                        while(true){
+                            continue;
+                        }
+                    } else{
+                        //CLOCKWISE 1 WAS BLUE
+                        //CLOCKWISE 2 IS RED
+                        //ANTICLOCK 1 IS RED
+                        //ANTICLOCK 2 IS BLUE
+                        placeRedTemporary();
+                        while(!(distanceFrontVal > 500)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(currentBoxCol != BoxCol::NO_BOX)){
+                            utilityFunction();
+                            checkBoxColour();
+                        }
+                        AntiClockpickUpAndReturnT();
+                        placeSecondBlueBox();
+                        dealWithTwoClockwiseReds();
+                    }
+                }
+            } else {
+                //CLOCKWISE 1 IS RED
+                //CHECKING OTHER SIDE
+                while(!(clockwise == false)){
+                    utilityFunction();
+                    reverseAndTwist();
+                    clockwise == false;
+                    currentBoxCol = BoxCol::NO_BOX;
+                }
+                checkOtherSideFromClockwise();
+                if(currentBoxCol == BoxCol::BLUE){
+                    //CLOCKWISE 1 IS RED
+                    //ANTICLOCK 1 IS BLUE
+                    AntiClockpickUpAndReturnT();
+                    placeFirstBlueBox();
+                    while(!(position == PositionList::PILL)){
+                        utilityFunction();
+                        turnRight();
+                        position = PositionList::PILL;
+                    }
+                    while(!(distanceFrontVal > 500)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                        utilityFunction();
+                        checkBoxColour();
+                    }
+                    if(currentBoxCol == BoxCol::BLUE){
+                        //CLOCKWISE 1 IS RED
+                        //ANTICLOCK 1 WAS BLUE
+                        //ANTICLOCK 2 IS BLUE
+                        //CLOCKWISE 2 IS RED
+                        ClockwisepickUpAndReturnT();
+                        placeSecondBlueBox();
+                        dealWithTwoClockwiseReds();
+                    } else{
+                        //CLOCKWISE 1 IS RED
+                        //ANTICLOCK 1 WAS BLUE
+                        //ANTICLOCK 2 IS RED
+                        //SO CLOCKWISE 2 MUST BE BLUE
+                        //TAKING RED ACROSS TO T
+                        placeRedTemporary();
+                        while(!(distanceFrontVal > 500)){
+                            utilityFunction();
+                            binaryFollowLine(100);
+                        }
+                        while(!(currentBoxCol != BoxCol::NO_BOX)){
+                            utilityFunction();
+                            checkBoxColour();
+                        }
+                        AntiClockpickUpAndReturnT();
+                        placeSecondBlueBox();
+                        dealWithTwoClockwiseReds();
+                    }
+                }else{
+                    //CLOCKWISE 1 IS RED
+                    //ANTICLOCK 1 IS RED
+                    //CLOCKWISE 2 IS BLUE
+                    //ANTICLOCK 2 IS BLUE
+                    placeRedTemporary();
+                    while(!(distanceFrontVal > 500)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                        utilityFunction();
+                        checkBoxColour();
+                    }
+                    AntiClockpickUpAndReturnT();
+                    placeFirstBlueBox();
+                    while(!(position == PositionList::PILL)){
+                        utilityFunction();
+                        turnRight();
+                        position = PositionList::PILL;
+                    }
+                    while(!(distanceFrontVal > 500)){
+                        utilityFunction();
+                        binaryFollowLine(100);
+                    }
+                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                        utilityFunction();
+                        checkBoxColour();
+                    }
+                    ClockwisepickUpAndReturnT();
+                    placeSecondBlueBox();
+                    dealWithTwoClockwiseReds();
+                }
+            }
+        }
 };
 
 Robot Bot;
@@ -1346,5 +1347,13 @@ void setup() {
     // Servo1.write(90);
     // delay(10);
 }
+
+
+
+
+void loop() {
+    Bot.runProgram();
+}
+
 
 

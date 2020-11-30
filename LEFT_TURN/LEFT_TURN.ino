@@ -221,15 +221,18 @@ class Robot {
             int buttonState = digitalRead(startButtonPin);
             static bool lockSwitch = false;
 
-            while(buttonState == 1 && run == false){
-                int buttonState = digitalRead(startButtonPin);
-                if(buttonState == 0){
-                    Serial.println("Begin Program");
-                    run = true;
-                    lockSwitch = true;
-                    return;
+            if(run == false){
+                while(buttonState == 1 && run == false){
+                    int buttonState = digitalRead(startButtonPin);
+                    if(buttonState == 0){
+                        Serial.println("Begin Program");
+                        run = true;
+                        lockSwitch = true;
+                        return;
+                    }
                 }
             }
+            
             if(buttonState == 0 && lockSwitch == false && run == true){
                 Serial.println("Pause Program");
                 run = false;
@@ -334,6 +337,7 @@ class Robot {
         }
 
         void turnLeft() {
+            Serial.println("Turning Left");
             //WAIT FOR FAR LEFT TO TRIGGER
             
             // while(farLeftVal == 1 ){
@@ -364,6 +368,7 @@ class Robot {
         }
 
         void turnRight() {
+            Serial.println("Turning Right");
             //WAIT FOR FAR LEFT TO TRIGGER
             
             // while(farLeftVal == 1 ){
@@ -471,18 +476,19 @@ class Robot {
         }
 
         void checkBoxColour(){
+            Serial.println("Checking Box Colour");
             static char colour[20];
             strcpy(colour,"blue");
             currentBoxCol = BoxCol::BLUE;
             while(distanceFrontVal > 350 ){
+                utilityFunction();
                 runMotors(motorSpeed,motorSpeed);
-                checkAllSensorValues(false);
                 if(colourPinVal == 1){
                     strcpy(colour,"red");
                     currentBoxCol = BoxCol::RED;
                 }
             }
-            flashLEDS();
+            utilityFunction();
             Serial.println(colour);
         }
 

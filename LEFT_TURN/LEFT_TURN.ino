@@ -21,6 +21,7 @@ Servo Servo1;
 
 bool run = false;
 int servoStart = 60;
+int servoClose = 85;
 
 // Declare the Servo pin, 9 for servo2 and 10 for servo1
 
@@ -295,6 +296,8 @@ class Robot {
         }
 
         void binaryFollowLine(int increaseRate) {
+            checkAllSensorValues(false);
+            onOffSwitch();
             if (frontLeftVal > lineSensorThreshold) {
                 speedDifference = increaseRate;
             }
@@ -442,7 +445,7 @@ class Robot {
         void pickupBox(){
             //closes claws and sets hasBoxatm to true
             hasBoxAtm = true;
-            for (pos = servoStart; pos <= 80; pos += 1) { // goes from 0 degrees to 180 degrees
+            for (pos = servoStart; pos <= servoClose; pos += 1) { // goes from 0 degrees to 180 degrees
                 // in steps of 1 degree
                 Servo1.write(pos);              // tell servo to go to position in variable 'pos'
                 delay(50);                       // waits 15ms for the servo to reach the position
@@ -466,6 +469,26 @@ class Robot {
                 checkAllSensorValues(false);
                 flashLEDS();
             }
+            
+            for (pos = servoClose; pos <= servoStart; pos += 1) { // goes from 0 degrees to 180 degrees
+                // in steps of 1 degree
+                Servo1.write(pos);              // tell servo to go to position in variable 'pos'
+                delay(50);                       // waits 15ms for the servo to reach the position
+            }   
+
+            timer = 0;
+            runMotors(-0.5*motorSpeed,-0.5*motorSpeed);
+            while (timer < 1000){
+                timer +=1;
+                checkAllSensorValues(false);
+                flashLEDS();
+            }     
+            turn180();
+            onTargetBox = false;
+            currentBoxCol = BoxCol::NO_BOX;
+            hasBoxAtm = false;
+
+
             // GET CLAW TO OPEN;
             // IF BOX HAS SLIPPED TO END, WILL NOT BE ABLE TO REVERSE AND TWIST
         }
@@ -508,13 +531,13 @@ class Robot {
                 utilityFunction();
                 binaryFollowLine(100);
                 if(farRightVal == 1 ){
-                    position == PositionList::FIRST_JUNCTION;
+                    position = PositionList::FIRST_JUNCTION;
                 }
             }
             while(!(position == PositionList::BLUE_TRACK)){
                 utilityFunction();
                 turnRight();
-                position == PositionList::BLUE_TRACK;
+                position = PositionList::BLUE_TRACK;
             }
             while(!(position == PositionList::BLUE_T)){
                 utilityFunction();
@@ -801,7 +824,7 @@ class Robot {
                 utilityFunction();
                 binaryFollowLine(100);
                 if (farRightVal==1){
-                    position == PositionList::MAIN_T_JUNCTION;
+                    position = PositionList::MAIN_T_JUNCTION;
                 }
             }
             while(!(position == PositionList::TUNNEL)){
@@ -860,6 +883,7 @@ class Robot {
             }
             crossTFromAnticlock();
             follow(1000);
+            placeBox();
             //open claw
             reverseAndTwist();
             clockwise = false;
@@ -971,7 +995,7 @@ class Robot {
 
 
         void runProgram(){
-            testProgram();
+            //testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
             while(!(position == PositionList::START)){
                 utilityFunction();
@@ -1255,7 +1279,8 @@ class Robot {
                         dealWithTwoClockwiseReds();
                     }
                 }
-            } else {
+            } 
+            else {
                 //CLOCKWISE 1 IS RED
                 //CHECKING OTHER SIDE
                 while(!(clockwise == false)){
@@ -1310,7 +1335,8 @@ class Robot {
                         placeSecondBlueBox();
                         dealWithTwoClockwiseReds();
                     }
-                }else{
+                }
+                else{
                     //CLOCKWISE 1 IS RED
                     //ANTICLOCK 1 IS RED
                     //CLOCKWISE 2 IS BLUE

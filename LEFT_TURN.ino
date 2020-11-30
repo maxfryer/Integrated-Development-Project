@@ -240,7 +240,7 @@ class Robot {
                         lockSwitch = false;
                     }
                     if(buttonState == 0 && lockSwitch == false){
-                        Serial.println("Continue Program")
+                        Serial.println("Continue Program");
                         run = true;
                         lockSwitch = true;
                         return;
@@ -255,7 +255,7 @@ class Robot {
         void utilityFunction(){
             checkAllSensorValues(false);
             flashLEDS();
-            OnOffSwitch();
+            onOffSwitch();
             return;
         }
 
@@ -449,10 +449,9 @@ class Robot {
                 timer +=1;
                 checkAllSensorValues(false);
                 flashLEDS();
-            }
-            GET CLAW TO OPEN;
-            IF BOX HAS SLIPPED TO END, WILL NOT BE ABLE TO REVERSE AND TWIST
-
+            // }
+            // GET CLAW TO OPEN;
+            // IF BOX HAS SLIPPED TO END, WILL NOT BE ABLE TO REVERSE AND TWIST
         }
 
         //currently not using stop in home location

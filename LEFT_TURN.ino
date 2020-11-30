@@ -1196,6 +1196,7 @@ class Robot {
             }
         }
         
+        //picks up red and places it on clockwise side of T junction before turning round and passing T junction
         void placeRedTemporary(){
             
             while(!(hasBoxAtm==true)){

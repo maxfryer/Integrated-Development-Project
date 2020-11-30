@@ -1,6 +1,6 @@
 {
     "board": "arduino:avr:uno",
-    "sketch": "finalMain\\finalMain.ino",
+    "sketch": "LEFT_TURN.ino",
     "port": "COM4",
     "programmer": "AVR ISP"
 }

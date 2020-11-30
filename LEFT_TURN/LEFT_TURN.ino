@@ -442,14 +442,14 @@ class Robot {
                 set currentBox col to no Box
                 SET HASBOXATM TO FALSE
                 do a 180
-            }*/
+            */
             int timer = 0;
             runMotors(-0.5*motorSpeed,-0.5*motorSpeed);
             while (timer < 400){
                 timer +=1;
                 checkAllSensorValues(false);
                 flashLEDS();
-            // }
+            }
             // GET CLAW TO OPEN;
             // IF BOX HAS SLIPPED TO END, WILL NOT BE ABLE TO REVERSE AND TWIST
         }

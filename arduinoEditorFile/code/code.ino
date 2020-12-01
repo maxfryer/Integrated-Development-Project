@@ -530,7 +530,7 @@ class Robot {
 
 
         //places first blue box, starts from tunnel and ends on T-junction
-        void placeFirstBlueBox(){
+        void placeSecondBlueBox(){
             // Serial.println("Placing First Blue Block");
             // // goes from tunel back to main junction
             while(!(position == PositionList::FIRST_JUNCTION)){
@@ -618,20 +618,20 @@ class Robot {
             }
         }
 
-        void placeSecondBlueBox(){
+        void placeFirstBlueBox(){
             Serial.println("Placing Second Blue Block");
-            while(!(position == PositionList::FIRST_JUNCTION)){
-                utilityFunction();
-                binaryFollowLine(100);
-                if(farRightVal == 1 ){
-                    position == PositionList::FIRST_JUNCTION;
-                }
-            }
-            while(!(position == PositionList::BLUE_TRACK)){
-                utilityFunction();
-                turnRight();
-                position == PositionList::BLUE_TRACK;
-            }
+            // while(!(position == PositionList::FIRST_JUNCTION)){
+            //     utilityFunction();
+            //     binaryFollowLine(100);
+            //     if(farRightVal == 1 ){
+            //         position == PositionList::FIRST_JUNCTION;
+            //     }
+            // }
+            // while(!(position == PositionList::BLUE_TRACK)){
+            //     utilityFunction();
+            //     turnRight();
+            //     position == PositionList::BLUE_TRACK;
+            // }
             while(!(position == PositionList::BLUE_T)){
                 utilityFunction();
                 binaryFollowLine(100);
@@ -640,24 +640,32 @@ class Robot {
                 }
             }
             //jumps across to other side of the square
-            int timer = 0;
-            runMotors(motorSpeed,motorSpeed);
-            while (timer < 200){
-                timer +=1;
+            while (frontLeftVal < lineSensorThreshold && frontRightVal < lineSensorThreshold){
+                runMotors(motorSpeed,motorSpeed);
                 utilityFunction();
+            }
+            int timer = 0;
+            while(timer < 100){
+                runMotors(1*motorSpeed,1*motorSpeed);
+                timer +=1;
             }
             while(!(position == PositionList::BLUE_SIDE)){
                 utilityFunction();
-                binaryFollowLine(100);
-                if(farRightVal==1 && farLeftVal ==1){
-                    turnLeft();
-                    position = PositionList::BLUE_SIDE;
+                while(frontLeftVal < lineSensorThreshold){
+                    runMotors(-1*motorSpeed,motorSpeed);
+                    utilityFunction();
                 }
+                while(frontRightVal < lineSensorThreshold){
+                    runMotors(-1*motorSpeed,motorSpeed);
+                    utilityFunction();
+                }
+                position = PositionList::BLUE_SIDE;
             }
+            direction = Directions::AWAY_FROM_PILL;
             while(!(direction == Directions::TOWARDS_PILL)){
                 utilityFunction();
                 int timer = 0;
-                while (timer < 20){
+                while (timer < 150){
                     timer +=1;
                     runMotors(motorSpeed,motorSpeed);
                     utilityFunction();
@@ -685,9 +693,9 @@ class Robot {
                 direction = Directions::TOWARDS_PILL;
             }
             Serial.println("finished manual seqence");
+            
             while(!(farRightVal)){
                 utilityFunction();
-                turnRight();
                 position = PositionList::BLUE_SIDE;
             }
             while(!(position == PositionList::BLUE_T)){
@@ -1050,8 +1058,8 @@ class Robot {
             // testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
             pickupBox();
-            // placeFirstBlueBox();
-            placeSecondBlueBox();  
+            placeFirstBlueBox();
+            //placeSecondBlueBox();  
             while(!(position == PositionList::START)){
                 utilityFunction();
                 binaryFollowLine(100);

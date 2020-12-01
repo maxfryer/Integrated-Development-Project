@@ -282,8 +282,10 @@ class Robot {
             //Serial.println("motors running");
         }
 
-        void binaryFollowLine(int increaseRate = 100) {
-            utilityFunction(); // actually the utility function is contained within binary follow line
+        void binaryFollowLine(bool flashLED = true, int increaseRate = 100) {
+            checkAllSensorValues(false);
+            onOffSwitch();
+            if (flashLED) flashLEDS(); // actually the utility function is contained within binary follow line
             if (frontLeftVal > lineSensorThreshold) {
                 speedDifference = increaseRate;
             }
@@ -484,7 +486,7 @@ class Robot {
             currentBoxCol = BoxCol::BLUE;
             while(distanceFrontVal > 350 ){
                 checkAllSensorValues(false);
-                binaryFollowLine();
+                binaryFollowLine(false);
                 if(colourPinVal == 1){
                     strcpy(colour,"red");
                     currentBoxCol = BoxCol::RED;
@@ -858,7 +860,7 @@ class Robot {
 
         //crosses t junction from clockwise dealing with pill position reset
         void crossTFromClockwise(){
-            Serial.println("Crossing T Junction");
+            Serial.println("Crossing T Junction in the anticlockwise direction");
             while(!(position == PositionList::MAIN_T_JUNCTION )){
                 binaryFollowLine();
                 if(farRightVal == 1){
@@ -878,7 +880,7 @@ class Robot {
 
         //crosses t junction from anticlockwise dealing with pill position reset
         void crossTFromAnticlock(){
-            Serial.println("Crossing T Junction");
+            Serial.println("Crossing T Junction in the clockwise direction");
             while(!(position == PositionList::MAIN_T_JUNCTION )){
                 binaryFollowLine();
                 if(farLeftVal == 1){

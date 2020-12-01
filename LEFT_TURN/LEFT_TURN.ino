@@ -318,7 +318,7 @@ class Robot {
                 if(farLeftVal == 0 && farRightVal == 0 && onTargetBox == true){
                     onTargetBox = false;
                 }
-                if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold&& onTargetBox == true){
+                if(onTargetBox == true){
                     runMotors(motorSpeed,motorSpeed);
                 } 
             }
@@ -435,7 +435,7 @@ class Robot {
         void reverseAndTwist(){
             int timer = 0;
             Serial.println("reversing");
-            while (timer < 3000){
+            while (timer < 700){
                 timer +=1;
                 checkAllSensorValues(false);
                 flashLEDS();
@@ -530,8 +530,8 @@ class Robot {
 
         //places first blue box, starts from tunnel and ends on T-junction
         void placeFirstBlueBox(){
-            Serial.println("Placing First Blue Block");
-            //goes from tunel back to main junction
+            // Serial.println("Placing First Blue Block");
+            // // goes from tunel back to main junction
             // while(!(position == PositionList::FIRST_JUNCTION)){
             //     utilityFunction();
             //     binaryFollowLine(100);
@@ -553,30 +553,38 @@ class Robot {
                     position = PositionList::BLUE_T;
                 }
             }
+            Serial.println("reached blue T");
             while(!(position == PositionList::BLUE_SIDE)){
                 utilityFunction();
                 lineSensorThreshold = 200;
                 turnLeft();
                 position = PositionList::BLUE_SIDE;
             }
+            direction = Directions::AWAY_FROM_PILL;
             while(!(direction == Directions::TOWARDS_PILL)){
                 utilityFunction();
-                follow(400);
+                int timer = 0;
+                while (timer < 250){
+                    timer +=1;
+                    runMotors(motorSpeed,motorSpeed);
+                    utilityFunction();
+                }
                 hasBoxAtm = true;
-                for (pos = servoClose; pos <= servoStart; pos -= 1) { // 
+                for (pos = servoClose; pos > servoStart; pos -= 1) { // 
                     // in steps of 1 degree
                     Servo1.write(pos);              // tell servo to go to position in variable 'pos'
                     delay(50);                       // waits 15ms for the servo to reach the position
                 }
-                int timer = 0;
-                while (timer < 300){
+                Serial.println("Opened Claws");
+                timer = 0;
+                while (timer < 800){
                     timer +=1;
                     runMotors(-motorSpeed,-motorSpeed);
                     utilityFunction();
                 }
-                turnLeft();
                 direction = Directions::TOWARDS_PILL;
             }
+            Serial.println("finished manual seqence");
 
             while(!(position == PositionList::BLUE_T)){
                 utilityFunction();
@@ -585,12 +593,14 @@ class Robot {
                     position = PositionList::BLUE_T;
                 }
             }
+            Serial.println("Reached Blue T just placed");
             while(!(position == PositionList::BLUE_TRACK)){
                 utilityFunction();
-                turnRight();
+                turnLeft();
                 lineSensorThreshold = 300;
                 position =  PositionList::BLUE_TRACK;
             }
+            Serial.println("Reached Blue Track");
             while(!(position == PositionList::FIRST_JUNCTION)){
                 utilityFunction();
                 binaryFollowLine(100);
@@ -910,9 +920,13 @@ class Robot {
                 binaryFollowLine(100);
             }
             crossTFromAnticlock();
-            follow(1000);
-            placeBox();
-            //open claw
+            follow(400);
+            runMotors(0,0);
+            for (pos = servoClose; pos >= servoStart; pos -= 1) { // goes from 0 degrees to 180 degrees
+                // in steps of 1 degree
+                Servo1.write(pos);              // tell servo to go to position in variable 'pos'
+                delay(50);                       // waits 15ms for the servo to reach the position
+            }   
             reverseAndTwist();
             clockwise = false;
             
@@ -1031,8 +1045,8 @@ class Robot {
         void runProgram(){
             // testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
-            // pickupBox();
-            // placeFirstBlueBox();     
+            pickupBox();
+            placeFirstBlueBox();     
             while(!(position == PositionList::START)){
                 utilityFunction();
                 binaryFollowLine(100);

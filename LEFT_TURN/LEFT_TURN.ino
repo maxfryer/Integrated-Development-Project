@@ -557,6 +557,7 @@ class Robot {
                     delay(50);                       // waits 15ms for the servo to reach the position
                 }
                 Serial.println("Opened Claws");
+                hasBoxAtm = false;
                 timer = 0;
                 while (timer < 1000){
                     timer +=1;
@@ -628,6 +629,7 @@ class Robot {
                 delay(50);                       // waits 15ms for the servo to reach the position
             }
             Serial.println("Opened Claws");
+            hasBoxAtm = false;
             timer = 0;
             while (timer < 1300){
                 timer +=1;

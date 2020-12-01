@@ -513,7 +513,7 @@ class Robot {
 
         //places first blue box, starts from tunnel and ends on T-junction
         void placeSecondBlueBox(){
-            // Serial.println("Placing First Blue Block");
+            Serial.println("Placing Second Blue Block");
             // // goes from tunel back to main junction
             while(!(position == PositionList::FIRST_JUNCTION)){
                 binaryFollowLine();
@@ -557,6 +557,7 @@ class Robot {
                     delay(50);                       // waits 15ms for the servo to reach the position
                 }
                 Serial.println("Opened Claws");
+                hasBoxAtm = false;
                 timer = 0;
                 while (timer < 1000){
                     timer +=1;
@@ -600,13 +601,13 @@ class Robot {
             while(!(position == PositionList::FIRST_JUNCTION)){
                 binaryFollowLine();
                 if(farRightVal == 1 ){
-                    position == PositionList::FIRST_JUNCTION;
+                    position = PositionList::FIRST_JUNCTION;
                 }
             }
             while(!(position == PositionList::BLUE_TRACK)){
                 utilityFunction();
                 turnRight();
-                position == PositionList::BLUE_TRACK;
+                position = PositionList::BLUE_TRACK;
             }
             while(!(position == PositionList::BLUE_T)){
                 binaryFollowLine();
@@ -628,6 +629,7 @@ class Robot {
                 delay(50);                       // waits 15ms for the servo to reach the position
             }
             Serial.println("Opened Claws");
+            hasBoxAtm = false;
             timer = 0;
             while (timer < 1300){
                 timer +=1;
@@ -669,8 +671,9 @@ class Robot {
             crossTFromClockwise();
             while(!(distanceFrontVal > 500)){
                 binaryFollowLine();
-                Serial.println("found box on the other side");
+                
             }
+            Serial.println("found box on the other side");
             while(currentBoxCol == BoxCol::NO_BOX){
                 utilityFunction();
                 checkBoxColour();
@@ -861,13 +864,6 @@ class Robot {
             
             crossTFromClockwise();
 
-            /*from t junction
-            goes forward a bit
-            places block
-            reverses some and twists
-            set clockwise to false
-            goes to t juction and past it
-            */
         }
 
         //crosses t junction from clockwise dealing with pill position reset

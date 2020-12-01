@@ -37,8 +37,8 @@ class Robot {
         int frontLeft = A0; // input pin for FRONT LEFT light sensor
         int frontRight = A1;
         int colourPin = 0;
-        int offAxisRight = 3;
-        int offAxisLeft = 4;
+        int offAxisRight = 4;
+        int offAxisLeft = 3;
         int backMiddle = 5;
         int startButtonPin = 2;
         int distanceSensor = A2;
@@ -318,7 +318,7 @@ class Robot {
                 if(farLeftVal == 0 && farRightVal == 0 && onTargetBox == true){
                     onTargetBox = false;
                 }
-                if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
+                if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold&& onTargetBox == true){
                     runMotors(motorSpeed,motorSpeed);
                 } 
             }
@@ -532,10 +532,12 @@ class Robot {
             while(!(position == PositionList::FIRST_JUNCTION)){
                 utilityFunction();
                 binaryFollowLine(100);
+                Serial.println(farRightVal);
                 if(farRightVal == 1 ){
                     position = PositionList::FIRST_JUNCTION;
                 }
             }
+            Serial.println("First Junction");
             while(!(position == PositionList::BLUE_TRACK)){
                 Serial.println("Reached First Junction");
                 utilityFunction();
@@ -834,12 +836,14 @@ class Robot {
                     position = PositionList::MAIN_T_JUNCTION;
                 }
             }
+            Serial.println("Main T");
             while(!(position == PositionList::TUNNEL)){
                 utilityFunction();
                 turnRight();
                 direction = Directions::AWAY_FROM_PILL;
                 position = PositionList::TUNNEL;
             }
+            Serial.println("Tunnel");
             follow(2000);
         }
 
@@ -1011,6 +1015,8 @@ class Robot {
         void runProgram(){
             // testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
+            pickupBox();
+            placeFirstBlueBox();     
             while(!(position == PositionList::START)){
                 utilityFunction();
                 binaryFollowLine(100);
@@ -1032,6 +1038,7 @@ class Robot {
                     position = PositionList::TUNNEL;
                 }
             }
+            
             while(!(position == PositionList::MAIN_T_JUNCTION)){
                 utilityFunction();
                 binaryFollowLine(100);
@@ -1039,6 +1046,7 @@ class Robot {
                     position = PositionList::MAIN_T_JUNCTION;
                 }
             }
+            Serial.println("Main T");
             while(!(position == PositionList::PILL)){
                 utilityFunction();
                 turnLeft();

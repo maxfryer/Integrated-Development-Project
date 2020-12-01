@@ -511,7 +511,7 @@ class Robot {
             strcpy(colour,"blue");
             currentBoxCol = BoxCol::BLUE;
             while(distanceFrontVal > 350 ){
-                Serial.println(distanceFrontVal);
+                //Serial.println(distanceFrontVal);
                 checkAllSensorValues(false);
                 binaryFollowLine(100);
                 if(colourPinVal == 1){
@@ -537,6 +537,7 @@ class Robot {
             while(!(position == PositionList::BLUE_TRACK)){
                 utilityFunction();
                 turnRight();
+                follow(1000);
                 position = PositionList::BLUE_TRACK;
             }
             while(!(position == PositionList::BLUE_T)){

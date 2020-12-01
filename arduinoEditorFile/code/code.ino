@@ -511,7 +511,7 @@ class Robot {
             strcpy(colour,"blue");
             currentBoxCol = BoxCol::BLUE;
             while(distanceFrontVal > 350 ){
-                Serial.println(distanceFrontVal);
+                //Serial.println(distanceFrontVal);
                 checkAllSensorValues(false);
                 binaryFollowLine(100);
                 if(colourPinVal == 1){
@@ -531,13 +531,14 @@ class Robot {
                 utilityFunction();
                 binaryFollowLine(100);
                 if(farRightVal == 1 ){
-                    position == PositionList::FIRST_JUNCTION;
+                    position = PositionList::FIRST_JUNCTION;
                 }
             }
             while(!(position == PositionList::BLUE_TRACK)){
                 utilityFunction();
                 turnRight();
-                position == PositionList::BLUE_TRACK;
+                follow(1000);
+                position = PositionList::BLUE_TRACK;
             }
             while(!(position == PositionList::BLUE_T)){
                 utilityFunction();
@@ -1279,7 +1280,8 @@ class Robot {
                         dealWithTwoClockwiseReds();
                     }
                 }
-            } else {
+            } 
+            else {
                 //CLOCKWISE 1 IS RED
                 //CHECKING OTHER SIDE
                 while(!(clockwise == false)){
@@ -1334,7 +1336,8 @@ class Robot {
                         placeSecondBlueBox();
                         dealWithTwoClockwiseReds();
                     }
-                }else{
+                }
+                else{
                     //CLOCKWISE 1 IS RED
                     //ANTICLOCK 1 IS RED
                     //CLOCKWISE 2 IS BLUE

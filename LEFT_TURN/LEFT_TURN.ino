@@ -640,11 +640,14 @@ class Robot {
                 }
             }
             //jumps across to other side of the square
-            int timer = 0;
-            runMotors(motorSpeed,motorSpeed);
-            while (timer < 200){
-                timer +=1;
+            while (frontLeftVal < lineSensorThreshold && frontRightVal < lineSensorThreshold){
+                runMotors(motorSpeed,motorSpeed);
                 utilityFunction();
+            }
+            int timer = 0;
+            while(timer < 100){
+                runMotors(1*motorSpeed,1*motorSpeed);
+                timer +=1;
             }
             while(!(position == PositionList::BLUE_SIDE)){
                 utilityFunction();
@@ -1050,8 +1053,8 @@ class Robot {
             // testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
             pickupBox();
-            // placeFirstBlueBox();
-            placeSecondBlueBox();  
+            placeFirstBlueBox();
+            //placeSecondBlueBox();  
             while(!(position == PositionList::START)){
                 utilityFunction();
                 binaryFollowLine(100);

@@ -298,7 +298,8 @@ class Robot {
                     if(clockwise==true){
                         pillPosition ++;
                         Serial.println("hit front of clockwise target box");
-                    } else{
+                    } 
+                    else{
                         pillPosition --;
                         Serial.println("hit front of anticlockwise target box");
                     }
@@ -1109,7 +1110,8 @@ class Robot {
                     while(true){
                         continue;
                     }
-                } else{
+                } 
+                else{
                     //CLOCKWISE 1 WAS BLUE
                     //CLOCKWISE 2 IS RED
                     //NOW CHECKING OTHER SIDE
@@ -1215,7 +1217,8 @@ class Robot {
                         while(true){
                             continue;
                         }
-                    } else{
+                    } 
+                    else{
                         //CLOCKWISE 1 WAS BLUE
                         //CLOCKWISE 2 IS RED
                         //ANTICLOCK 1 IS RED
@@ -1270,7 +1273,8 @@ class Robot {
                         ClockwisepickUpAndReturnT();
                         placeSecondBlueBox();
                         dealWithTwoClockwiseReds();
-                    } else{
+                    } 
+                    else{
                         //CLOCKWISE 1 IS RED
                         //ANTICLOCK 1 WAS BLUE
                         //ANTICLOCK 2 IS RED

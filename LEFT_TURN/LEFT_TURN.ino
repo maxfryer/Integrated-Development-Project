@@ -467,21 +467,21 @@ class Robot {
             */
             Serial.println("placing box");
             int timer = 0;
-            runMotors(-0.5*motorSpeed,-0.5*motorSpeed);
+            runMotors(-1*motorSpeed,-1*motorSpeed);
             while (timer < 400){
                 timer +=1;
                 checkAllSensorValues(false);
                 flashLEDS();
             }
             runMotors(0,0);
-            for (pos = servoClose; pos <= servoStart; pos -= 1) { // goes from 0 degrees to 180 degrees
+            for (pos = servoClose; pos >= servoStart; pos -= 1) { // goes from 0 degrees to 180 degrees
                 // in steps of 1 degree
                 Servo1.write(pos);              // tell servo to go to position in variable 'pos'
                 delay(50);                       // waits 15ms for the servo to reach the position
             }   
 
             timer = 0;
-            runMotors(-0.5*motorSpeed,-0.5*motorSpeed);
+            runMotors(-1*motorSpeed,-1*motorSpeed);
             while (timer < 1000){
                 timer +=1;
                 checkAllSensorValues(false);

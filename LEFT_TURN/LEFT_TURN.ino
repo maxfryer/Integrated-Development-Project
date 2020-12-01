@@ -326,6 +326,7 @@ class Robot {
             if(position == PositionList::BLUE_SIDE){
                 if(farLeftVal == 1 && farRightVal == 1 && onTargetBox == false){
                     onTargetBox = true;
+                    Serial.println("On Blue Target Box");
                 }
                 if(farLeftVal == 0 && farRightVal == 0 && onTargetBox == true){
                     onTargetBox = false;
@@ -462,6 +463,7 @@ class Robot {
                 SET HASBOXATM TO FALSE
                 do a 180
             */
+            Serial.println("placing box");
             int timer = 0;
             runMotors(-0.5*motorSpeed,-0.5*motorSpeed);
             while (timer < 400){
@@ -469,8 +471,8 @@ class Robot {
                 checkAllSensorValues(false);
                 flashLEDS();
             }
-            
-            for (pos = servoClose; pos <= servoStart; pos += 1) { // goes from 0 degrees to 180 degrees
+            runMotors(0,0);
+            for (pos = servoClose; pos <= servoStart; pos -= 1) { // goes from 0 degrees to 180 degrees
                 // in steps of 1 degree
                 Servo1.write(pos);              // tell servo to go to position in variable 'pos'
                 delay(50);                       // waits 15ms for the servo to reach the position
@@ -529,21 +531,20 @@ class Robot {
         void placeFirstBlueBox(){
             Serial.println("Placing First Blue Block");
             //goes from tunel back to main junction
-            while(!(position == PositionList::FIRST_JUNCTION)){
-                utilityFunction();
-                binaryFollowLine(100);
-                Serial.println(farRightVal);
-                if(farRightVal == 1 ){
-                    position = PositionList::FIRST_JUNCTION;
-                }
-            }
-            Serial.println("First Junction");
-            while(!(position == PositionList::BLUE_TRACK)){
-                Serial.println("Reached First Junction");
-                utilityFunction();
-                turnRight();
-                position = PositionList::BLUE_TRACK;
-            }
+            // while(!(position == PositionList::FIRST_JUNCTION)){
+            //     utilityFunction();
+            //     binaryFollowLine(100);
+            //     Serial.println(farRightVal);
+            //     if(farRightVal == 1 ){
+            //         position = PositionList::FIRST_JUNCTION;
+            //     }
+            // }
+            // while(!(position == PositionList::BLUE_TRACK)){
+            //     Serial.println("Reached First Junction");
+            //     utilityFunction();
+            //     turnRight();
+            //     position = PositionList::BLUE_TRACK;
+            // }
             while(!(position == PositionList::BLUE_T)){
                 utilityFunction();
                 binaryFollowLine(100);
@@ -553,6 +554,7 @@ class Robot {
             }
             while(!(position == PositionList::BLUE_SIDE)){
                 utilityFunction();
+                lineSensorThreshold = 200;
                 turnLeft();
                 position = PositionList::BLUE_SIDE;
             }
@@ -575,6 +577,7 @@ class Robot {
             while(!(position == PositionList::BLUE_TRACK)){
                 utilityFunction();
                 turnRight();
+                lineSensorThreshold = 300;
                 position =  PositionList::BLUE_TRACK;
             }
             while(!(position == PositionList::FIRST_JUNCTION)){
@@ -689,7 +692,6 @@ class Robot {
                 }
             }
         }
-
         void checkOtherSideFromClockwise() {
             Serial.println("Checking other Side From Clockwise");
             while(!(pillPosition == 0)){

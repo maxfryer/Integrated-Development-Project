@@ -516,7 +516,7 @@ class Robot {
             runMotors(0,0);
             utilityFunction();
             runMotors(0,0);
-            Serial.println(colour);
+            //Serial.println(colour);
         }
 
 

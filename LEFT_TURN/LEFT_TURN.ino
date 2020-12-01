@@ -520,6 +520,7 @@ class Robot {
                 }
             }
             utilityFunction();
+            runMotors(0,0);
             Serial.println(colour);
         }
 

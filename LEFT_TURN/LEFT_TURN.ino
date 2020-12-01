@@ -651,12 +651,10 @@ class Robot {
             }
             while(!(position == PositionList::BLUE_SIDE)){
                 utilityFunction();
-                binaryFollowLine(100);
-                if(farRightVal==1 && farLeftVal ==1){
-                    turnLeft();
-                    position = PositionList::BLUE_SIDE;
-                }
+                turnLeft();
+                position = PositionList::BLUE_SIDE;
             }
+            direction = Directions::AWAY_FROM_PILL;
             while(!(direction == Directions::TOWARDS_PILL)){
                 utilityFunction();
                 int timer = 0;

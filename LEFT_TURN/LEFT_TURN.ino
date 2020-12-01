@@ -651,14 +651,21 @@ class Robot {
             }
             while(!(position == PositionList::BLUE_SIDE)){
                 utilityFunction();
-                turnLeft();
+                while(frontLeftVal < lineSensorThreshold){
+                    runMotors(-1*motorSpeed,motorSpeed);
+                    utilityFunction();
+                }
+                while(frontRightVal < lineSensorThreshold){
+                    runMotors(-1*motorSpeed,motorSpeed);
+                    utilityFunction();
+                }
                 position = PositionList::BLUE_SIDE;
             }
             direction = Directions::AWAY_FROM_PILL;
             while(!(direction == Directions::TOWARDS_PILL)){
                 utilityFunction();
                 int timer = 0;
-                while (timer < 20){
+                while (timer < 150){
                     timer +=1;
                     runMotors(motorSpeed,motorSpeed);
                     utilityFunction();
@@ -686,9 +693,9 @@ class Robot {
                 direction = Directions::TOWARDS_PILL;
             }
             Serial.println("finished manual seqence");
+            
             while(!(farRightVal)){
                 utilityFunction();
-                turnRight();
                 position = PositionList::BLUE_SIDE;
             }
             while(!(position == PositionList::BLUE_T)){

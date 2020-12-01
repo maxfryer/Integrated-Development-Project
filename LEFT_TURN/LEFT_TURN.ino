@@ -644,7 +644,7 @@ class Robot {
                 utilityFunction();
             }
             int timer = 0;
-            while(timer < 100){
+            while(timer < 250){
                 runMotors(1*motorSpeed,1*motorSpeed);
                 timer +=1;
             }
@@ -664,7 +664,7 @@ class Robot {
             while(!(direction == Directions::TOWARDS_PILL)){
                 utilityFunction();
                 int timer = 0;
-                while (timer < 150){
+                while (timer < 20){
                     timer +=1;
                     runMotors(motorSpeed,motorSpeed);
                     utilityFunction();

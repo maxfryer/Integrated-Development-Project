@@ -610,6 +610,7 @@ class Robot {
                 utilityFunction();
                 turnRight();
                 position = PositionList::BLUE_TRACK;
+                follow(200);  // NEEDED LATENCY !!!!!!!!!!!!!!!!!!!!!!!!!
             }
             while(!(position == PositionList::BLUE_T)){
                 binaryFollowLine();
@@ -951,6 +952,7 @@ class Robot {
                 if(farLeftVal == 1 && farRightVal == 1){
                     position = PositionList::START;
                     Serial.println("left the start box");
+                    follow(200);  // NEEDED LATENCY !!!!!!!!!!!!!!!!!!!!!!!!!
                 }
             }
             while(!(position == PositionList::FIRST_JUNCTION)){
@@ -958,6 +960,7 @@ class Robot {
                 if( farLeftVal == 1){
                     position = PositionList::FIRST_JUNCTION;
                     Serial.println("first junction towards pill no boxes yet");
+                    follow(200);  // NEEDED LATENCY !!!!!!!!!!!!!!!!!!!!!!!!!
                 }
             }
             while(!(position == PositionList::TUNNEL)){

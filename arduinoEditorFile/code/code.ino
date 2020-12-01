@@ -415,6 +415,32 @@ class Robot {
 
         }
 
+
+        void servosOpen(bool open = true){
+            runMotors(0,0);
+            if (open){
+                for (pos = servoClose; pos >= servoStart; pos -= 1) { // goes from 0 degrees to 180 degrees
+                    // in steps of 1 degree
+                    Servo1.write(pos);              // tell servo to go to position in variable 'pos'
+                    delay(50); 
+                    utilityFunction();
+                }                      
+                Serial.println("opened Claws");
+                hasBoxAtm = false;
+                currentBoxCol = BoxCol::NO_BOX;
+            }   
+            else{
+                for (pos = servoStart; pos <= servoClose; pos += 1) { // goes from 0 degrees to 180 degrees
+                    // in steps of 1 degree
+                    Servo1.write(pos);              // tell servo to go to position in variable 'pos'
+                    delay(50);   
+                    utilityFunction();                    // waits 15ms for the servo to reach the position
+                }   
+                Serial.println("closed Claws");
+                hasBoxAtm = true;
+            }
+        }
+
         //used either having just deposited or decided against picking up, tune so that it just misses block on 180
         void reverseAndTwist(){
             int timer = 0;
@@ -426,16 +452,6 @@ class Robot {
             }
             Serial.println("finished reversing");
             turn180();
-        }
-
-        void pickupBox(){
-            //closes claws and sets hasBoxatm to true
-            hasBoxAtm = true;
-            for (pos = servoStart; pos <= servoClose; pos += 1) { // goes from 0 degrees to 180 degrees
-                // in steps of 1 degree
-                Servo1.write(pos);              // tell servo to go to position in variable 'pos'
-                delay(50);                       // waits 15ms for the servo to reach the position
-            }            
         }
 
         void placeBox(){
@@ -457,11 +473,7 @@ class Robot {
                 flashLEDS();
             }
             runMotors(0,0);
-            for (pos = servoClose; pos >= servoStart; pos -= 1) { // goes from 0 degrees to 180 degrees
-                // in steps of 1 degree
-                Servo1.write(pos);              // tell servo to go to position in variable 'pos'
-                delay(50);                       // waits 15ms for the servo to reach the position
-            }   
+            servosOpen(true); 
             timer = 0;
             runMotors(-1*motorSpeed,-1*motorSpeed);
             while (timer < 200){
@@ -471,9 +483,6 @@ class Robot {
             }     
             turn180();
             onTargetBox = false;
-            currentBoxCol = BoxCol::NO_BOX;
-            hasBoxAtm = false;
-
 
             // GET CLAW TO OPEN;
             // IF BOX HAS SLIPPED TO END, WILL NOT BE ABLE TO REVERSE AND TWIST
@@ -550,14 +559,7 @@ class Robot {
                     runMotors(motorSpeed,motorSpeed);
                     utilityFunction();
                 }
-                hasBoxAtm = true;
-                for (pos = servoClose; pos > servoStart; pos -= 1) { // 
-                    // in steps of 1 degree
-                    Servo1.write(pos);              // tell servo to go to position in variable 'pos'
-                    delay(50);                       // waits 15ms for the servo to reach the position
-                }
-                Serial.println("Opened Claws");
-                hasBoxAtm = false;
+                servosOpen(true);
                 timer = 0;
                 while (timer < 1000){
                     timer +=1;
@@ -608,6 +610,7 @@ class Robot {
                 utilityFunction();
                 turnRight();
                 position = PositionList::BLUE_TRACK;
+                follow(200);  // NEEDED LATENCY !!!!!!!!!!!!!!!!!!!!!!!!!
             }
             while(!(position == PositionList::BLUE_T)){
                 binaryFollowLine();
@@ -623,13 +626,7 @@ class Robot {
                 utilityFunction();
             }
             runMotors(0,0);
-            for (pos = servoClose; pos > servoStart; pos -= 1) { // 
-                // in steps of 1 degree
-                Servo1.write(pos);              // tell servo to go to position in variable 'pos'
-                delay(50);                       // waits 15ms for the servo to reach the position
-            }
-            Serial.println("Opened Claws");
-            hasBoxAtm = false;
+            servosOpen(true);
             timer = 0;
             while (timer < 1300){
                 timer +=1;
@@ -694,10 +691,9 @@ class Robot {
                 utilityFunction();
                 checkBoxColour();
             }
-            while(!(hasBoxAtm==true)){
-                utilityFunction();
-                pickupBox();
-            }
+
+            servosOpen(false); //pick up box
+            
             while(!(clockwise==false)){
                 utilityFunction();
                 turn180();
@@ -729,10 +725,9 @@ class Robot {
                 utilityFunction();
                 checkBoxColour();
             }
-            while(!(hasBoxAtm==true)){
-                utilityFunction();
-                pickupBox();
-            }
+
+            servosOpen(false);  //pick up box
+            
             while(!(pillPosition == 0)){
                 binaryFollowLine();
             }
@@ -777,10 +772,7 @@ class Robot {
         //picks up blue block turns and turns right at T junction (used for placeblue)
         void ClockwisepickUpAndReturnT(){
             Serial.println("Returning to T");
-            while(!(hasBoxAtm==true)){
-                utilityFunction();
-                pickupBox();
-            }
+            servosOpen(false); //pick up box
             while(!(clockwise==false)){
                 utilityFunction();
                 turn180();
@@ -809,10 +801,7 @@ class Robot {
         //picks up blue block turns and turns left at T junction (used for placeblue)
         void AntiClockpickUpAndReturnT(){
             Serial.println("Returning to T from the anticlockwise side");
-            while(!(hasBoxAtm==true)){
-                utilityFunction();
-                pickupBox();
-            }
+            servosOpen(false); //pick up box
             while(!(clockwise==true)){
                 utilityFunction();
                 turn180();
@@ -839,10 +828,7 @@ class Robot {
         //picks up red and places it on clockwise side of T junction before turning round and passing T junction
         void placeRedTemporary(){
             Serial.println("Temporarily placing Red Block");
-            while(!(hasBoxAtm==true)){
-                utilityFunction();
-                pickupBox();
-            }
+            servosOpen(false); //pick up box
             while(!(clockwise==true)){
                 utilityFunction();
                 turn180(true);
@@ -854,16 +840,11 @@ class Robot {
             crossTFromAnticlock();
             follow(400);
             runMotors(0,0);
-            for (pos = servoClose; pos >= servoStart; pos -= 1) {// open the servos
-                Servo1.write(pos);              // tell servo to go to position in variable 'pos'
-                delay(30);                       // waits 15ms for the servo to reach the position
-            }   
-            hasBoxAtm = false;
+            servosOpen(true); 
             reverseAndTwist();
             clockwise = false;
             
             crossTFromClockwise();
-
         }
 
         //crosses t junction from clockwise dealing with pill position reset
@@ -963,7 +944,7 @@ class Robot {
         void runProgram(){
             // testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
-            // pickupBox();
+            // servosOpen(false);
             // placeFirstBlueBox();
             //placeSecondBlueBox();  
             while(!(position == PositionList::START)){
@@ -971,6 +952,7 @@ class Robot {
                 if(farLeftVal == 1 && farRightVal == 1){
                     position = PositionList::START;
                     Serial.println("left the start box");
+                    follow(200);  // NEEDED LATENCY !!!!!!!!!!!!!!!!!!!!!!!!!
                 }
             }
             while(!(position == PositionList::FIRST_JUNCTION)){
@@ -978,6 +960,7 @@ class Robot {
                 if( farLeftVal == 1){
                     position = PositionList::FIRST_JUNCTION;
                     Serial.println("first junction towards pill no boxes yet");
+                    follow(200);  // NEEDED LATENCY !!!!!!!!!!!!!!!!!!!!!!!!!
                 }
             }
             while(!(position == PositionList::TUNNEL)){
@@ -1028,7 +1011,7 @@ class Robot {
                     binaryFollowLine();
                 }
                 Serial.println("found second clockwise box");
-                while(!(currentBoxCol != BoxCol::NO_BOX)){
+                while(currentBoxCol == BoxCol::NO_BOX){
                     utilityFunction();
                     checkBoxColour();
                 }
@@ -1049,14 +1032,11 @@ class Robot {
                     while(!(distanceFrontVal > 500)){
                         binaryFollowLine();
                     }
-                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                    while(currentBoxCol == BoxCol::NO_BOX){
                         utilityFunction();
                         checkBoxColour();
                     }
-                    while(!(hasBoxAtm==true)){
-                        utilityFunction();
-                        pickupBox();
-                    }
+                    servosOpen(false); //pick up the box
                     Serial.println("picked up first of remaining reds");
                     while(!(pillPosition==1)){
                         binaryFollowLine();
@@ -1073,10 +1053,7 @@ class Robot {
                         clockwise = false;
                     }
                     checkOtherSideFromClockwise();
-                    while(!(hasBoxAtm==true)){
-                        utilityFunction();
-                        pickupBox();
-                    }
+                    servosOpen(false);  //pick up the box
                     while(!(clockwise == true)){
                         utilityFunction();
                         turn180();
@@ -1149,10 +1126,7 @@ class Robot {
                             utilityFunction();
                             checkBoxColour();
                         }
-                        while(!(hasBoxAtm==true)){
-                            utilityFunction();
-                            pickupBox();
-                        }
+                        servosOpen(false);  //pick up the box
                         while(!(pillPosition==-1)){
                             binaryFollowLine();
                         }
@@ -1175,10 +1149,7 @@ class Robot {
                             utilityFunction();
                             checkBoxColour();
                         }
-                        while(!(hasBoxAtm==true)){
-                            utilityFunction();
-                            pickupBox();
-                        }
+                        servosOpen(false);   //pick up the box
                         while(!(clockwise ==false)){
                             utilityFunction();
                             turn180();

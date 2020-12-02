@@ -800,7 +800,7 @@ class Robot {
                 if( farRightVal == 0){
                     position = PositionList::PILL;
                     pillPosition = 0;
-                    clockwise = true;
+                    
                 }
             }
             clockwise = false;
@@ -820,7 +820,7 @@ class Robot {
                 if( farLeftVal == 0){
                     position = PositionList::PILL;
                     pillPosition = 0;
-                    clockwise = false;
+                    
                 }
             }
             clockwise = true;
@@ -871,6 +871,11 @@ class Robot {
             if(position == PositionList::PILL && clockwise == true) goto CHECK_FIRST_PILL_CLOCKWISE;
             bool comingHomeTest = false;
             if(position == PositionList::TUNNEL && comingHomeTest == true) goto COMING_HOME_FROM_TUNNEL;
+            bool placeRedTest = false;
+            if(placeRedTest == true){
+                position = PositionList::PILL;
+                goto PLACE_RED_CLOCKWISE_TEST;
+            }
             // testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
             // servosOpen(false);
@@ -946,7 +951,7 @@ class Robot {
                     approachAndCheckBoxColour();
                     servosOpen(false); //pick up the box
                     Serial.println("picked up first of remaining reds");
-                    while(!(pillPosition==1)) binaryFollowLine();
+                    PLACE_RED_CLOCKWISE_TEST: while(!(pillPosition==1)) binaryFollowLine();     //this line contains a link to the place red test which can run, avoiding one box and then depositing the thingy at the next
                     
                     Serial.println("avoided first pill");
                     while(!(onTargetBox==true)) binaryFollowLine();  // this should be checking for a target box as well

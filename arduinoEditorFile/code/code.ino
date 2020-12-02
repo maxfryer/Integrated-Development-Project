@@ -867,7 +867,10 @@ class Robot {
 
         void runProgram(){
 
-            if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL) goto FIRST_TUNNEL;
+            if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL) goto FIRST_TUNNEL;  //THESE GOTO CLAUSES PROVIDE EASY TESTING HOPEFULLY OF SOME BITS
+            if(position == PositionList::PILL && clockwise == true) goto CHECK_FIRST_PILL_CLOCKWISE;
+            bool comingHomeTest = false;
+            if(position == PositionList::TUNNEL && comingHomeTest == true) goto COMING_HOME_FROM_TUNNEL;
             // testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
             // servosOpen(false);
@@ -910,7 +913,7 @@ class Robot {
                 clockwise = true;
                 Serial.println("On Pill first time going clockwise");
             }
-            approachAndCheckBoxColour();
+            CHECK_FIRST_PILL_CLOCKWISE: approachAndCheckBoxColour();
             if(currentBoxCol == BoxCol::BLUE){
                 Serial.println("on way to place first clockwise blue");
                 //CLOCKWISE 1 IS BLUE
@@ -983,7 +986,7 @@ class Robot {
                         position = PositionList::TUNNEL;
                     }
                     follow(2000);
-                    headHomeFromTunnel();
+                    COMING_HOME_FROM_TUNNEL: headHomeFromTunnel();
                 } 
                 else{
                     Serial.println("clockwise 2 was red");

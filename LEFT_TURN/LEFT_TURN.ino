@@ -247,7 +247,13 @@ class Robot {
             checkAllSensorValues(false);
             onOffSwitch();
             if (flashLED) flashLEDS(); // actually the utility function is contained within binary follow line
-            if (frontLeftVal > lineSensorThreshold) {
+            
+            //NOTE THIS CODE
+            if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
+                
+                speedDifference = 0;
+            }  //THIS CODE SHOULD ALWAYS FIX TARGET BOX PROBLEMS. IF IT DOES NOT WORK THEN REMOVE IT
+            else if (frontLeftVal > lineSensorThreshold) {
                 speedDifference = increaseRate;
             }
             else if (frontRightVal > lineSensorThreshold) {
@@ -288,7 +294,6 @@ class Robot {
             motorSpeedLeft = motorSpeed - speedDifference;
             motorSpeedRight = motorSpeed + speedDifference;
             runMotors(motorSpeedLeft,motorSpeedRight);
-            return;
         }
 
         void turnLeft() {
@@ -624,7 +629,7 @@ class Robot {
             while(!(pillPosition == 0)){
                 binaryFollowLine();
             }
-            crossTFromClockwise();
+            crossTInAntiClockDirection();
             approachAndCheckBoxColour();
         }
 
@@ -647,7 +652,7 @@ class Robot {
             while(!(pillPosition == 0)){
                 binaryFollowLine();
             }
-            crossTFromClockwise();
+            crossTInAntiClockDirection();
             while(!(pillPosition == 0)){
                 binaryFollowLine();
             }
@@ -662,7 +667,7 @@ class Robot {
             while(!(pillPosition == 0)){
                 binaryFollowLine();
             }
-            crossTFromAnticlock();
+            crossTInClockwiseDirection();
             approachAndCheckBoxColour();
 
             servosOpen(false);  //pick up box
@@ -756,18 +761,18 @@ class Robot {
             while(!(pillPosition== 0)){
                 binaryFollowLine();
             }
-            crossTFromAnticlock();
+            crossTInClockwiseDirection();
             follow(800);
             runMotors(0,0);
             servosOpen(true); 
             reverseAndTwist();
             clockwise = false;
             
-            crossTFromClockwise();
+            crossTInAntiClockDirection();
         }
 
         //crosses t junction from clockwise dealing with pill position reset
-        void crossTFromClockwise(){
+        void crossTInAntiClockDirection(){
             Serial.println("Crossing T Junction in the anticlockwise direction");
             while(!(position == PositionList::MAIN_T_JUNCTION )){
                 binaryFollowLine();
@@ -787,7 +792,7 @@ class Robot {
         }
 
         //crosses t junction from anticlockwise dealing with pill position reset
-        void crossTFromAnticlock(){
+        void crossTInClockwiseDirection(){
             Serial.println("Crossing T Junction in the clockwise direction");
             while(!(position == PositionList::MAIN_T_JUNCTION )){
                 binaryFollowLine();
@@ -945,7 +950,7 @@ class Robot {
                     while(!(pillPosition == 0)){
                         binaryFollowLine();
                     }
-                    crossTFromAnticlock();
+                    crossTInClockwiseDirection();
                     Serial.println("crossing pill for the last time to place the last red");
                     while(!(onTargetBox==true)){
                         binaryFollowLine();
@@ -1006,7 +1011,7 @@ class Robot {
                         while(!(pillPosition==0)){
                             binaryFollowLine();
                         }
-                        crossTFromAnticlock();
+                        crossTInClockwiseDirection();
                         approachAndCheckBoxColour();
                         servosOpen(false);   //pick up the box
                         while(!(clockwise ==false)){
@@ -1017,18 +1022,14 @@ class Robot {
                         while(!(pillPosition==0)){
                             binaryFollowLine();
                         }
-                        crossTFromClockwise();
+                        crossTInAntiClockDirection();
                         while(!(onTargetBox==true)){
                             binaryFollowLine();
                         }
-                        while(!(clockwise==true)){
-                            utilityFunction();
-                            placeBox();
-                            clockwise = true;
-                        }
-                        while(!(pillPosition == 0 )){
-                            binaryFollowLine();
-                        }
+                        utilityFunction();
+                        placeBox();
+                        clockwise = true;
+                        //NO NEED TO CHECK PILL POSITION HERE AS ON WAY HOME
                         while(!(position == PositionList::MAIN_T_JUNCTION)){
                             binaryFollowLine();
                             if (farLeftVal==1){

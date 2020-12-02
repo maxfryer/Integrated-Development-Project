@@ -285,7 +285,13 @@ class Robot {
             checkAllSensorValues(false);
             onOffSwitch();
             if (flashLED) flashLEDS(); // actually the utility function is contained within binary follow line
-            if (frontLeftVal > lineSensorThreshold) {
+            
+            //NOTE THIS CODE
+            if(frontLeftVal > lineSensorThreshold && frontRightVal > lineSensorThreshold){
+                
+                speedDifference = 0;
+            }  //THIS CODE SHOULD ALWAYS FIX TARGET BOX PROBLEMS. IF IT DOES NOT WORK THEN REMOVE IT
+            else if (frontLeftVal > lineSensorThreshold) {
                 speedDifference = increaseRate;
             }
             else if (frontRightVal > lineSensorThreshold) {
@@ -338,12 +344,10 @@ class Robot {
                     utilityFunction();
                 }
             }
-            while(frontLeftVal < lineSensorThreshold ){
-                utilityFunction();
-            }
-            while(frontRightVal < lineSensorThreshold ){
-                utilityFunction();
-            }
+            while(frontLeftVal < lineSensorThreshold ) utilityFunction();
+            
+            while(frontRightVal < lineSensorThreshold ) utilityFunction();
+            
             follow(100);
             return;
         }
@@ -357,12 +361,10 @@ class Robot {
                     utilityFunction();
                 }
             }
-            while(frontRightVal < lineSensorThreshold ){
-                utilityFunction();
-            }
-            while(frontLeftVal < lineSensorThreshold ){
-                utilityFunction();
-            }
+            while(frontRightVal < lineSensorThreshold )  utilityFunction();
+            
+            while(frontLeftVal < lineSensorThreshold ) utilityFunction();
+            
             follow(100);
             return;
         }
@@ -376,28 +378,22 @@ class Robot {
             // }
             if(anticlockwise){
                 runMotors(-1*motorSpeed,1*motorSpeed);
-                while( farLeftVal == 0 ){
-                    utilityFunction();
-                }
-                while(frontLeftVal < lineSensorThreshold ){
-                    utilityFunction();
-                }
-                while(frontRightVal < lineSensorThreshold ){
-                    utilityFunction();
-                }
+                while( farLeftVal == 0 ) utilityFunction();
+                
+                while(frontLeftVal < lineSensorThreshold ) utilityFunction();
+                
+                while(frontRightVal < lineSensorThreshold ) utilityFunction();
+                
 
             }
             else {
                 runMotors(1*motorSpeed,-1*motorSpeed);
-                while( farRightVal == 0 ){
-                    checkAllSensorValues(false);
-                }
-                while(frontRightVal < lineSensorThreshold ){
-                    checkAllSensorValues(false);
-                }
-                while(frontLeftVal < lineSensorThreshold ){
-                    checkAllSensorValues(false);
-                }
+                while( farRightVal == 0 ) utilityFunction();
+                
+                while(frontRightVal < lineSensorThreshold ) utilityFunction();
+                
+                while(frontLeftVal < lineSensorThreshold ) utilityFunction();
+                
             }
 
             
@@ -474,9 +470,8 @@ class Robot {
         }
 
         void approachAndCheckBoxColour(){
-            while(!(distanceFrontVal > 500)){
-                binaryFollowLine();
-            }
+            while(!(distanceFrontVal > 500)) binaryFollowLine();
+            
             Serial.println("found box");
             while(currentBoxCol == BoxCol::NO_BOX){
                 utilityFunction();
@@ -862,9 +857,7 @@ class Robot {
                 approachAndCheckBoxColour();
                 currentBoxCol = BoxCol::BLUE;
                 //JUST CHECKING NOT red BOX
-                while(currentBoxCol == BoxCol::RED){
-                    Serial.println("seeing blue in Anti1, must be errror");
-                }
+                while(currentBoxCol == BoxCol::RED) Serial.println("seeing blue in Anti1, must be errror");
                 
                 AntiClockpickUpAndReturnT();
                 placeFirstBlueBox();
@@ -901,7 +894,6 @@ class Robot {
                     Serial.println("at tunnel on way to pill first time");
                 }
             }
-            
             while(!(position == PositionList::MAIN_T_JUNCTION)){
                 binaryFollowLine();
                 if(farLeftVal == 1 && farRightVal == 1){
@@ -990,16 +982,17 @@ class Robot {
                     }
                     follow(2000);
                     headHomeFromTunnel();
-                    } 
+                } 
                 else{
+                    Serial.println("clockwise 2 was red");
                     //CLOCKWISE 2 IS RED
                     //NOW CHECKING OTHER SIDE
-                    while(!(clockwise == false)){
-                        utilityFunction();
-                        reverseAndTwist();
-                        clockwise = false;
-                        currentBoxCol = BoxCol::NO_BOX;
-                    }
+                    
+                    utilityFunction();
+                    reverseAndTwist();
+                    clockwise = false;
+                    currentBoxCol = BoxCol::NO_BOX;
+                    
                     checkOtherSideFromClockwise();
                     if(currentBoxCol == BoxCol::BLUE){
                         //ANTICLOCK 1 IS BLUE
@@ -1018,33 +1011,29 @@ class Robot {
     
                         while(!(onTargetBox==true)) binaryFollowLine();
                         
-                        while(!(clockwise==true)){
-                            utilityFunction();
-                            placeBox();
-                            clockwise = true;
-                        }
+                        utilityFunction();
+                        placeBox();
+                        clockwise = true;
+                        
                         while(!(pillPosition==0)) binaryFollowLine();
                         
                         crossTInClockwiseDirection();
                         approachAndCheckBoxColour();
                         servosOpen(false);   //pick up the box
-                        while(!(clockwise ==false)){
-                            utilityFunction();
-                            turn180();
-                            clockwise = false;
-                        }
+                        
+                        utilityFunction();
+                        turn180();
+                        clockwise = false;
+                        
                         while(!(pillPosition==0)) binaryFollowLine();
                         
                         crossTInAntiClockDirection();
                         while(!(onTargetBox==true)) binaryFollowLine();
                         
-                        while(!(clockwise==true)){
-                            utilityFunction();
-                            placeBox();
-                            clockwise = true;
-                        }
-                        while(!(pillPosition == 0 )) binaryFollowLine();
-                        
+                        utilityFunction();
+                        placeBox();
+                        clockwise = true;
+                        //NO NEED TO CHECK PILL POSITION HERE AS ON WAY HOME
                         while(!(position == PositionList::MAIN_T_JUNCTION)){
                             binaryFollowLine();
                             if (farLeftVal==1){
@@ -1077,12 +1066,12 @@ class Robot {
                 Serial.println("turning round and checking the other side");
                 //CLOCKWISE 1 IS RED
                 //CHECKING OTHER SIDE
-                while(!(clockwise == false)){
-                    utilityFunction();
-                    reverseAndTwist();
-                    clockwise = false;
-                    currentBoxCol = BoxCol::NO_BOX;
-                }
+                
+                utilityFunction();
+                reverseAndTwist();
+                clockwise = false;
+                currentBoxCol = BoxCol::NO_BOX;
+                
                 checkOtherSideFromClockwise();
                 if(currentBoxCol == BoxCol::BLUE){
                     //CLOCKWISE 1 IS RED
@@ -1138,7 +1127,6 @@ class Robot {
                 }
             }
         }
-
 };
 
 Robot Bot;

@@ -866,6 +866,8 @@ class Robot {
         }
 
         void runProgram(){
+
+            if(position == PositionList::TUNNEL && direction == Directions::TOWARDS_PILL) goto FIRST_TUNNEL;
             // testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
             // servosOpen(false);
@@ -894,7 +896,7 @@ class Robot {
                     Serial.println("at tunnel on way to pill first time");
                 }
             }
-            while(!(position == PositionList::MAIN_T_JUNCTION)){
+            FIRST_TUNNEL: while(!(position == PositionList::MAIN_T_JUNCTION)){
                 binaryFollowLine();
                 if(farLeftVal == 1 && farRightVal == 1){
                     position = PositionList::MAIN_T_JUNCTION;

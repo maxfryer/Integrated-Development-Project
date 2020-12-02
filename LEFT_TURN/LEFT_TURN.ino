@@ -529,8 +529,20 @@ class Robot {
             Serial.println("reached blue T");
         }
 
-        void travelFromBlueTtoTJUNC(){
-
+        void travelFromBlueTracktoTJUNC(){
+            while(!(position == PositionList::FIRST_JUNCTION)){
+                binaryFollowLine();
+                if(farRightVal == 1){
+                    position = PositionList::FIRST_JUNCTION;
+                    follow(300);
+                }
+            }
+            while(!(position == PositionList::MAIN_T_JUNCTION)){
+                binaryFollowLine();
+                if(farRightVal ==1 && farLeftVal ==1){
+                    position = PositionList::MAIN_T_JUNCTION;
+                }
+            }
         }
         //places first blue box, starts from tunnel and ends on T-junction
         void placeSecondBlueBox(){
@@ -578,18 +590,7 @@ class Robot {
                 position =  PositionList::BLUE_TRACK;
             }
             Serial.println("Reached Blue Track");
-            while(!(position == PositionList::FIRST_JUNCTION)){
-                binaryFollowLine();
-                if(farRightVal == 1){
-                    position = PositionList::FIRST_JUNCTION;
-                }
-            }
-            while(!(position == PositionList::MAIN_T_JUNCTION)){
-                binaryFollowLine();
-                if(farRightVal ==1 && farLeftVal ==1){
-                    position = PositionList::MAIN_T_JUNCTION;
-                }
-            }
+            travelFromBlueTracktoTJUNC();
         }
 
         void placeFirstBlueBox(){
@@ -623,18 +624,7 @@ class Robot {
                 turn180();
                 position = PositionList::BLUE_TRACK;
             }
-            while(!(position == PositionList::FIRST_JUNCTION)){
-                binaryFollowLine();
-                if(farRightVal == 1){
-                    position = PositionList::FIRST_JUNCTION;
-                }
-            }
-            while(!(position == PositionList::MAIN_T_JUNCTION)){
-                binaryFollowLine();
-                if(farRightVal ==1 && farLeftVal ==1){
-                    position = PositionList::MAIN_T_JUNCTION;
-                }
-            }
+            travelFromBlueTracktoTJUNC();
         }
         
         void checkOtherSideFromClockwise() {

@@ -177,11 +177,13 @@ class Robot {
         }
 
         void flashLEDS(){
-            static int timer = 0;
-            int state = LOW;
-            timer += 1;
-            if(timer > 100) timer = 1;
-            if(timer % 100 == 0 ){
+            static int timeStart = millis();
+            static int state = LOW;
+            unsigned long timeNow = millis();
+            unsigned long time = timeNow - timeStart;
+            if(time > 500) {
+                time = 0;
+                timeStart = timeNow;
                 state = (state == HIGH) ? LOW : HIGH;
             }
 
@@ -453,38 +455,52 @@ class Robot {
             */
             Serial.println("placing box");
             int timer = 0;
-            runMotors(-1*motorSpeed,-1*motorSpeed);
             while (timer < 400){
                 timer +=1;
-                checkAllSensorValues(false);
-                flashLEDS();
+                runMotors(-1*motorSpeed,-1*motorSpeed);
+                utilityFunction();
             }
             runMotors(0,0);
             servosOpen(true); 
             timer = 0;
             runMotors(-1*motorSpeed,-1*motorSpeed);
-            while (timer < 200){
+            while (timer < 500){
                 timer +=1;
                 checkAllSensorValues(false);
                 flashLEDS();
             }     
             turn180();
             onTargetBox = false;
-
-            // GET CLAW TO OPEN;
-            // IF BOX HAS SLIPPED TO END, WILL NOT BE ABLE TO REVERSE AND TWIST
         }
 
         //currently not using stop in home location
-        void stopInHomeLocation(){
-            int timer = 0;
-            while (timer < 1000){
-                timer += 1;
-                runMotors(motorSpeed,motorSpeed);
+        void headHomeFromTunnel(){
+            while(!(position == PositionList::FIRST_JUNCTION)){
+                binaryFollowLine();
+                if(farRightVal ==1 ){
+                    position = PositionList::FIRST_JUNCTION;
+                    Serial.println("reached the first junction for the last time, heading back towards the start");
+                    int timer = 0;
+                    while (timer < 100){
+                        runMotors(motorSpeed,motorSpeed);
+                        flashLEDS();
+                        timer +=1;
+                    }
+                }
             }
-            Serial.println("stopping NOWWWW");
-            runMotors(0,0);
-            run = false;
+            while(!(position == PositionList::START)){
+                binaryFollowLine();
+                if(farRightVal ==1 && farLeftVal ==1){
+                    position = PositionList::START;
+                    Serial.println("reached start, stopping now");
+                    follow(1000);
+                    runMotors(0,0);
+                    Serial.println("stopped, program complete!");
+                }
+            }
+            while(true){
+                continue;
+            }
         }
 
         void checkBoxColour(){
@@ -770,11 +786,10 @@ class Robot {
         void AntiClockpickUpAndReturnT(){
             Serial.println("Picking up box then Returning to T from the anticlockwise side");
             servosOpen(false); //pick up box
-            while(!(clockwise==true)){
-                utilityFunction();
-                turn180(true);
-                clockwise = true;
-            }
+            clockwise = false;
+            turn180(true);
+            clockwise = true;
+
             while(!(pillPosition== 0)){
                 binaryFollowLine();
             }
@@ -1041,27 +1056,21 @@ class Robot {
                     while(!(pillPosition == 0)){
                         binaryFollowLine();
                     }
-                    while(!(position == PositionList::FIRST_JUNCTION)){
+                    while(!(position == PositionList::MAIN_T_JUNCTION)){
                         binaryFollowLine();
-                        if(farRightVal ==1 ){
-                            position = PositionList::FIRST_JUNCTION;
-                            Serial.println("reached the first junction for the last time, heading back towards the start");
+                        if (farRightVal==1){
+                            position = PositionList::MAIN_T_JUNCTION;
                         }
                     }
-                    while(!(position == PositionList::START)){
-                        binaryFollowLine();
-                        if(farRightVal ==1 && farLeftVal ==1){
-                            position = PositionList::START;
-                            Serial.println("reached start, stopping now");
-                            follow(1000);
-                            runMotors(0,0);
-                            Serial.println("stopped, program complete!");
-                        }
+                    while(!(position == PositionList::TUNNEL)){
+                        utilityFunction();
+                        turnRight();
+                        direction = Directions::AWAY_FROM_PILL;
+                        position = PositionList::TUNNEL;
                     }
-                    while(true){
-                        continue;
-                    }
-                } 
+                    follow(2000);
+                    headHomeFromTunnel();
+                    } 
                 else{
                     //CLOCKWISE 1 WAS BLUE
                     //CLOCKWISE 2 IS RED
@@ -1137,31 +1146,20 @@ class Robot {
                         while(!(pillPosition == 0 )){
                             binaryFollowLine();
                         }
-                        while(!(farLeftVal == true)){
+                        while(!(position == PositionList::MAIN_T_JUNCTION)){
                             binaryFollowLine();
+                            if (farLeftVal==1){
+                                position = PositionList::MAIN_T_JUNCTION;
+                            }
                         }
-                        while(!(position== PositionList::TUNNEL)){
+                        while(!(position == PositionList::TUNNEL)){
                             utilityFunction();
                             turnLeft();
+                            direction = Directions::AWAY_FROM_PILL;
                             position = PositionList::TUNNEL;
                         }
-                        while(!(position == PositionList::FIRST_JUNCTION)){
-                            binaryFollowLine();
-                            if(farRightVal ==1 ){
-                                position = PositionList::FIRST_JUNCTION;
-                            }
-                        }
-                        while(!(position == PositionList::START)){
-                            binaryFollowLine();
-                            if(farRightVal ==1 && farLeftVal ==1){
-                                position = PositionList::START;
-                                follow(1000);
-                                runMotors(0,0);
-                            }
-                        }
-                        while(true){
-                            continue;
-                        }
+                        follow(2000);
+                        headHomeFromTunnel();
                     } 
                     else{
                         //CLOCKWISE 1 WAS BLUE
@@ -1261,11 +1259,11 @@ class Robot {
                     while(!(distanceFrontVal > 500)){
                         binaryFollowLine();
                     }
-                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                    while(currentBoxCol == BoxCol::NO_BOX){
                         utilityFunction();
                         checkBoxColour();
                     }
-                    ClockwisepickUpAndReturnT();
+                    AntiClockpickUpAndReturnT();
                     placeSecondBlueBox();
                     dealWithTwoClockwiseReds();
                 }

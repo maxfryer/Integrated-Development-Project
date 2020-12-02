@@ -177,11 +177,13 @@ class Robot {
         }
 
         void flashLEDS(){
-            static int timer = 0;
-            int state = LOW;
-            timer += 1;
-            if(timer > 100) timer = 1;
-            if(timer % 100 == 0 ){
+            static int timeStart = millis();
+            static int state = LOW;
+            unsigned long timeNow = millis();
+            unsigned long time = timeNow - timeStart;
+            if(time > 500) {
+                time = 0;
+                timeStart = timeNow;
                 state = (state == HIGH) ? LOW : HIGH;
             }
 
@@ -330,20 +332,17 @@ class Robot {
         void turnLeft() {
             Serial.println("Turning Left");
             //WAIT FOR FAR LEFT TO TRIGGER
-            
+            runMotors(-1*motorSpeed,1*motorSpeed);
             if(frontLeftVal > lineSensorThreshold ){
                 while (frontLeftVal > lineSensorThreshold){
                     utilityFunction();
-                    runMotors(-1*motorSpeed,1*motorSpeed);
                 }
             }
             while(frontLeftVal < lineSensorThreshold ){
                 utilityFunction();
-                runMotors(-1*motorSpeed,1*motorSpeed);
             }
             while(frontRightVal < lineSensorThreshold ){
                 utilityFunction();
-                runMotors(-1*motorSpeed,1*motorSpeed);
             }
             follow(100);
             return;
@@ -352,20 +351,17 @@ class Robot {
         void turnRight() {
             Serial.println("Turning Right");
             //WAIT FOR FAR LEFT TO TRIGGER
-
+            runMotors(1*motorSpeed,-1*motorSpeed);
             if(frontRightVal > lineSensorThreshold ){
                 while (frontRightVal > lineSensorThreshold){
-                    checkAllSensorValues(false);
-                    runMotors(1*motorSpeed,-1*motorSpeed);
+                    utilityFunction();
                 }
             }
             while(frontRightVal < lineSensorThreshold ){
-                checkAllSensorValues(false);
-                runMotors(1*motorSpeed,-1*motorSpeed);
+                utilityFunction();
             }
             while(frontLeftVal < lineSensorThreshold ){
-                checkAllSensorValues(false);
-                runMotors(1*motorSpeed,-1*motorSpeed);
+                utilityFunction();
             }
             follow(100);
             return;
@@ -379,32 +375,28 @@ class Robot {
             //     runMotors(1*motorSpeed,-1*motorSpeed);
             // }
             if(anticlockwise){
+                runMotors(-1*motorSpeed,1*motorSpeed);
                 while( farLeftVal == 0 ){
-                    checkAllSensorValues(false);
-                    runMotors(-1*motorSpeed,1*motorSpeed);
+                    utilityFunction();
                 }
                 while(frontLeftVal < lineSensorThreshold ){
-                    checkAllSensorValues(false);
-                    runMotors(-1*motorSpeed,1*motorSpeed);
+                    utilityFunction();
                 }
                 while(frontRightVal < lineSensorThreshold ){
-                    checkAllSensorValues(false);
-                    runMotors(-1*motorSpeed,1*motorSpeed);
+                    utilityFunction();
                 }
 
             }
             else {
+                runMotors(1*motorSpeed,-1*motorSpeed);
                 while( farRightVal == 0 ){
                     checkAllSensorValues(false);
-                    runMotors(1*motorSpeed,-1*motorSpeed);
                 }
                 while(frontRightVal < lineSensorThreshold ){
                     checkAllSensorValues(false);
-                    runMotors(1*motorSpeed,-1*motorSpeed);
                 }
                 while(frontLeftVal < lineSensorThreshold ){
                     checkAllSensorValues(false);
-                    runMotors(1*motorSpeed,-1*motorSpeed);
                 }
             }
 
@@ -539,6 +531,22 @@ class Robot {
             Serial.println("reached blue T");
         }
 
+        void travelFromBlueTracktoTJUNC(){
+            while(!(position == PositionList::FIRST_JUNCTION)){
+                binaryFollowLine();
+                if(farRightVal == 1){
+                    position = PositionList::FIRST_JUNCTION;
+                    Serial.println("reached first t junction from blue track");
+                    follow(300);
+                }
+            }
+            while(!(position == PositionList::MAIN_T_JUNCTION)){
+                binaryFollowLine();
+                if(farRightVal ==1 && farLeftVal ==1){
+                    position = PositionList::MAIN_T_JUNCTION;
+                }
+            }
+        }
         //places first blue box, starts from tunnel and ends on T-junction
         void placeSecondBlueBox(){
             Serial.println("Placing Second Blue Block");
@@ -585,18 +593,7 @@ class Robot {
                 position =  PositionList::BLUE_TRACK;
             }
             Serial.println("Reached Blue Track");
-            while(!(position == PositionList::FIRST_JUNCTION)){
-                binaryFollowLine();
-                if(farRightVal == 1){
-                    position = PositionList::FIRST_JUNCTION;
-                }
-            }
-            while(!(position == PositionList::MAIN_T_JUNCTION)){
-                binaryFollowLine();
-                if(farRightVal ==1 && farLeftVal ==1){
-                    position = PositionList::MAIN_T_JUNCTION;
-                }
-            }
+            travelFromBlueTracktoTJUNC();
         }
 
         void placeFirstBlueBox(){
@@ -630,18 +627,7 @@ class Robot {
                 turn180();
                 position = PositionList::BLUE_TRACK;
             }
-            while(!(position == PositionList::FIRST_JUNCTION)){
-                binaryFollowLine();
-                if(farRightVal == 1){
-                    position = PositionList::FIRST_JUNCTION;
-                }
-            }
-            while(!(position == PositionList::MAIN_T_JUNCTION)){
-                binaryFollowLine();
-                if(farRightVal ==1 && farLeftVal ==1){
-                    position = PositionList::MAIN_T_JUNCTION;
-                }
-            }
+            travelFromBlueTracktoTJUNC();
         }
         
         void checkOtherSideFromClockwise() {
@@ -784,13 +770,12 @@ class Robot {
 
         //picks up blue block turns and turns left at T junction (used for placeblue)
         void AntiClockpickUpAndReturnT(){
-            Serial.println("Returning to T from the anticlockwise side");
+            Serial.println("Picking up box then Returning to T from the anticlockwise side");
             servosOpen(false); //pick up box
-            while(!(clockwise==true)){
-                utilityFunction();
-                turn180();
-                clockwise = true;
-            }
+            clockwise = false;
+            turn180(true);
+            clockwise = true;
+
             while(!(pillPosition== 0)){
                 binaryFollowLine();
             }
@@ -1263,7 +1248,7 @@ class Robot {
                     while(!(distanceFrontVal > 500)){
                         binaryFollowLine();
                     }
-                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                    while(currentBoxCol == BoxCol::NO_BOX){
                         utilityFunction();
                         checkBoxColour();
                     }
@@ -1277,11 +1262,11 @@ class Robot {
                     while(!(distanceFrontVal > 500)){
                         binaryFollowLine();
                     }
-                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                    while(currentBoxCol == BoxCol::NO_BOX){
                         utilityFunction();
                         checkBoxColour();
                     }
-                    ClockwisepickUpAndReturnT();
+                    AntiClockpickUpAndReturnT();
                     placeSecondBlueBox();
                     dealWithTwoClockwiseReds();
                 }

@@ -16,8 +16,8 @@ Adafruit_DCMotor * myMotorRight = AFMS.getMotor(2);
 Servo Servo1;
 
 bool run = false;
-int servoStart = 60;
-int servoClose = 85;
+int servoStart = 5;
+int servoClose = 60;
 
 class Robot {
     public:
@@ -53,13 +53,14 @@ class Robot {
         int colourPinVal = 0;
 
         /* MOTORS */
-        float motorSpeed = 100; //EDIT THIS 
-        int motorDiff = 100;
+        float motorSpeed = 110; //EDIT THIS 
+        int motorDiff = 110;
         float lineFollowDampingFactor = 0.9;
         float motorSpeedLeft;
         float motorSpeedRight;
         float speedDifference = 0;
         int pos = 85;  // variable to store the servo position
+        int turnSpeed = 1.5;
 
         /* THRESHOLDS */
         int lineSensorThreshold = 300;
@@ -79,43 +80,6 @@ class Robot {
         Directions direction = Directions::TOWARDS_PILL;//TOWARDS_PILL;
         BoxCol currentBoxCol = BoxCol::NO_BOX;
 
-        //the whole contorl structre
-            /*line follow to t junction, the turn left
-            if red 
-                check other side ()  -> go back round until you hit the t-junction, then carry on until you hit something on the other side
-                if red 
-                    put it on the left hand side ()  -> pickup a red, 180, cross t- junction, carry on for a short while then place on the left hand side 
-                    then go back right, pickup and place blue,
-                    come back, head right and pickup and place blue
-
-                    come back and place the left red in the right hand spot, 
-                    then go back and plave the last left red in hte clockwise spot
-                    then go home
-                else if blue 
-                    place the blue and check the right hand side again
-                    if red:
-                        move to left hand side 
-                        then come back, go right pick up and place the last blue
-                        and then place the left red on the right
-                        then place the last red clockwise
-                    else 
-                        place the blue,
-                        come back and place the left red on the right
-                        go across and place the left red clockwise on the pill
-            else pickup and place blue
-                come back and check the left hand side again 
-                if red:
-                    check other side
-                    if red: 
-                        place this red on left
-                        go back and deal with final blue on right
-                        go back and place the first lefthandside red on the right hand side
-                        then deal with second red on the left hand side
-                else blue:
-                    place blue and 
-                    place the right red on the right
-                    place the clockwise red on the back of the pill.
-            */
 
         float checkAllSensorValues(bool listVals) {
             //Check ALL the sensor values
@@ -151,9 +115,9 @@ class Robot {
             middleSum +=middleVals[NUMBER_OF_SENSOR_POSITIVES -1];
             distanceSum += distanceVals[NUMBER_OF_SENSOR_POSITIVES -1];
 
-            farLeftVal = leftSum > 8 ? 1: 0; 
-            farRightVal = rightSum > 8 ? 1: 0; 
-            backMiddleVal = middleSum > 8 ? 1: 0; 
+            farLeftVal = leftSum > 6 ? 1: 0; 
+            farRightVal = rightSum > 6 ? 1: 0; 
+            backMiddleVal = middleSum > 6 ? 1: 0; 
             distanceFrontVal = distanceSum / NUMBER_OF_SENSOR_POSITIVES;
 
             if(listVals){
@@ -302,29 +266,23 @@ class Robot {
                 if(farLeftVal == 1 && farRightVal == 1 && onTargetBox == false){
                     if(clockwise==true){
                         pillPosition += 1;
-                        Serial.println("hit front of clockwise target box");
+                        if( pillPosition > 1){
+                            pillPosition = 1;
+                        }
+                        Serial.println("hit front of target box clockwise");
                     } 
                     else{
                         pillPosition -= 1;
-                        Serial.println("hit front of anticlockwise target box");
+                        if( pillPosition < -1){
+                            pillPosition = -1;
+                        }
+                        Serial.println("hit front of target box in Anticlockwise");
                     }
                     onTargetBox = true;
                 }
-                if(farLeftVal == 0 && farRightVal == 0 && onTargetBox == true){
+                if((farLeftVal == 0 || farRightVal == 0) && onTargetBox == true){
                     onTargetBox = false;
-                    Serial.println("hit the end of the clockwsie target box");
-                }
-                if(onTargetBox == true){
-                    speedDifference = 0;
-                } 
-            }
-
-            if(position == PositionList::BLUE_TRACK){
-                if(frontLeftVal == 1 && frontRightVal == 1){
-                    speedDifference=0;
-                }
-                if(frontRightVal == 0 && frontLeftVal == 0){
-                    speedDifference =0;
+                    Serial.println("hit the end of target box");
                 }
             }
 
@@ -338,7 +296,7 @@ class Robot {
         void turnLeft() {
             Serial.println("Turning Left");
             //WAIT FOR FAR LEFT TO TRIGGER
-            runMotors(-1*motorSpeed,1*motorSpeed);
+            runMotors(-turnSpeed*motorSpeed,turnSpeed*motorSpeed);
             if(frontLeftVal > lineSensorThreshold ){
                 while (frontLeftVal > lineSensorThreshold){
                     utilityFunction();
@@ -355,13 +313,13 @@ class Robot {
         void turnRight() {
             Serial.println("Turning Right");
             //WAIT FOR FAR LEFT TO TRIGGER
-            runMotors(1*motorSpeed,-1*motorSpeed);
+            runMotors(turnSpeed*motorSpeed,-turnSpeed*motorSpeed);
             if(frontRightVal > lineSensorThreshold ){
                 while (frontRightVal > lineSensorThreshold){
                     utilityFunction();
                 }
             }
-            while(frontRightVal < lineSensorThreshold )  utilityFunction();
+            while(frontRightVal < lineSensorThreshold ) utilityFunction();
             
             while(frontLeftVal < lineSensorThreshold ) utilityFunction();
             
@@ -377,20 +335,18 @@ class Robot {
             //     runMotors(1*motorSpeed,-1*motorSpeed);
             // }
             if(anticlockwise){
-                runMotors(-1*motorSpeed,1*motorSpeed);
+                runMotors(-turnSpeed*motorSpeed,turnSpeed*motorSpeed);
                 while( farLeftVal == 0 ) utilityFunction();
                 
-                while(frontLeftVal < lineSensorThreshold ) utilityFunction();
                 
                 while(frontRightVal < lineSensorThreshold ) utilityFunction();
                 
 
             }
             else {
-                runMotors(1*motorSpeed,-1*motorSpeed);
+                runMotors(turnSpeed*motorSpeed,-turnSpeed*motorSpeed);
                 while( farRightVal == 0 ) utilityFunction();
                 
-                while(frontRightVal < lineSensorThreshold ) utilityFunction();
                 
                 while(frontLeftVal < lineSensorThreshold ) utilityFunction();
                 
@@ -433,7 +389,7 @@ class Robot {
             while (timer < 600){
                 timer +=1;
                 utilityFunction();
-                runMotors(-1*motorSpeed,-1*motorSpeed);
+                runMotors(-turnSpeed*motorSpeed,-turnSpeed*motorSpeed);
             }
             Serial.println("finished reversing");
             turn180();
@@ -451,7 +407,7 @@ class Robot {
             */
             Serial.println("placing box");
             int timer = 0;
-            while (timer < 400){
+            while (timer < 430){
                 timer +=1;
                 runMotors(-1*motorSpeed,-1*motorSpeed);
                 utilityFunction();
@@ -459,13 +415,13 @@ class Robot {
             runMotors(0,0);
             servosOpen(true); 
             timer = 0;
-            runMotors(-1*motorSpeed,-1*motorSpeed);
-            while (timer < 500){
+            runMotors(-1.5*motorSpeed,-1.5*motorSpeed);
+            while (timer < 1500){
                 timer +=1;
                 checkAllSensorValues(false);
                 flashLEDS();
             }     
-            turn180();
+            turn180(true);
             onTargetBox = false;
         }
 
@@ -499,7 +455,7 @@ class Robot {
                 if(farRightVal ==1 && farLeftVal ==1){
                     position = PositionList::START;
                     Serial.println("reached start, stopping now");
-                    follow(1000);
+                    follow(700);
                     runMotors(0,0);
                     Serial.println("stopped, program complete!");
                 }
@@ -583,7 +539,7 @@ class Robot {
             while(!(direction == Directions::TOWARDS_PILL)){
                 utilityFunction();
                 int timer = 0;
-                while (timer < 20){
+                while (timer < 230){
                     timer +=1;
                     runMotors(motorSpeed,motorSpeed);
                     utilityFunction();
@@ -623,7 +579,7 @@ class Robot {
             int timer = 0;
             while (timer < 1300){
                 timer +=1;
-                runMotors(0.65*motorSpeed,1.1*motorSpeed);
+                runMotors(0.5*motorSpeed,1.1*motorSpeed);
                 utilityFunction();
             }
             runMotors(0,0);
@@ -631,7 +587,7 @@ class Robot {
             timer = 0;
             while (timer < 1300){
                 timer +=1;
-                runMotors(-0.65*motorSpeed,-1.1*motorSpeed);
+                runMotors(-0.5*motorSpeed,-1.1*motorSpeed);
                 utilityFunction();
             }
             timer = 0;
@@ -644,7 +600,7 @@ class Robot {
             
             while(!(position == PositionList::BLUE_TRACK)){
                 utilityFunction();
-                turn180();
+                turn180(true);
                 position = PositionList::BLUE_TRACK;
             }
             travelFromBlueTracktoTJUNC();
@@ -664,6 +620,7 @@ class Robot {
             while(!(position == PositionList::PILL)){
                 utilityFunction();
                 turnLeft();
+                clockwise = true;
                 position = PositionList::PILL;
             }
             approachAndCheckBoxColour();
@@ -769,15 +726,13 @@ class Robot {
         void placeRedTemporary(){
             Serial.println("Temporarily placing Red Block");
             servosOpen(false); //pick up box
-            while(!(clockwise==true)){
-                utilityFunction();
-                turn180(true);
-                clockwise = true;
-            }
+            utilityFunction();
+            turn180(false);
+            clockwise = true;
             while(!(pillPosition== 0)) binaryFollowLine();
             
             crossTInClockwiseDirection();
-            follow(400);
+            follow(700);
             runMotors(0,0);
             servosOpen(true); 
             reverseAndTwist();
@@ -874,7 +829,17 @@ class Robot {
             bool placeRedTest = false;
             if(placeRedTest == true){
                 position = PositionList::PILL;
+                Servo1.write(servoClose);
+                delay(10);
                 goto PLACE_RED_CLOCKWISE_TEST;
+            }
+
+            bool lastTest = false;
+            if(lastTest == true){ 
+                position = PositionList::MAIN_T_JUNCTION;
+                Servo1.write(servoClose);
+                delay(10);
+                goto REDTESTS;
             }
             // testProgram();
             //FIRST CHECKS FIRST ANTICLOCK BLOCK
@@ -936,33 +901,35 @@ class Robot {
                 approachAndCheckBoxColour();
                 if(currentBoxCol == BoxCol::BLUE){
                     Serial.println("heading to place the second clockwise blue");
-                    //CLOCKWISE 2 IS BLUE
+                    //CLOCKWISE 1 IS BLUE
                     //CLOCKWISE 2 IS BLUE
                     //ANTICLOCK 1 & 2 RED
                     //PLACES SECOND BLUE THEN DEALS WITH REMAINING REDS
                     ClockwisepickUpAndReturnT();
-                    placeSecondBlueBox();
+                    REDTESTS: placeSecondBlueBox();
                     while(!(position == PositionList::PILL)){
                         binaryFollowLine();
                         turnLeft();
+                        clockwise = true;
                         position = PositionList::PILL;
                         Serial.println("on pill clockwise looking for first of remaining reds");
                     }
+                    
+                    PLACE_RED_CLOCKWISE_TEST: while(!(pillPosition==1)) binaryFollowLine();     //this line contains a link to the place red test which can run, avoiding one box and then depositing the thingy at the next
+                    Serial.println("avoided first pill");
                     approachAndCheckBoxColour();
                     servosOpen(false); //pick up the box
                     Serial.println("picked up first of remaining reds");
-                    PLACE_RED_CLOCKWISE_TEST: while(!(pillPosition==1)) binaryFollowLine();     //this line contains a link to the place red test which can run, avoiding one box and then depositing the thingy at the next
                     
-                    Serial.println("avoided first pill");
                     while(!(onTargetBox==true)) binaryFollowLine();  // this should be checking for a target box as well
                     
                     Serial.println("hit red target box");
-                    while(!(clockwise==false)){
-                        utilityFunction();
-                        placeBox();
-                        Serial.println("placed first of reds, and heading anticlockwise");
-                        clockwise = false;
-                    }
+                    
+                    utilityFunction();
+                    placeBox();
+                    Serial.println("placed first of reds, and heading anticlockwise");
+                    clockwise = false;
+                    
                     checkOtherSideFromClockwise();
                     servosOpen(false);  //pick up the box
                     turn180();
@@ -1091,6 +1058,7 @@ class Robot {
                     while(!(position == PositionList::PILL)){
                         utilityFunction();
                         turnRight();
+                        clockwise = false;
                         position = PositionList::PILL;
                     }
                     approachAndCheckBoxColour();
@@ -1128,6 +1096,7 @@ class Robot {
                     while(!(position == PositionList::PILL)){
                         utilityFunction();
                         turnRight();
+                        clockwise = false;
                         position = PositionList::PILL;
                     }
                     approachAndCheckBoxColour();

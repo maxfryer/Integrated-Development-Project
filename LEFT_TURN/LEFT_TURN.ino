@@ -777,11 +777,11 @@ class Robot {
 
         //picks up blue block turns and turns left at T junction (used for placeblue)
         void AntiClockpickUpAndReturnT(){
-            Serial.println("Returning to T from the anticlockwise side");
+            Serial.println("Picking up box then Returning to T from the anticlockwise side");
             servosOpen(false); //pick up box
             while(!(clockwise==true)){
                 utilityFunction();
-                turn180();
+                turn180(true);
                 clockwise = true;
             }
             while(!(pillPosition== 0)){
@@ -1256,7 +1256,7 @@ class Robot {
                     while(!(distanceFrontVal > 500)){
                         binaryFollowLine();
                     }
-                    while(!(currentBoxCol != BoxCol::NO_BOX)){
+                    while(currentBoxCol == BoxCol::NO_BOX){
                         utilityFunction();
                         checkBoxColour();
                     }

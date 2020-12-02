@@ -534,6 +534,7 @@ class Robot {
                 binaryFollowLine();
                 if(farRightVal == 1){
                     position = PositionList::FIRST_JUNCTION;
+                    Serial.println("reached first t junction from blue track");
                     follow(300);
                 }
             }
